@@ -1,0 +1,13 @@
+# Tooling IO Management System Dependencies
+
+# Web Framework
+Flask>=2.0.0
+
+# Database
+pyodbc>=4.0.0
+
+# Configuration
+python-dotenv>=0.19.0
+
+# Logging
+colorlog>=6.0.0

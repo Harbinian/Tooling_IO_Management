@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出入库单详情 - 工装出入库管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 22px; font-weight: 500; }
+        .header a { color: white; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .main-content { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h2 { font-size: 18px; color: #333; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .info-item { }
+        .info-item label { display: block; font-size: 12px; color: #999; margin-bottom: 4px; }
+        .info-item .value { font-size: 14px; color: #333; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 14px; font-weight: 500; }
+        .status-draft { background: #6c757d; color: white; }
+        .status-submitted { background: #17a2b8; color: white; }
+        .status-keeper_confirmed { background: #28a745; color: white; }
+        .status-partially_confirmed { background: #ffc107; color: #333; }
+        .status-transport_notified { background: #20c997; color: white; }
+        .status-completed { background: #20c997; color: white; }
+        .status-rejected { background: #dc3545; color: white; }
+        .status-cancelled { background: #6c757d; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 10px; }
+        .btn-primary { background: #2a5298; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .timeline { padding: 20px 0; }
+        .timeline-item { display: flex; padding: 10px 0; border-left: 2px solid #ddd; padding-left: 20px; margin-left: 10px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -6px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: #2a5298; }
+        .timeline-item .time { font-size: 12px; color: #999; width: 150px; }
+        .timeline-item .content { flex: 1; }
+        .timeline-item .action { font-weight: 500; color: #333; }
+        .timeline-item .operator { font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>出入库单详情</h1>
+        <div>
+            <a href="/inventory">返回列表</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <h2>基本信息 <span id="statusBadge" class="status-badge"></span></h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>单号</label>
+                    <div class="value" id="orderNo">-</div>
+                </div>
+                <div class="info-item">
+                    <label>类型</label>
+                    <div class="value" id="orderType">-</div>
+                </div>
+                <div class="info-item">
+                    <label>状态</label>
+                    <div class="value"><span id="statusText">-</span></div>
+                </div>
+                <div class="info-item">
+                    <label>发起人</label>
+                    <div class="value" id="initiator">-</div>
+                </div>
+                <div class="info-item">
+                    <label>部门</label>
+                    <div class="value" id="department">-</div>
+                </div>
+                <div class="info-item">
+                    <label>项目代号</label>
+                    <div class="value" id="projectCode">-</div>
+                </div>
+                <div class="info-item">
+                    <label>用途</label>
+                    <div class="value" id="purpose">-</div>
+                </div>
+                <div class="info-item">
+                    <label>目标位置</label>
+                    <div class="value" id="targetLocation">-</div>
+                </div>
+                <div class="info-item">
+                    <label>创建时间</label>
+                    <div class="value" id="createTime">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>工装明细</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>工装编码</th>
+                        <th>工装名称</th>
+                        <th>图号</th>
+                        <th>申请数量</th>
+                        <th>确认数量</th>
+                        <th>状态</th>
+                        <th>确认位置</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTable">
+                    <tr><td colspan="8" style="text-align: center; padding: 40px; color: #999;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>操作日志</h2>
+            <div class="timeline" id="logTimeline">
+                <div style="text-align: center; padding: 20px; color: #999;">暂无日志</div>
+            </div>
+        </div>
+
+        <div class="card" id="actionButtons">
+        </div>
+    </div>
+
+    <script>
+        const orderNo = window.location.pathname.split('/').pop();
+
+        async function loadOrderDetail() {
+            const response = await fetch(`/api/tool-io-orders/${orderNo}`);
+            const result = await response.json();
+
+            if (result.success) {
+                renderOrder(result.data);
+                renderItems(result.data.items || []);
+                loadLogs();
+            } else {
+                alert('加载失败: ' + result.error);
+            }
+        }
+
+        function renderOrder(order) {
+            document.getElementById('orderNo').textContent = order.出入库单号;
+            document.getElementById('orderType').textContent = order.单据类型 === 'outbound' ? '出库' : '入库';
+            document.getElementById('statusBadge').textContent = getStatusText(order.单据状态);
+            document.getElementById('statusBadge').className = `status-badge status-${order.单据状态}`;
+            document.getElementById('statusText').textContent = getStatusText(order.单据状态);
+            document.getElementById('initiator').textContent = `${order.发起人姓名} (${order.发起人角色})`;
+            document.getElementById('department').textContent = order.部门 || '-';
+            document.getElementById('projectCode').textContent = order.项目代号 || '-';
+            document.getElementById('purpose').textContent = order.用途 || '-';
+            document.getElementById('targetLocation').textContent = order.目标位置文本 || '-';
+            document.getElementById('createTime').textContent = formatDate(order.创建时间);
+
+            renderActions(order);
+        }
+
+        function renderItems(items) {
+            const tbody = document.getElementById('itemsTable');
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #999;">暂无明细</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map((item, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${item.工装编码}</td>
+                    <td>${item.工装名称}</td>
+                    <td>${item.工装图号 || '-'}</td>
+                    <td>${item.申请数量 || 1}</td>
+                    <td>${item.确认数量 || '-'}</td>
+                    <td><span class="status-badge status-${item.明细状态}">${getItemStatusText(item.明细状态)}</span></td>
+                    <td>${item.保管员确认位置文本 || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadLogs() {
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/logs`);
+            const result = await response.json();
+
+            if (result.success && result.data.length > 0) {
+                renderLogs(result.data);
+            }
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logTimeline');
+            container.innerHTML = logs.map(log => `
+                <div class="timeline-item">
+                    <div class="time">${formatDate(log.操作时间)}</div>
+                    <div class="content">
+                        <div class="action">${log.操作类型}</div>
+                        <div class="operator">${log.操作人姓名} (${log.操作人角色})</div>
+                        ${log.操作内容 ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${log.操作内容}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderActions(order) {
+            const container = document.getElementById('actionButtons');
+            const status = order.单据状态;
+            let html = '<h2>操作</h2><div class="btn-group">';
+
+            if (status === 'draft') {
+                html += `<button class="btn btn-primary" onclick="submitOrder()">提交</button>`;
+                html += `<button class="btn btn-danger" onclick="cancelOrder()">取消</button>`;
+            } else if (status === 'transport_notified' || status === 'final_confirmation_pending') {
+                html += `<button class="btn btn-success" onclick="finalConfirm()">确认完成</button>`;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        async function submitOrder() {
+            const name = prompt('请输入您的姓名:');
+            if (!name) return;
+
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/submit`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({operator_id: name, operator_name: name, operator_role: '班组长'})
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('提交成功');
+                loadOrderDetail();
+            } else {
+                alert('提交失败: ' + result.error);
+            }
+        }
+
+        async function cancelOrder() {
+            if (!confirm('确定要取消此单据吗？')) return;
+
+            const name = prompt('请输入您的姓名:');
+            if (!name) return;
+
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/cancel`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({operator_id: name, operator_name: name, operator_role: '班组长'})
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('取消成功');
+                loadOrderDetail();
+            } else {
+                alert('取消失败: ' + result.error);
+            }
+        }
+
+        async function finalConfirm() {
+            if (!confirm('确认完成此出入库单？')) return;
+
+            const name = prompt('请输入您的姓名:');
+            if (!name) return;
+
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/final-confirm`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({operator_id: name, operator_name: name, operator_role: '班组长'})
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('确认完成');
+                loadOrderDetail();
+            } else {
+                alert('确认失败: ' + result.error);
+            }
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'draft': '草稿',
+                'submitted': '待确认',
+                'keeper_confirmed': '已确认',
+                'partially_confirmed': '部分确认',
+                'transport_notified': '已通知运输',
+                'final_confirmation_pending': '待完成',
+                'completed': '已完成',
+                'rejected': '已驳回',
+                'cancelled': '已取消'
+            };
+            return map[status] || status;
+        }
+
+        function getItemStatusText(status) {
+            const map = {
+                'pending_check': '待确认',
+                'approved': '已通过',
+                'rejected': '已拒绝',
+                'completed': '已完成'
+            };
+            return map[status] || status;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-CN');
+        }
+
+        loadOrderDetail();
+    </script>
+</body>
+</html>

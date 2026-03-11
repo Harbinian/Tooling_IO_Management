@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保管员工作台 - 工装出入库管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 22px; font-weight: 500; }
+        .header a { color: white; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .main-content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h2 { font-size: 18px; color: #333; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .order-list { display: flex; flex-direction: column; gap: 15px; }
+        .order-item { border: 1px solid #eee; border-radius: 8px; padding: 20px; transition: box-shadow 0.2s; }
+        .order-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .order-no { font-size: 16px; font-weight: 600; color: #333; }
+        .order-type { padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .type-outbound { background: #fff3cd; color: #856404; }
+        .type-inbound { background: #d4edda; color: #155724; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .status-submitted { background: #17a2b8; color: white; }
+        .status-partially_confirmed { background: #ffc107; color: #333; }
+        .order-info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
+        .info-item label { display: block; font-size: 12px; color: #999; margin-bottom: 4px; }
+        .info-item .value { font-size: 14px; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+        th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #2a5298; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 8px; padding: 24px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 18px; }
+        .modal-close { font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-row { display: flex; gap: 20px; }
+        .form-row .form-group { flex: 1; }
+        .preview-text { background: #f8f9fa; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 13px; max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        .empty-state { padding: 60px 20px; text-align: center; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>保管员工作台</h1>
+        <div>
+            <a href="/inventory">出入库单列表</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <h2>待处理单据 <span id="pendingCount" style="color: #dc3545;">(0)</span></h2>
+            <div class="order-list" id="pendingList">
+                <div class="empty-state">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>保管员确认</h3>
+                <span class="modal-close" onclick="closeConfirmModal()">&times;</span>
+            </div>
+            <form id="confirmForm">
+                <input type="hidden" id="confirmOrderNo">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>保管员姓名 *</label>
+                        <input type="text" id="keeperName" required placeholder="请输入姓名">
+                    </div>
+                    <div class="form-group">
+                        <label>运输类型</label>
+                        <select id="transportType">
+                            <option value="">无需运输</option>
+                            <option value="叉车">叉车</option>
+                            <option value="吊车">吊车</option>
+                            <option value="人工">人工</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>运输人</label>
+                    <input type="text" id="transportPerson" placeholder="运输人姓名">
+                </div>
+
+                <h4 style="margin: 20px 0 10px;">工装确认</h4>
+                <table id="confirmItemsTable">
+                    <thead>
+                        <tr>
+                            <th>工装</th>
+                            <th>当前位置</th>
+                            <th>确认位置</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <div style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="previewNotification()">预览通知</button>
+                    <button type="submit" class="btn btn-success">确认</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 通知预览弹窗 -->
+    <div class="modal" id="notifyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>运输通知预览</h3>
+                <span class="modal-close" onclick="closeNotifyModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>飞书/系统通知</label>
+                <div class="preview-text" id="notifyText"></div>
+            </div>
+            <div class="form-group">
+                <label>微信复制文本 <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 12px;" onclick="copyWechatText()">复制</button></label>
+                <div class="preview-text" id="wechatText"></div>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-primary" onclick="sendNotify()">发送通知</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentOrderItems = [];
+
+        async function loadPendingOrders() {
+            const response = await fetch('/api/tool-io-orders/pending-keeper');
+            const result = await response.json();
+
+            if (result.success) {
+                renderPendingOrders(result.data);
+                document.getElementById('pendingCount').textContent = `(${result.data.length})`;
+            }
+        }
+
+        function renderPendingOrders(orders) {
+            const container = document.getElementById('pendingList');
+            if (!orders || orders.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无待处理单据</div>';
+                return;
+            }
+
+            container.innerHTML = orders.map(order => `
+                <div class="order-item">
+                    <div class="order-header">
+                        <div>
+                            <span class="order-no">${order.出入库单号}</span>
+                            <span class="order-type ${order.单据类型 === 'outbound' ? 'type-outbound' : 'type-inbound'}">${order.单据类型 === 'outbound' ? '出库' : '入库'}</span>
+                            <span class="status-badge status-${order.单据状态}">${getStatusText(order.单据状态)}</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openConfirmModal('${order.出入库单号}')">确认</button>
+                    </div>
+                    <div class="order-info">
+                        <div class="info-item">
+                            <label>发起人</label>
+                            <div class="value">${order.发起人姓名} (${order.发起人角色})</div>
+                        </div>
+                        <div class="info-item">
+                            <label>项目代号</label>
+                            <div class="value">${order.项目代号 || '-'}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>工装数量</label>
+                            <div class="value">${order.工装数量 || 0}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>创建时间</label>
+                            <div class="value">${formatDate(order.创建时间)}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function openConfirmModal(orderNo) {
+            const response = await fetch(`/api/tool-io-orders/${orderNo}`);
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('confirmOrderNo').value = orderNo;
+                currentOrderItems = result.data.items || [];
+                renderConfirmItems(currentOrderItems);
+                document.getElementById('confirmModal').classList.add('show');
+            }
+        }
+
+        function renderConfirmItems(items) {
+            const tbody = document.querySelector('#confirmItemsTable tbody');
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.工装名称} (${item.工装编码})</td>
+                    <td>${item.工装快照位置文本 || '-'}</td>
+                    <td><input type="text" name="location_${item.工装编码}" value="${item.工装快照位置文本 || ''}" placeholder="确认位置" style="width: 150px; padding: 5px;"></td>
+                    <td>
+                        <select name="status_${item.工装编码}" style="padding: 5px;">
+                            <option value="approved">通过</option>
+                            <option value="rejected">驳回</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+
+        document.getElementById('confirmForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const orderNo = document.getElementById('confirmOrderNo').value;
+            const keeperName = document.getElementById('keeperName').value;
+            const transportType = document.getElementById('transportType').value;
+            const transportPerson = document.getElementById('transportPerson').value;
+
+            const items = currentOrderItems.map(item => ({
+                tool_code: item.工装编码,
+                location_id: null,
+                location_text: document.querySelector(`input[name="location_${item.工装编码}"]`).value,
+                status: document.querySelector(`select[name="status_${item.工装编码}"]`).value,
+                check_result: document.querySelector(`select[name="status_${item.工装编码}"]`).value === 'approved' ? '通过' : '驳回',
+                approved_qty: 1
+            }));
+
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/keeper-confirm`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    keeper_id: keeperName,
+                    keeper_name: keeperName,
+                    confirm_data: {
+                        items: items,
+                        transport_type: transportType,
+                        transport_assignee_id: transportPerson,
+                        transport_assignee_name: transportPerson
+                    },
+                    operator_id: keeperName,
+                    operator_name: keeperName,
+                    operator_role: 'keeper'
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('确认成功');
+                closeConfirmModal();
+                loadPendingOrders();
+            } else {
+                alert('确认失败: ' + result.error);
+            }
+        });
+
+        async function previewNotification() {
+            const orderNo = document.getElementById('confirmOrderNo').value;
+
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/generate-transport-text`);
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('notifyText').textContent = result.text;
+                document.getElementById('wechatText').textContent = result.wechat_text;
+                document.getElementById('notifyModal').classList.add('show');
+            }
+        }
+
+        function closeNotifyModal() {
+            document.getElementById('notifyModal').classList.remove('show');
+        }
+
+        function copyWechatText() {
+            const text = document.getElementById('wechatText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板');
+            });
+        }
+
+        async function sendNotify() {
+            const orderNo = document.getElementById('confirmOrderNo').value;
+
+            const response = await fetch(`/api/tool-io-orders/${orderNo}/notify-transport`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('通知发送成功');
+                closeNotifyModal();
+                loadPendingOrders();
+            } else {
+                alert('通知发送失败: ' + result.error);
+            }
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'submitted': '待确认',
+                'partially_confirmed': '部分确认',
+                'keeper_confirmed': '已确认'
+            };
+            return map[status] || status;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('zh-CN');
+        }
+
+        loadPendingOrders();
+    </script>
+</body>
+</html>
