@@ -2,6 +2,19 @@
 
 ---
 
+## 架构索引 / Architecture Index
+
+**重要: 架构知识的入口点是 `docs/ARCHITECTURE_INDEX.md`** / **Important: The entry point for architecture knowledge is `docs/ARCHITECTURE_INDEX.md`**
+
+在实现任何功能之前，AI 模型应首先加载: / Before implementing any feature, AI models should first load:
+
+1. `docs/ARCHITECTURE_INDEX.md` - 架构文档中心入口 / Architecture document central entry point
+2. 然后根据任务类型加载相关架构文档 / Then load relevant architecture documents based on task type
+
+详见: `docs/ARCHITECTURE_INDEX.md` / See: `docs/ARCHITECTURE_INDEX.md`
+
+---
+
 ## 概述 / Overview
 
 本项目使用提示词驱动开发流水线，结合 AI 技能和 Agent 来管理开发、验证、发布和 bug 修复。 / This project uses a Prompt-Driven Development Pipeline combined with AI Skills and Agents to manage development, verification, release, and bug fixing.
