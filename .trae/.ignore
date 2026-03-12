@@ -1,0 +1,51 @@
+# .trae/.ignore - Token-optimized ignore rules for Trae
+
+# Python environments
+node_modules/
+venv/
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+
+# Build outputs
+dist/
+build/
+frontend/dist/
+frontend/build/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+*.cache
+*.map
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+
+# Generated/report directories
+review-reports/
+run_records/
+logs/
+
+# IDE
+.git/
+.idea/
+.vscode/
+
+# Prompts - active only
+promptsRec/*
+!promptsRec/active/
+promptsRec/archive/
+
+# Completed prompts (archive)
+promptsRec/✅_*
+promptsRec/*.lock
+
+# Docs - whitelist only essential
+docs/*
+!docs/ARCHITECTURE_INDEX.md
+!docs/API_CONTRACT_SNAPSHOT.md
+!docs/PRD.md

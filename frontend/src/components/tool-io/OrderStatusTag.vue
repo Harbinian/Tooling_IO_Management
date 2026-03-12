@@ -22,17 +22,19 @@ const props = defineProps({
 })
 
 const labelMap = {
-  draft: 'Draft',
-  submitted: 'Submitted',
-  keeper_confirmed: 'Keeper confirmed',
-  partially_confirmed: 'Partially confirmed',
-  transport_notified: 'Transport notified',
-  final_confirmation_pending: 'Final confirmation pending',
-  completed: 'Completed',
-  rejected: 'Rejected',
-  cancelled: 'Cancelled',
-  pending_check: 'Pending check',
-  approved: 'Approved'
+  draft: '草稿',
+  submitted: '已提交',
+  keeper_confirmed: '保管员已确认',
+  partially_confirmed: '部分确认',
+  transport_notified: '已通知运输',
+  transport_in_progress: '运输中',
+  transport_completed: '运输已完成',
+  final_confirmation_pending: '待最终确认',
+  completed: '已完成',
+  rejected: '已驳回',
+  cancelled: '已取消',
+  pending_check: '待确认',
+  approved: '已通过'
 }
 
 const presentation = computed(() => {

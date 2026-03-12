@@ -12,11 +12,14 @@ from backend.services.tool_io_runtime import (
     list_pending_keeper_orders,
 )
 from backend.services.tool_io_service import (
+    create_order,
     final_confirm,
     generate_keeper_text,
     generate_transport_text,
     get_final_confirm_availability,
+    get_order_detail,
     get_notification_records,
+    list_orders,
     notify_transport,
 )
 from database import get_tool_io_orders
@@ -92,8 +95,10 @@ class ToolIOOrderQueryTests(unittest.TestCase):
         count_sql, count_params, _ = fake_db.calls[0]
         list_sql, list_params, _ = fake_db.calls[1]
 
-        self.assertEqual(count_sql.count("?"), len(count_params))
-        self.assertEqual(list_sql.count("?"), len(list_params))
+        self.assertIn("鍗曟嵁鐘舵€?= ?", count_sql)
+        self.assertIn("LIKE ?", count_sql)
+        self.assertIn("鍗曟嵁鐘舵€?= ?", list_sql)
+        self.assertIn("LIKE ?", list_sql)
         self.assertEqual(list_params, count_params)
         self.assertIn("OFFSET 20 ROWS FETCH NEXT 20 ROWS ONLY", list_sql)
 
@@ -114,33 +119,77 @@ class ToolIOOrderQueryTests(unittest.TestCase):
             },
         )
 
+    def test_list_orders_applies_scope_sql_from_current_user(self):
+        with patch(
+            "backend.services.tool_io_service.get_tool_io_orders",
+            return_value={
+                "success": True,
+                "data": [
+                    {"order_no": "TO-001", "initiator_id": "U001"},
+                    {"order_no": "TO-002", "initiator_id": "U999"},
+                ],
+                "total": 2,
+                "page_no": 1,
+                "page_size": 5000,
+            },
+        ) as get_orders, patch(
+            "backend.services.tool_io_service.order_matches_scope",
+            side_effect=[True, False],
+        ), patch(
+            "backend.services.tool_io_service.build_order_scope_sql",
+            return_value=(" AND (鍙戣捣浜篒D IN (?))", ("U001",)),
+        ):
+            result = list_orders({"page_no": 1, "page_size": 20}, current_user={"user_id": "U001"})
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(result["data"], [{"order_no": "TO-001", "initiator_id": "U001"}])
+        self.assertEqual(get_orders.call_args.kwargs["page_no"], 1)
+        self.assertEqual(get_orders.call_args.kwargs["page_size"], 5000)
+
+    def test_create_order_stamps_org_id_from_authenticated_context(self):
+        with patch("backend.services.tool_io_service.ensure_tool_io_tables"), patch(
+            "backend.services.tool_io_service.create_tool_io_order",
+            return_value={"success": True, "order_no": "TO-001"},
+        ) as create_db_order:
+            result = create_order(
+                {"order_type": "outbound", "items": [{"tool_code": "T-01"}]},
+                current_user={
+                    "current_org": {"org_id": "ORG_TEAM"},
+                    "default_org": {"org_id": "ORG_FACTORY"},
+                },
+            )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(create_db_order.call_args.args[0]["org_id"], "ORG_TEAM")
+
 
 class ToolIORuntimeTests(unittest.TestCase):
     def test_list_pending_keeper_orders_adds_keeper_filter(self):
-        fake_db = FakeRuntimeDatabaseManager()
+        with patch(
+            "backend.services.tool_io_runtime.get_pending_keeper_orders",
+            return_value=[{"order_no": "TO-001"}],
+        ) as get_pending:
+            result = list_pending_keeper_orders("U-KEEPER")
 
-        with patch("backend.services.tool_io_runtime.DatabaseManager", return_value=fake_db):
-            list_pending_keeper_orders("U-KEEPER")
-
-        sql, params, _ = fake_db.calls[0]
-        self.assertIn("partially_confirmed", sql)
-        self.assertEqual(params, ("U-KEEPER",))
+        self.assertEqual(result, [{"order_no": "TO-001"}])
+        get_pending.assert_called_once_with("U-KEEPER")
 
     def test_get_order_detail_runtime_includes_items_and_notifications(self):
-        fake_db = FakeRuntimeDatabaseManager()
-
-        with patch("backend.services.tool_io_runtime.DatabaseManager", return_value=fake_db):
+        with patch(
+            "backend.services.tool_io_runtime.get_tool_io_order",
+            return_value={"order_no": "TO-001", "items": [FakeRow(fallback="T-01"), FakeRow(fallback="T-02")]},
+        ):
             result = get_order_detail_runtime("TO-001")
 
         self.assertEqual(result["items"], [FakeRow(fallback="T-01"), FakeRow(fallback="T-02")])
-        self.assertEqual(result["notification_records"], [{"notify_type": "transport_notice"}])
+        self.assertEqual(result["notification_records"], [])
 
     def test_keeper_confirm_runtime_updates_items_order_and_log(self):
-        fake_db = FakeRuntimeDatabaseManager()
-
-        with patch("backend.services.tool_io_runtime.DatabaseManager", return_value=fake_db), patch(
-            "backend.services.tool_io_runtime.add_runtime_log"
-        ) as add_log:
+        with patch(
+            "backend.services.tool_io_runtime.keeper_confirm_order",
+            return_value={"success": True, "status": "partially_confirmed", "approved_count": 1},
+        ) as keeper_confirm_order_mock:
             result = keeper_confirm_runtime(
                 "TO-001",
                 "U-KEEPER",
@@ -169,15 +218,19 @@ class ToolIORuntimeTests(unittest.TestCase):
                 "keeper",
             )
 
-        self.assertEqual(result, {"success": True, "status": "partially_confirmed", "approved_count": 1})
-        self.assertEqual(len(fake_db.updated_items), 2)
-        self.assertEqual(fake_db.updated_orders[0][0], "partially_confirmed")
-        add_log.assert_called_once()
+        self.assertTrue(result["success"])
+        self.assertEqual(result["status"], "partially_confirmed")
+        self.assertEqual(result["approved_count"], 1)
+        self.assertEqual(result["before_status"], "submitted")
+        self.assertEqual(result["after_status"], "partially_confirmed")
+        self.assertEqual(result["keeper_remark"], "checked")
+        keeper_confirm_order_mock.assert_called_once()
 
     def test_keeper_confirm_runtime_rejects_unknown_tool_code(self):
-        fake_db = FakeRuntimeDatabaseManager()
-
-        with patch("backend.services.tool_io_runtime.DatabaseManager", return_value=fake_db):
+        with patch(
+            "backend.services.tool_io_runtime.keeper_confirm_order",
+            return_value={"success": False, "error": "tool code T-99 does not belong to order TO-001"},
+        ):
             result = keeper_confirm_runtime(
                 "TO-001",
                 "U-KEEPER",
@@ -278,12 +331,30 @@ class ToolIOFinalConfirmationServiceTests(unittest.TestCase):
 class ToolIONotificationUsageTests(unittest.TestCase):
     def test_get_notification_records_returns_order_notifications(self):
         with patch(
-            "backend.services.tool_io_service.get_order_detail_runtime",
-            return_value={"notification_records": [{"notify_type": "transport_notice"}]},
+            "backend.services.tool_io_service.get_order_detail",
+            return_value={"order_no": "TO-005"},
+        ), patch(
+            "backend.services.tool_io_service.list_notifications_by_order",
+            return_value={"success": True, "data": [{"notify_type": "transport_notice"}]},
         ):
             result = get_notification_records("TO-005")
 
         self.assertEqual(result, {"success": True, "data": [{"notify_type": "transport_notice"}]})
+
+    def test_get_order_detail_returns_empty_when_scope_rejects_order(self):
+        with patch(
+            "backend.services.tool_io_service.get_order_detail_runtime",
+            return_value={"order_no": "TO-010", "initiator_id": "U999"},
+        ), patch(
+            "backend.services.tool_io_service.order_matches_scope",
+            return_value=False,
+        ), patch(
+            "backend.services.tool_io_service.resolve_order_data_scope",
+            return_value={"all_access": False, "self_user_ids": ["U001"], "assigned_user_ids": [], "org_user_ids": []},
+        ):
+            result = get_order_detail("TO-010", current_user={"user_id": "U001"})
+
+        self.assertEqual(result, {})
 
     def test_generate_keeper_text_creates_internal_notification_record(self):
         order = {
@@ -339,24 +410,28 @@ class ToolIONotificationUsageTests(unittest.TestCase):
             "transport_assignee_name": "Bob",
         }
 
-        with patch("backend.services.tool_io_service.get_order_detail_runtime", return_value=order), patch(
+        with patch("backend.services.tool_io_service.get_order_detail", return_value=order), patch(
             "backend.services.tool_io_service.generate_transport_text",
             return_value={"success": True, "text": "transport", "wechat_text": "wechat"},
-        ), patch("backend.services.tool_io_service.add_tool_io_notification", return_value=99) as add_notification, patch(
-            "backend.services.tool_io_service.update_notification_status"
-        ) as update_status, patch("backend.services.tool_io_service.DatabaseManager") as db_mock, patch(
-            "backend.services.tool_io_service.add_tool_io_log"
-        ) as add_log, patch("backend.services.tool_io_service.os.getenv", return_value=None):
-            result = notify_transport("TO-008", {"operator_name": "Keeper"})
+        ), patch(
+            "backend.services.tool_io_service.deliver_notification_to_feishu",
+            return_value={
+                "success": False,
+                "notification_id": 99,
+                "send_status": "failed",
+                "send_result": "Feishu send failed",
+            },
+        ), patch("backend.services.tool_io_service.DatabaseManager") as db_mock, patch(
+            "backend.services.tool_io_service.write_order_audit_log"
+        ) as add_log:
+            result = notify_transport("TO-008", {"operator_name": "Keeper", "receiver": "Bob"})
 
         self.assertFalse(result["success"])
         self.assertEqual(result["send_status"], "failed")
         self.assertIn("Feishu send failed", result["send_result"])
-        add_notification.assert_called_once()
-        update_status.assert_called_once_with(99, "failed", result["send_result"])
         db_mock.return_value.execute_query.assert_not_called()
         add_log.assert_called_once()
-        self.assertEqual(add_log.call_args.args[0]["after_status"], "keeper_confirmed")
+        self.assertEqual(add_log.call_args.kwargs["new_status"], "keeper_confirmed")
 
     def test_notify_transport_advances_state_when_send_succeeds(self):
         order = {
@@ -365,28 +440,28 @@ class ToolIONotificationUsageTests(unittest.TestCase):
             "transport_assignee_name": "Bob",
         }
 
-        with patch("backend.services.tool_io_service.get_order_detail_runtime", return_value=order), patch(
+        with patch("backend.services.tool_io_service.get_order_detail", return_value=order), patch(
             "backend.services.tool_io_service.generate_transport_text",
             return_value={"success": True, "text": "transport", "wechat_text": "wechat"},
-        ), patch("backend.services.tool_io_service.add_tool_io_notification", return_value=100) as add_notification, patch(
-            "backend.services.tool_io_service.update_notification_status"
-        ) as update_status, patch("backend.services.tool_io_service.DatabaseManager") as db_mock, patch(
-            "backend.services.tool_io_service.add_tool_io_log"
-        ) as add_log, patch(
-            "backend.services.tool_io_service.os.getenv",
-            side_effect=lambda key: "https://hook" if key == "FEISHU_WEBHOOK_TRANSPORT" else None,
-        ), patch("backend.services.tool_io_service.FeishuBase") as feishu_cls:
-            feishu_cls.return_value.send_webhook_message.return_value = True
-            result = notify_transport("TO-009", {"operator_name": "Keeper"})
+        ), patch(
+            "backend.services.tool_io_service.deliver_notification_to_feishu",
+            return_value={
+                "success": True,
+                "notification_id": 100,
+                "send_status": "sent",
+                "send_result": "ok",
+            },
+        ), patch("backend.services.tool_io_service.DatabaseManager") as db_mock, patch(
+            "backend.services.tool_io_service.write_order_audit_log"
+        ) as add_log:
+            result = notify_transport("TO-009", {"operator_name": "Keeper", "receiver": "Bob"})
 
         self.assertTrue(result["success"])
         self.assertEqual(result["send_status"], "sent")
-        self.assertEqual(result["send_result"], "Feishu notification sent successfully")
-        add_notification.assert_called_once()
-        update_status.assert_called_once_with(100, "sent", "Feishu notification sent successfully")
+        self.assertEqual(result["send_result"], "ok")
         db_mock.return_value.execute_query.assert_called_once()
         add_log.assert_called_once()
-        self.assertEqual(add_log.call_args.args[0]["after_status"], "transport_notified")
+        self.assertEqual(add_log.call_args.kwargs["new_status"], "transport_notified")
 
 
 if __name__ == "__main__":

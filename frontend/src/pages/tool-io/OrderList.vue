@@ -1,13 +1,12 @@
 <template>
   <div class="space-y-6">
     <section class="space-y-2">
-      <p class="text-xs font-medium uppercase tracking-[0.28em] text-slate-400">Order Registry</p>
+      <p class="text-xs font-medium uppercase tracking-[0.28em] text-slate-400">单据列表</p>
       <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div class="space-y-2">
-          <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Tool IO Orders</h1>
+          <h1 class="text-3xl font-semibold tracking-tight text-slate-900">工装出入库单据</h1>
           <p class="max-w-2xl text-sm leading-6 text-slate-500">
-            Review outbound and inbound requests, keep filters close at hand, and act on each order
-            without leaving the registry view.
+            统一查看出库和入库申请，快速筛选并在列表中直接处理单据。
           </p>
         </div>
         <div class="grid gap-3 sm:grid-cols-3">
@@ -24,101 +23,101 @@
       </div>
     </section>
 
-    <Card class="overflow-hidden border-slate-200/80 bg-white/85 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.4)]">
+    <Card v-debug-id="DEBUG_IDS.ORDER_LIST.FILTER_SECTION" class="overflow-hidden border-slate-200/80 bg-white/85 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
       <CardHeader class="border-b border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,252,0.95),rgba(255,255,255,0.78))]">
         <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div class="space-y-1">
-            <p class="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">Filters</p>
-            <CardTitle class="text-lg text-slate-900">Search and narrow the queue</CardTitle>
+            <p class="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">筛选</p>
+            <CardTitle class="text-lg text-slate-900">搜索并收敛队列</CardTitle>
             <p class="text-sm text-slate-500">
-              Keep the same backend filters, but present them in a lighter, easier-to-scan panel.
+              保持原有后端筛选能力，同时用更清晰的方式呈现。
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <Button variant="outline" @click="resetFilters">Reset filters</Button>
-            <Button @click="loadOrders">Refresh list</Button>
+            <Button v-debug-id="DEBUG_IDS.ORDER_LIST.RESET_BTN" variant="outline" @click="resetFilters">重置筛选</Button>
+            <Button @click="loadOrders">刷新列表</Button>
           </div>
         </div>
       </CardHeader>
       <CardContent class="pt-6">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Keyword</span>
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">关键词</span>
             <input
+              v-debug-id="DEBUG_IDS.ORDER_LIST.SEARCH_INPUT"
               v-model="filters.keyword"
               type="text"
               class="mist-input"
-              placeholder="Order no, project code, or text"
+              placeholder="单号、项目代号或备注"
               @keyup.enter="searchFromFirstPage"
             />
           </label>
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Order type</span>
-            <select v-model="filters.orderType" class="mist-input">
-              <option value="">All types</option>
-              <option value="outbound">Outbound</option>
-              <option value="inbound">Inbound</option>
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">单据类型</span>
+            <select v-debug-id="DEBUG_IDS.ORDER_LIST.TYPE_FILTER" v-model="filters.orderType" class="mist-input">
+              <option value="">全部类型</option>
+              <option value="outbound">出库</option>
+              <option value="inbound">入库</option>
             </select>
           </label>
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Order status</span>
-            <select v-model="filters.orderStatus" class="mist-input">
-              <option value="">All statuses</option>
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">单据状态</span>
+            <select v-debug-id="DEBUG_IDS.ORDER_LIST.STATUS_FILTER" v-model="filters.orderStatus" class="mist-input">
+              <option value="">全部状态</option>
               <option v-for="(status, key) in statusOptions" :key="key" :value="key">
                 {{ status.label }}
               </option>
             </select>
           </label>
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Initiator ID</span>
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">发起人 ID</span>
             <input
               v-model="filters.initiatorId"
               type="text"
               class="mist-input"
-              placeholder="Initiator account"
+              placeholder="发起人账号"
               @keyup.enter="searchFromFirstPage"
             />
           </label>
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Keeper ID</span>
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">保管员 ID</span>
             <input
               v-model="filters.keeperId"
               type="text"
               class="mist-input"
-              placeholder="Keeper account"
+              placeholder="保管员账号"
               @keyup.enter="searchFromFirstPage"
             />
           </label>
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Created from</span>
-            <input v-model="filters.dateFrom" type="date" class="mist-input" />
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">创建起始</span>
+            <input v-debug-id="DEBUG_IDS.ORDER_LIST.DATE_RANGE_FILTER" v-model="filters.dateFrom" type="date" class="mist-input" />
           </label>
           <label class="space-y-2">
-            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Created to</span>
+            <span class="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">创建截止</span>
             <input v-model="filters.dateTo" type="date" class="mist-input" />
           </label>
+
           <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-500">
-            This page still reads from <code>/api/tool-io-orders</code> and keeps the current paging,
-            status, and row action behavior unchanged.
+            当前页面仍然读取 <code>/api/tool-io-orders</code>，保留原有分页、状态和行操作行为。
           </div>
         </div>
       </CardContent>
     </Card>
 
-    <Card class="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+    <Card v-debug-id="DEBUG_IDS.ORDER_LIST.ORDER_TABLE" class="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
       <CardHeader class="border-b border-slate-100">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div class="space-y-1">
-            <p class="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">Results</p>
-            <CardTitle class="text-lg text-slate-900">Operational queue</CardTitle>
+            <p class="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">结果</p>
+            <CardTitle class="text-lg text-slate-900">业务队列</CardTitle>
             <p class="text-sm text-slate-500">
-              {{ pagination.total }} orders total. Page {{ pagination.pageNo }} with {{ pagination.pageSize }}
-              rows per request.
+              共 {{ pagination.total }} 条单据。当前第 {{ pagination.pageNo }} 页，每页 {{ pagination.pageSize }} 条。
             </p>
           </div>
           <div class="flex flex-wrap gap-2 text-xs text-slate-500">
-            <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Quiet internal layout</span>
-            <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Existing API preserved</span>
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">中文界面</span>
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">接口保持不变</span>
           </div>
         </div>
       </CardHeader>
@@ -147,13 +146,13 @@
           class="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center"
         >
           <div class="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-600">
-            Request failed
+            请求失败
           </div>
           <div class="space-y-2">
-            <h3 class="text-lg font-semibold text-slate-900">The order list could not be loaded</h3>
+            <h3 class="text-lg font-semibold text-slate-900">单据列表加载失败</h3>
             <p class="max-w-md text-sm leading-6 text-slate-500">{{ errorMessage }}</p>
           </div>
-          <Button @click="loadOrders">Try again</Button>
+          <Button @click="loadOrders">重试</Button>
         </div>
 
         <div
@@ -161,22 +160,22 @@
           class="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center"
         >
           <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            Empty state
+            空状态
           </div>
           <div class="space-y-2">
             <h3 class="text-lg font-semibold text-slate-900">
-              {{ hasActiveFilters ? 'No orders match the current filters' : 'No orders available yet' }}
+              {{ hasActiveFilters ? '没有匹配当前筛选条件的单据' : '暂时还没有单据' }}
             </h3>
             <p class="max-w-md text-sm leading-6 text-slate-500">
               {{
                 hasActiveFilters
-                  ? 'Adjust the filters or clear them to broaden the search.'
-                  : 'Once new outbound or inbound requests are created, they will appear here.'
+                  ? '可以调整或清空筛选条件后再试。'
+                  : '创建新的出入库申请后，单据会显示在这里。'
               }}
             </p>
           </div>
           <Button :variant="hasActiveFilters ? 'outline' : 'default'" @click="handleEmptyAction">
-            {{ hasActiveFilters ? 'Clear filters' : 'Reload orders' }}
+            {{ hasActiveFilters ? '清空筛选' : '重新加载' }}
           </Button>
         </div>
 
@@ -188,47 +187,48 @@
           >
             <div class="min-w-0 space-y-2">
               <button
+                v-debug-id="DEBUG_IDS.ORDER_LIST.ORDER_NO_COL"
                 class="text-left text-sm font-semibold text-slate-900 transition-colors hover:text-slate-600"
                 @click="viewOrder(order.orderNo)"
               >
                 {{ order.orderNo }}
               </button>
               <div class="flex flex-wrap gap-2 text-xs text-slate-500">
-                <span class="rounded-full bg-slate-100 px-2.5 py-1">Project {{ order.projectCode || '-' }}</span>
-                <span class="rounded-full bg-slate-100 px-2.5 py-1">Tools {{ order.toolCount || 0 }}</span>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1">项目 {{ order.projectCode || '-' }}</span>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1">工装 {{ order.toolCount || 0 }}</span>
                 <span class="rounded-full bg-slate-100 px-2.5 py-1">
-                  Location {{ order.targetLocationText || '-' }}
+                  位置 {{ order.targetLocationText || '-' }}
                 </span>
               </div>
             </div>
 
             <div class="space-y-1">
-              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">Type</p>
+              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">类型</p>
               <p class="text-sm font-medium text-slate-700">{{ orderTypeLabel(order.orderType) }}</p>
             </div>
 
             <div class="space-y-1">
-              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">Initiator</p>
+              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">发起人</p>
               <p class="text-sm font-medium text-slate-700">{{ order.initiatorName || '-' }}</p>
             </div>
 
             <div class="space-y-1">
-              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">Keeper</p>
+              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">保管员</p>
               <p class="text-sm font-medium text-slate-700">{{ order.keeperName || '-' }}</p>
             </div>
 
-            <div class="space-y-1">
-              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">Status</p>
+            <div v-debug-id="DEBUG_IDS.ORDER_LIST.STATUS_COL" class="space-y-1">
+              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">状态</p>
               <OrderStatusTag :status="order.orderStatus" />
             </div>
 
             <div class="space-y-1">
-              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">Created</p>
+              <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">创建时间</p>
               <p class="text-sm font-medium text-slate-700">{{ formatDateTime(order.createdAt) }}</p>
             </div>
 
             <div class="flex flex-wrap items-start justify-start gap-2 lg:justify-end">
-              <Button variant="outline" size="sm" @click="viewOrder(order.orderNo)">View</Button>
+              <Button v-debug-id="DEBUG_IDS.ORDER_LIST.VIEW_ACTION" variant="outline" size="sm" @click="viewOrder(order.orderNo)">查看</Button>
               <Button
                 v-if="canSubmit(order)"
                 variant="ghost"
@@ -236,7 +236,7 @@
                 class="text-amber-700 hover:bg-amber-50 hover:text-amber-800"
                 @click="submitCurrentOrder(order)"
               >
-                Submit
+                提交
               </Button>
               <Button
                 v-if="canCancel(order)"
@@ -245,7 +245,7 @@
                 class="text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                 @click="cancelCurrentOrder(order)"
               >
-                Cancel
+                取消
               </Button>
               <Button
                 v-if="canFinalConfirm(order)"
@@ -254,19 +254,20 @@
                 class="text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                 @click="finalConfirmCurrentOrder(order)"
               >
-                Final confirm
+                最终确认
               </Button>
             </div>
           </article>
         </div>
 
+
         <div class="flex flex-col gap-4 border-t border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <p class="text-sm text-slate-500">
-            Showing {{ pageStart }} to {{ pageEnd }} of {{ pagination.total }} orders
+            显示第 {{ pageStart }} 到 {{ pageEnd }} 条，共 {{ pagination.total }} 条单据
           </p>
           <div class="flex items-center gap-2">
             <Button variant="outline" :disabled="pagination.pageNo <= 1 || loading" @click="changePage(-1)">
-              Previous
+              上一页
             </Button>
             <div class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
               {{ pagination.pageNo }} / {{ totalPages }}
@@ -276,7 +277,7 @@
               :disabled="pagination.pageNo >= totalPages || loading || !pagination.total"
               @click="changePage(1)"
             >
-              Next
+              下一页
             </Button>
           </div>
         </div>
@@ -289,7 +290,7 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { cancelOrder, finalConfirmOrder, getOrderList, submitOrder } from '@/api/toolIO'
+import { cancelOrder, finalConfirmOrder, getOrderList, submitOrder } from '@/api/orders'
 import OrderStatusTag from '@/components/tool-io/OrderStatusTag.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -298,8 +299,10 @@ import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
 import { formatDateTime, orderStatusMap } from '@/utils/toolIO'
 import { useSessionStore } from '@/store/session'
+import { DEBUG_IDS } from '@/debug/debugIds'
 
 const router = useRouter()
+
 const session = useSessionStore()
 
 const statusOptions = orderStatusMap
@@ -330,19 +333,19 @@ const hasActiveFilters = computed(() => Object.values(filters).some((value) => B
 
 const summaryMetrics = computed(() => [
   {
-    label: 'Total listed',
+    label: '当前总数',
     value: pagination.total,
-    hint: 'All orders returned by the current filter set.'
+    hint: '按当前筛选条件返回的全部单据。'
   },
   {
-    label: 'Draft on page',
+    label: '本页草稿',
     value: orders.value.filter((order) => order.orderStatus === 'draft').length,
-    hint: 'Orders that can still be submitted by initiators.'
+    hint: '仍可由发起人提交的单据。'
   },
   {
-    label: 'Waiting action',
+    label: '待处理',
     value: orders.value.filter((order) => ['submitted', 'partially_confirmed'].includes(order.orderStatus)).length,
-    hint: 'Orders still moving through keeper or follow-up handling.'
+    hint: '仍处于保管或后续处理过程中的单据。'
   }
 ])
 
@@ -371,7 +374,7 @@ async function loadOrders() {
     })
 
     if (!result.success) {
-      errorMessage.value = result.error || 'Failed to load the order list.'
+      errorMessage.value = result.error || '单据列表加载失败。'
       orders.value = []
       pagination.total = 0
       return
@@ -382,7 +385,7 @@ async function loadOrders() {
   } catch (error) {
     orders.value = []
     pagination.total = 0
-    errorMessage.value = error?.response?.data?.error || error?.message || 'Failed to load the order list.'
+    errorMessage.value = error?.response?.data?.error || error?.message || '单据列表加载失败。'
   } finally {
     loading.value = false
   }
@@ -425,22 +428,24 @@ function viewOrder(orderNo) {
 }
 
 function orderTypeLabel(orderType) {
-  return orderType === 'outbound' ? 'Outbound' : orderType === 'inbound' ? 'Inbound' : '-'
+  return orderType === 'outbound' ? '出库' : orderType === 'inbound' ? '入库' : '-'
 }
 
 function canSubmit(order) {
-  return session.role === 'initiator' && order.orderStatus === 'draft'
+  return session.hasPermission('order:submit') && order.orderStatus === 'draft'
 }
 
 function canCancel(order) {
-  return session.role === 'initiator' && ['draft', 'rejected'].includes(order.orderStatus)
+  return session.hasPermission('order:cancel') && ['draft', 'rejected'].includes(order.orderStatus)
 }
 
 function canFinalConfirm(order) {
+  if (!session.hasPermission('order:final_confirm')) return false
+  
   if (order.orderType === 'outbound') {
-    return session.role === 'initiator' && ['transport_notified', 'final_confirmation_pending'].includes(order.orderStatus)
+    return ['transport_notified', 'transport_completed', 'final_confirmation_pending'].includes(order.orderStatus)
   }
-  return session.role === 'keeper' && ['transport_notified', 'final_confirmation_pending'].includes(order.orderStatus)
+  return ['transport_notified', 'transport_completed', 'final_confirmation_pending'].includes(order.orderStatus)
 }
 
 async function submitCurrentOrder(order) {
@@ -449,13 +454,13 @@ async function submitCurrentOrder(order) {
 }
 
 async function cancelCurrentOrder(order) {
-  await ElMessageBox.confirm(`Cancel order ${order.orderNo}?`, 'Cancel order', { type: 'warning' })
+  await ElMessageBox.confirm(`确认取消单据 ${order.orderNo} 吗？`, '取消单据', { type: 'warning' })
   const result = await cancelOrder(order.orderNo, buildOperator())
   if (result.success) loadOrders()
 }
 
 async function finalConfirmCurrentOrder(order) {
-  await ElMessageBox.confirm(`Finalize order ${order.orderNo}?`, 'Final confirm', { type: 'warning' })
+  await ElMessageBox.confirm(`确认完成单据 ${order.orderNo} 的最终确认吗？`, '最终确认', { type: 'warning' })
   const result = await finalConfirmOrder(order.orderNo, buildOperator())
   if (result.success) loadOrders()
 }

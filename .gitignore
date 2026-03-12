@@ -11,6 +11,8 @@ ENV/
 # Logs
 logs/
 !logs/.gitkeep
+.backend.stderr.log
+.backend.stdout.log
 
 # Frontend
 frontend/node_modules/
@@ -20,3 +22,6 @@ frontend/dist/
 .vscode/
 .idea/
 .claude/settings.local.json
+
+# Windows special files
+nul

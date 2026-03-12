@@ -20,7 +20,8 @@ const props = defineProps({
 
 <template>
   <div :class="cn('grid gap-4 md:grid-cols-2 lg:grid-cols-4', props.class)">
-    <Card v-for="(item, index) in stats" :key="index" class="overflow-hidden bg-white/50 backdrop-blur-sm border-white/20 shadow-shimmer">
+    <Card v-for="(item, index) in stats" :key="index" v-debug-id="item.debugId" class="overflow-hidden bg-white/50 backdrop-blur-sm border-white/20 shadow-shimmer">
+
       <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           {{ item.title }}

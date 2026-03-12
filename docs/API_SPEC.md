@@ -11,6 +11,91 @@
 
 ---
 
+## 0. 认证 API
+
+### 0.1 登录
+
+**POST** `/api/auth/login`
+
+**请求参数：**
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| login_name | string | 是 | 本地账号登录名 |
+| password | string | 是 | 明文密码 |
+
+**响应参数：**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| success | boolean | 是否成功 |
+| token | string | Bearer token |
+| user | object | 当前用户信息 |
+| user.user_id | string | 用户ID |
+| user.display_name | string | 显示名称 |
+| user.roles | array | 角色列表 |
+| user.permissions | array | 权限列表 |
+
+### 0.2 当前用户
+
+**GET** `/api/auth/me`
+
+**请求头：**
+
+`Authorization: Bearer <token>`
+
+**响应参数：**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| success | boolean | 是否成功 |
+| user | object | 当前用户身份 |
+
+---
+
+## 0.5 组织 API
+
+### 0.5.1 查询组织列表
+
+**GET** `/api/orgs`
+
+**实现说明：** 复用 `backend/services/org_service.py`
+
+### 0.5.2 查询组织树
+
+**GET** `/api/orgs/tree`
+
+**实现说明：** 基于 `sys_org.parent_org_id` 构建树
+
+### 0.5.3 查询组织详情
+
+**GET** `/api/orgs/{org_id}`
+
+### 0.5.4 创建组织
+
+**POST** `/api/orgs`
+
+**请求参数：**
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| org_id | string | 是 | 组织ID |
+| org_name | string | 是 | 组织名称 |
+| org_code | string | 否 | 组织编码 |
+| org_type | string | 是 | `company/factory/workshop/team/warehouse/project_group` |
+| parent_org_id | string | 否 | 父组织ID |
+| sort_no | int | 否 | 排序值 |
+| status | string | 否 | `active/disabled` |
+| remark | string | 否 | 备注 |
+
+### 0.5.5 更新组织
+
+**PUT** `/api/orgs/{org_id}`
+
+**实现说明：** 支持基础字段更新与层级校验
+
+---
+
 ## 1. 订单 API
 
 ### 1.1 创建订单

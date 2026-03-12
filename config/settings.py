@@ -6,7 +6,11 @@ Configuration settings for Tooling IO Management System.
 import os
 from dataclasses import dataclass
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    def load_dotenv():
+        return False
 
 load_dotenv()
 
@@ -33,6 +37,8 @@ class Settings:
     FEISHU_APP_TOKEN: str
     FEISHU_WEBHOOK_URL: str
     FEISHU_WEBHOOK_TRANSPORT: str
+    FEISHU_NOTIFICATION_ENABLED: bool
+    FEISHU_NOTIFICATION_TIMEOUT_SECONDS: int
     db: DatabaseSettings
 
     @property
@@ -94,6 +100,8 @@ def _build_settings() -> Settings:
         FEISHU_APP_TOKEN=os.getenv('FEISHU_APP_TOKEN', ''),
         FEISHU_WEBHOOK_URL=os.getenv('FEISHU_WEBHOOK_URL', ''),
         FEISHU_WEBHOOK_TRANSPORT=os.getenv('FEISHU_WEBHOOK_TRANSPORT', ''),
+        FEISHU_NOTIFICATION_ENABLED=_get_bool('FEISHU_NOTIFICATION_ENABLED', False),
+        FEISHU_NOTIFICATION_TIMEOUT_SECONDS=int(os.getenv('FEISHU_NOTIFICATION_TIMEOUT_SECONDS', '10')),
         db=db
     )
 

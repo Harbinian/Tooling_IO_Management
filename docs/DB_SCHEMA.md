@@ -289,3 +289,11 @@
 - [继承数据库访问审查](./INHERITED_DB_ACCESS_REVIEW.md)
 - [产品需求文档](./PRD.md)
 - [架构文档](./ARCHITECTURE.md)
+新增组织归属字段:
+
+- `org_id`: 订单所属组织，用于 RBAC `ORG` / `ORG_AND_CHILDREN` 数据范围过滤
+
+历史数据迁移规则:
+
+- 当历史订单缺少 `org_id` 时，优先回填发起人的主角色 `org_id`
+- 如果主角色组织为空，则回填发起人的 `default_org_id`

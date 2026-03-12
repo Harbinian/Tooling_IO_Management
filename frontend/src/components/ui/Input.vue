@@ -14,6 +14,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  autocomplete: {
+    type: String,
+    default: '',
+  },
   disabled: {
     type: Boolean,
     default: false,
@@ -36,6 +40,7 @@ function handleInput(event) {
     :type="type"
     :value="modelValue"
     :placeholder="placeholder"
+    :autocomplete="autocomplete"
     :disabled="disabled"
     @input="handleInput"
     :class="cn(

@@ -9,7 +9,7 @@
       <div class="space-y-2">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p class="text-sm font-semibold text-slate-900">{{ item.actionType || 'Action' }}</p>
+            <p class="text-sm font-semibold text-slate-900">{{ item.actionType || '操作' }}</p>
             <p class="text-xs uppercase tracking-[0.16em] text-slate-400">
               {{ item.operatorName || '-' }} / {{ item.operatorRole || '-' }}
             </p>
@@ -24,7 +24,7 @@
     v-else
     class="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center text-sm text-slate-500"
   >
-    No operation logs yet.
+    暂无操作日志。
   </div>
 </template>
 

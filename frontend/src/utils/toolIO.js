@@ -6,6 +6,8 @@ export const orderStatusMap = {
   keeper_confirmed: { label: '保管员已确认', type: 'success' },
   partially_confirmed: { label: '部分确认', type: 'warning' },
   transport_notified: { label: '已通知运输', type: 'primary' },
+  transport_in_progress: { label: '运输中', type: 'primary' },
+  transport_completed: { label: '运输已完成', type: 'success' },
   final_confirmation_pending: { label: '待最终确认', type: 'warning' },
   completed: { label: '已完成', type: 'success' },
   rejected: { label: '已驳回', type: 'danger' },
@@ -30,29 +32,34 @@ export function pickValue(record, keys, fallback = '') {
 
 export function normalizeOrder(record = {}) {
   return {
-    orderNo: pickValue(record, ['order_no', '鍑哄叆搴撳崟鍙?']),
-    orderType: pickValue(record, ['order_type', '鍗曟嵁绫诲瀷']),
-    orderStatus: pickValue(record, ['order_status', '鍗曟嵁鐘舵€?']),
-    initiatorId: pickValue(record, ['initiator_id', '鍙戣捣浜篒D']),
-    initiatorName: pickValue(record, ['initiator_name', '鍙戣捣浜哄鍚?']),
-    initiatorRole: pickValue(record, ['initiator_role', '鍙戣捣浜鸿鑹?']),
-    department: pickValue(record, ['department', '閮ㄩ棬']),
-    projectCode: pickValue(record, ['project_code', '椤圭洰浠ｅ彿']),
-    usagePurpose: pickValue(record, ['usage_purpose', '鐢ㄩ€?']),
-    targetLocationText: pickValue(record, ['target_location_text', '鐩爣浣嶇疆鏂囨湰']),
-    keeperId: pickValue(record, ['keeper_id', '淇濈鍛業D']),
-    keeperName: pickValue(record, ['keeper_name', '淇濈鍛樺鍚?']),
-    transportType: pickValue(record, ['transport_type', '杩愯緭绫诲瀷']),
-    transportOperatorName: pickValue(record, ['transport_operator_name', '杩愯緭浜哄鍚?']),
-    toolCount: Number(pickValue(record, ['tool_count', '宸ヨ鏁伴噺'], 0)) || 0,
-    approvedCount: Number(pickValue(record, ['approved_count', '宸茬‘璁ゆ暟閲?'], 0)) || 0,
-    createdAt: pickValue(record, ['created_at', '鍒涘缓鏃堕棿']),
-    updatedAt: pickValue(record, ['updated_at', '淇敼鏃堕棿']),
-    keeperRequestText: pickValue(record, ['keeper_request_text', '淇濈鍛橀渶姹傛枃鏈?']),
-    transportNoticeText: pickValue(record, ['transport_notice_text', '杩愯緭閫氱煡鏂囨湰']),
-    wechatCopyText: pickValue(record, ['wechat_copy_text', '寰俊澶嶅埗鏂囨湰']),
-    remark: pickValue(record, ['remark', '澶囨敞']),
-    rejectReason: pickValue(record, ['reject_reason', '椹冲洖鍘熷洜']),
+    orderNo: pickValue(record, ['order_no', '出入库单号']),
+    orderType: pickValue(record, ['order_type', '单据类型']),
+    orderStatus: pickValue(record, ['order_status', '单据状态']),
+    initiatorId: pickValue(record, ['initiator_id', '发起人ID']),
+    initiatorName: pickValue(record, ['initiator_name', '发起人姓名']),
+    initiatorRole: pickValue(record, ['initiator_role', '发起人角色']),
+    department: pickValue(record, ['department', '部门']),
+    projectCode: pickValue(record, ['project_code', '项目代号']),
+    usagePurpose: pickValue(record, ['usage_purpose', '用途']),
+    targetLocationText: pickValue(record, ['target_location_text', '目标位置文本']),
+    keeperId: pickValue(record, ['keeper_id', '保管员ID']),
+    keeperName: pickValue(record, ['keeper_name', '保管员姓名']),
+    transportType: pickValue(record, ['transport_type', '运输类型']),
+    transportOperatorId: pickValue(record, ['transport_operator_id', 'transport_assignee_id', '运输人ID']),
+    transportOperatorName: pickValue(
+      record,
+      ['transport_operator_name', 'transport_assignee_name', '运输人姓名']
+    ),
+    toolCount: Number(pickValue(record, ['tool_count', '工装数量'], 0)) || 0,
+    approvedCount: Number(pickValue(record, ['approved_count', '已确认数量'], 0)) || 0,
+    createdAt: pickValue(record, ['created_at', '创建时间']),
+    updatedAt: pickValue(record, ['updated_at', '修改时间']),
+    submittedAt: pickValue(record, ['submitted_at', '提交时间']),
+    keeperRequestText: pickValue(record, ['keeper_request_text', '保管员需求文本']),
+    transportNoticeText: pickValue(record, ['transport_notice_text', '运输通知文本']),
+    wechatCopyText: pickValue(record, ['wechat_copy_text', '微信复制文本']),
+    remark: pickValue(record, ['remark', '备注']),
+    rejectReason: pickValue(record, ['reject_reason', '驳回原因']),
     items: Array.isArray(record.items) ? record.items.map(normalizeItem) : [],
     logs: Array.isArray(record.logs) ? record.logs.map(normalizeLog) : [],
     notificationRecords: Array.isArray(record.notification_records)
@@ -64,98 +71,88 @@ export function normalizeOrder(record = {}) {
 }
 
 export function normalizeItem(record = {}) {
-  const itemStatus = pickValue(record, ['item_status', 'status', '鏄庣粏鐘舵€?', '鐘舵€?'])
-  const availableStatus = pickValue(record, ['available_status', '鍙敤鐘舵€?'])
-  const validStatus = pickValue(record, ['valid_status', '宸ヨ鏈夋晥鐘舵€?'])
-  const ioStatus = pickValue(record, ['io_status', '鍑哄叆搴撶姸鎬?'])
+  const itemStatus = pickValue(record, ['item_status', 'status', '明细状态'])
+  const availableStatus = pickValue(record, ['available_status', '可用状态'])
+  const validStatus = pickValue(record, ['valid_status', '有效状态'])
+  const ioStatus = pickValue(record, ['io_status', '出入库状态'])
 
   return {
-    toolId: pickValue(record, ['tool_id', '宸ヨID', 'tool_code', '搴忓垪鍙?']),
-    toolCode: pickValue(record, ['tool_code', '宸ヨ缂栫爜', '搴忓垪鍙?']),
-    toolName: pickValue(record, ['tool_name', '宸ヨ鍚嶇О']),
-    drawingNo: pickValue(record, ['drawing_no', '宸ヨ鍥惧彿']),
-    specModel: pickValue(record, ['spec_model', '鏈哄瀷']),
-    currentVersion: pickValue(record, ['current_version', '褰撳墠鐗堟']),
-    applyQty: Number(pickValue(record, ['apply_qty', '鐢宠鏁伴噺'], 1)) || 1,
-    approvedQty: Number(pickValue(record, ['approved_qty', '纭鏁伴噺'], 0)) || 0,
+    toolId: pickValue(record, ['tool_id', '工装ID']),
+    toolCode: pickValue(record, ['tool_code', '序列号', '工装编码']),
+    toolName: pickValue(record, ['tool_name', '工装名称']),
+    drawingNo: pickValue(record, ['drawing_no', '工装图号']),
+    specModel: pickValue(record, ['spec_model', '机型', '规格型号']),
+    currentVersion: pickValue(record, ['current_version', '当前版本']),
+    applyQty: Number(pickValue(record, ['apply_qty', '申请数量'], 1)) || 1,
+    approvedQty: Number(pickValue(record, ['approved_qty', '确认数量'], 0)) || 0,
     itemStatus,
     availableStatus,
     validStatus,
     ioStatus,
-    statusText: pickValue(
-      record,
-      ['status_text', 'status', '鐘舵€?'],
-      ioStatus || availableStatus || validStatus || '-'
-    ),
+    statusText: pickValue(record, ['status_text', '状态'], ioStatus || availableStatus || validStatus || '-'),
     currentLocationText: pickValue(
       record,
-      ['current_location_text', '搴撲綅', 'location_info', '搴旂敤鍘嗗彶', '褰撳墠浣嶇疆']
+      ['current_location_text', '当前位置文本', '工装快照位置文本', 'location_info', '库位', 'application_history']
     ),
-    applicationHistory: pickValue(record, ['application_history', '搴旂敤鍘嗗彶']),
-    ownerName: pickValue(record, ['owner_name', '浜ф潈鎵€鏈?']),
-    workPackage: pickValue(record, ['work_package', '宸ヤ綔鍖?']),
-    mainMaterial: pickValue(record, ['main_material', '涓讳綋鏉愯川']),
-    manufacturer: pickValue(record, ['manufacturer', '鍒堕€犲晢']),
-    inspectionExpiryDate: pickValue(record, ['inspection_expiry_date', '瀹氭鏈夋晥鎴']),
-    keeperConfirmLocationText: pickValue(
-      record,
-      ['keeper_confirm_location_text', '淇濈鍛樼‘璁や綅缃枃鏈?']
-    ),
-    checkResult: pickValue(
-      record,
-      ['keeper_check_result', 'check_result', '淇濈鍛樻鏌ョ粨鏋?', '妫€鏌ョ粨鏋?']
-    ),
-    checkRemark: pickValue(
-      record,
-      ['keeper_check_remark', 'check_remark', '淇濈鍛樻鏌ュ娉?', '妫€鏌ュ娉?']
-    ),
-    confirmTime: pickValue(record, ['confirm_time', '纭鏃堕棿'])
+    applicationHistory: pickValue(record, ['application_history', '应用历史']),
+    ownerName: pickValue(record, ['owner_name', '保管人']),
+    workPackage: pickValue(record, ['work_package', '工作包']),
+    mainMaterial: pickValue(record, ['main_material', '主要材料']),
+    manufacturer: pickValue(record, ['manufacturer', '生产厂家']),
+    inspectionExpiryDate: pickValue(record, ['inspection_expiry_date', '定检有效截止']),
+    keeperConfirmLocationText: pickValue(record, ['keeper_confirm_location_text', '保管员确认位置文本']),
+    checkResult: pickValue(record, ['keeper_check_result', 'check_result', '保管员检查结果', '归还检查结果']),
+    checkRemark: pickValue(record, ['keeper_check_remark', 'check_remark', '保管员检查备注', '归还检查备注']),
+    confirmPerson: pickValue(record, ['confirm_person', '确认人']),
+    confirmTime: pickValue(record, ['confirm_time', '确认时间']),
+    rejectReason: pickValue(record, ['reject_reason', '驳回原因'])
   }
 }
 
 export function normalizeLog(record = {}) {
   return {
-    actionType: pickValue(record, ['action_type', '鎿嶄綔绫诲瀷']),
-    operatorName: pickValue(record, ['operator_name', '鎿嶄綔浜哄鍚?']),
-    operatorRole: pickValue(record, ['operator_role', '鎿嶄綔浜鸿鑹?']),
-    content: pickValue(record, ['content', '鎿嶄綔鍐呭']),
-    actionTime: pickValue(record, ['action_time', '鎿嶄綔鏃堕棿']),
-    beforeStatus: pickValue(record, ['before_status', '鍙樻洿鍓嶇姸鎬?']),
-    afterStatus: pickValue(record, ['after_status', '鍙樻洿鍚庣姸鎬?'])
+    actionType: pickValue(record, ['action_type', '操作类型']),
+    operatorName: pickValue(record, ['operator_name', '操作人']),
+    operatorRole: pickValue(record, ['operator_role', '操作角色']),
+    content: pickValue(record, ['content', '内容']),
+    actionTime: pickValue(record, ['action_time', '操作时间']),
+    beforeStatus: pickValue(record, ['before_status', '变更前状态']),
+    afterStatus: pickValue(record, ['after_status', '变更后状态'])
   }
 }
 
 export function normalizeNotification(record = {}) {
   return {
-    notifyType: pickValue(record, ['notify_type', '閫氱煡绫诲瀷']),
-    notifyChannel: pickValue(record, ['notify_channel', '閫氱煡娓犻亾']),
-    receiver: pickValue(record, ['receiver', '鎺ユ敹浜?']),
-    title: pickValue(record, ['title', '鏍囬', 'notify_title', '閫氱煡鏍囬']),
-    content: pickValue(record, ['content', '鍐呭', 'notify_content', '閫氱煡鍐呭']),
-    copyText: pickValue(record, ['copy_text', '澶嶅埗鏂囨湰']),
-    sendStatus: pickValue(record, ['send_status', '鍙戦€佺姸鎬?']),
-    sendResult: pickValue(record, ['send_result', '鍙戦€佺粨鏋?']),
-    sendTime: pickValue(record, ['send_time', '鍙戦€佹椂闂?', 'created_at', '鍒涘缓鏃堕棿'])
+    notifyType: pickValue(record, ['notify_type', '通知类型']),
+    notifyChannel: pickValue(record, ['notify_channel', '通知渠道']),
+    receiver: pickValue(record, ['receiver', '接收人']),
+    title: pickValue(record, ['title', '标题', 'notify_title', '通知标题']),
+    content: pickValue(record, ['content', '内容', 'notify_content', '通知内容']),
+    copyText: pickValue(record, ['copy_text', '复制文本']),
+    sendStatus: pickValue(record, ['send_status', '发送状态']),
+    sendResult: pickValue(record, ['send_result', '发送结果']),
+    sendTime: pickValue(record, ['send_time', '发送时间', 'created_at', '创建时间'])
   }
 }
 
-export function getStatusPresentation(status, isItem = false) {
-  const source = isItem ? itemStatusMap : orderStatusMap
+export function resolveOrderStatusMeta(status, item = false) {
+  const source = item ? itemStatusMap : orderStatusMap
   return source[status] || { label: status || '-', type: 'info' }
+}
+
+export function getStatusPresentation(status, item = false) {
+  return resolveOrderStatusMeta(status, item)
 }
 
 export function formatDateTime(value) {
   if (!value) return '-'
-  const date = new Date(value)
+  const date = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleString('zh-CN', { hour12: false })
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-export async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text || '')
-    ElMessage.success('已复制')
-  } catch {
-    ElMessage.error('复制失败')
-  }
+export function notifyApiError(error, fallbackMessage = '请求失败') {
+  const message = error?.response?.data?.error || error?.message || fallbackMessage
+  ElMessage.error(message)
+  return message
 }

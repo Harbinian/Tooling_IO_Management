@@ -1,0 +1,31 @@
+
+> tooling-io-frontend@0.1.0 dev
+> vite --host 0.0.0.0 --port 5173 --strictPort
+
+
+  [32m[1mVITE[22m v6.4.1[39m  [2mready in [0m[1m748[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://26.26.26.1:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.19.199:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.5.34:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://169.254.215.125:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[2m12:00:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/api/auth.js[22m
+[2m12:01:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/admin/UserAdminPage.vue[22m
+[2m12:01:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/dashboard/DashboardOverview.vue, /src/assets/index.css[22m
+[2m12:01:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderList.vue, /src/assets/index.css[22m
+[2m12:02:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderList.vue, /src/pages/dashboard/DashboardOverview.vue, /src/pages/tool-io/OrderCreate.vue, /src/components/tool-io/ToolSearchDialog.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/OrderStatusTag.vue[22m
+[2m12:02:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderCreate.vue, /src/assets/index.css[22m
+[2m12:03:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/tool-io/ToolSearchDialog.vue, /src/assets/index.css[22m
+[2m12:03:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/KeeperProcess.vue, /src/assets/index.css[22m
+[2m12:03:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/admin/UserAdminPage.vue, /src/assets/index.css[22m
+[2m12:58:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/admin/UserAdminPage.vue[22m
+[2m12:58:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/admin/UserAdminPage.vue[22m
+[2m12:58:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/dashboard/DashboardOverview.vue, /src/pages/tool-io/OrderCreate.vue, /src/components/tool-io/ToolSearchDialog.vue, /src/pages/tool-io/KeeperProcess.vue[22m
+[2m13:02:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/admin/UserAdminPage.vue, /src/assets/index.css[22m
+[2m13:02:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/admin/UserAdminPage.vue, /src/assets/index.css[22m
+[2m13:03:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/admin/UserAdminPage.vue, /src/assets/index.css[22m
+[2m13:03:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/tool-io/NotificationPreview.vue, /src/assets/index.css[22m
+[2m13:03:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/tool-io/NotificationPreview.vue, /src/assets/index.css[22m
+[2m13:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/components/tool-io/ToolSelectionTable.vue[22m
