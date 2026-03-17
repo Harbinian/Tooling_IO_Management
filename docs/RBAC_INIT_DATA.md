@@ -9,6 +9,7 @@ This document provides the initial data required to bootstrap the RBAC system.
 
 It inserts:
 
+- default organizations
 - default roles
 - default permissions
 - role-permission mappings
@@ -34,6 +35,7 @@ Business roles:
 - team_leader
 - keeper
 - planner
+- production_prep_worker
 
 System roles:
 
@@ -44,15 +46,52 @@ SQL
 
     INSERT INTO sys_role (role_id, role_code, role_name, role_type)
     VALUES
-    ('ROLE_TEAM_LEADER', 'team_leader', 'Team Leader', 'business'),
-    ('ROLE_KEEPER', 'keeper', 'Keeper', 'business'),
-    ('ROLE_PLANNER', 'planner', 'Planner', 'business'),
-    ('ROLE_SYS_ADMIN', 'sys_admin', 'System Administrator', 'system'),
-    ('ROLE_AUDITOR', 'auditor', 'Auditor', 'system')
+    ('ROLE_TEAM_LEADER', 'team_leader', '班组长', 'business'),
+    ('ROLE_KEEPER', 'keeper', '保管员', 'business'),
+    ('ROLE_PLANNER', 'planner', '计划员', 'business'),
+    ('ROLE_PRODUCTION_PREP', 'production_prep_worker', '生产准备工', 'business'),
+    ('ROLE_SYS_ADMIN', 'sys_admin', '系统管理员', 'system'),
+    ('ROLE_AUDITOR', 'auditor', '审计员', 'system')
 
 ---
 
-# 3 Initial Permissions
+# 3 Initial Organizations
+
+Default organizations for the system.
+
+Organization structure:
+
+```
+Company
+├── 物资保障部 (Material Support Department)
+├── 项目管理部 (Project Management Department)
+├── 质量管理部 (Quality Management Department)
+└── 复材车间 (Composite Materials Workshop)
+```
+
+SQL
+
+    INSERT INTO sys_org (org_id, org_name, org_code, org_type, parent_org_id, sort_no, status, created_at, created_by)
+    VALUES
+    ('ORG_COMPANY', '昌兴复材', 'TOOL_MFG', 'company', NULL, 1, 'active', SYSDATETIME(), 'bootstrap'),
+    ('ORG_MATERIAL', '物资保障部', 'MATERIAL', 'warehouse', 'ORG_COMPANY', 10, 'active', SYSDATETIME(), 'bootstrap'),
+    ('ORG_PROJECT', '项目管理部', 'PROJECT', 'project_group', 'ORG_COMPANY', 20, 'active', SYSDATETIME(), 'bootstrap'),
+    ('ORG_QUALITY', '质量管理部', 'QUALITY', 'company', 'ORG_COMPANY', 30, 'active', SYSDATETIME(), 'bootstrap'),
+    ('ORG_COMPOSITE', '复材车间', 'COMPOSITE', 'workshop', 'ORG_COMPANY', 40, 'active', SYSDATETIME(), 'bootstrap');
+
+Organization descriptions:
+
+| org_id | org_name | org_type | Description |
+|--------|----------|----------|-------------|
+| ORG_COMPANY | 昌兴复材 | company | Root company |
+| ORG_MATERIAL | 物资保障部 | warehouse | Material support & warehousing |
+| ORG_PROJECT | 项目管理部 | project_group | Project management |
+| ORG_QUALITY | 质量管理部 | company | Quality management |
+| ORG_COMPOSITE | 复材车间 | workshop | Composite materials workshop |
+
+---
+
+# 4 Initial Permissions
 
 Permission naming rule:
 
@@ -79,6 +118,7 @@ SQL
     ('order:keeper_confirm', 'Keeper Confirm Order', 'order', 'keeper_confirm'),
     ('order:final_confirm', 'Final Confirm Order', 'order', 'final_confirm'),
     ('order:cancel', 'Cancel Order', 'order', 'cancel'),
+    ('order:delete', 'Delete Order', 'order', 'delete'),
     ('notification:view', 'View Notification', 'notification', 'view'),
     ('notification:create', 'Create Notification', 'notification', 'create'),
     ('notification:send_feishu', 'Send Feishu Notification', 'notification', 'send_feishu'),
@@ -88,25 +128,26 @@ SQL
 
 ---
 
-# 4 Role Permission Mapping
+# 5 Role Permission Mapping
 
 This section assigns permissions to roles.
 
 ---
 
-## Team Leader
+## 班组长 (Team Leader)
 
 Permissions
 
-dashboard:view  
-tool:search  
-tool:view  
-order:create  
-order:view  
-order:list  
-order:submit  
-order:final_confirm  
-notification:view  
+dashboard:view
+tool:search
+tool:view
+order:create
+order:view
+order:list
+order:submit
+order:final_confirm
+notification:view
+notification:create
 
 SQL
 
@@ -120,11 +161,12 @@ SQL
     ('ROLE_TEAM_LEADER', 'order:list'),
     ('ROLE_TEAM_LEADER', 'order:submit'),
     ('ROLE_TEAM_LEADER', 'order:final_confirm'),
-    ('ROLE_TEAM_LEADER', 'notification:view')
+    ('ROLE_TEAM_LEADER', 'notification:view'),
+    ('ROLE_TEAM_LEADER', 'notification:create')
 
 ---
 
-## Keeper
+## 保管员 (Keeper)
 
 Permissions
 
@@ -160,7 +202,7 @@ SQL
 
 ---
 
-## Planner
+## 计划员 (Planner)
 
 Permissions
 
@@ -188,7 +230,31 @@ SQL
 
 ---
 
-## System Administrator
+## 生产准备工 (Production Prep Worker)
+
+Production preparation workers are responsible for transporting tooling between locations. They belong to the Material Support Department (物资保障部).
+
+Permissions
+
+dashboard:view
+tool:search
+tool:view
+tool:location_view
+order:transport_execute
+
+SQL
+
+    INSERT INTO sys_role_permission_rel (role_id, permission_code)
+    VALUES
+    ('ROLE_PRODUCTION_PREP', 'dashboard:view'),
+    ('ROLE_PRODUCTION_PREP', 'tool:search'),
+    ('ROLE_PRODUCTION_PREP', 'tool:view'),
+    ('ROLE_PRODUCTION_PREP', 'tool:location_view'),
+    ('ROLE_PRODUCTION_PREP', 'order:transport_execute')
+
+---
+
+## 系统管理员 (System Administrator)
 
 Administrator has all permissions.
 
@@ -200,7 +266,7 @@ SQL
 
 ---
 
-## Auditor
+## 审计员 (Auditor)
 
 Permissions
 
@@ -222,7 +288,7 @@ SQL
 
 ---
 
-# 5 Role Data Scope
+# 6 Role Data Scope
 
 Defines which data each role can access.
 
@@ -236,7 +302,7 @@ ASSIGNED
 
 ---
 
-## Team Leader
+## 班组长 (Team Leader)
 
 SQL
 
@@ -247,7 +313,7 @@ SQL
 
 ---
 
-## Keeper
+## 保管员 (Keeper)
 
 SQL
 
@@ -258,7 +324,7 @@ SQL
 
 ---
 
-## Planner
+## 计划员 (Planner)
 
 SQL
 
@@ -269,7 +335,18 @@ SQL
 
 ---
 
-## System Administrator
+## 生产准备工 (Production Prep Worker)
+
+SQL
+
+    INSERT INTO sys_role_data_scope_rel (role_id, scope_type)
+    VALUES
+    ('ROLE_PRODUCTION_PREP', 'SELF'),
+    ('ROLE_PRODUCTION_PREP', 'ORG')
+
+---
+
+## 系统管理员 (System Administrator)
 
 SQL
 
@@ -279,7 +356,7 @@ SQL
 
 ---
 
-## Auditor
+## 审计员 (Auditor)
 
 SQL
 
@@ -288,5 +365,86 @@ SQL
     ('ROLE_AUDITOR', 'ALL')
 
 ---
+
+# 7 Cross-Organization Workflow
+
+This section documents the cross-organization order processing workflow.
+
+## 7.1 Workflow Overview
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    跨组织协同流程                                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  班组长创建订单                                                            │
+│  (ORG_DEPT_005)                                                          │
+│       │                                                                  │
+│       ▼                                                                  │
+│  提交订单 ──▶ 部门自动分配: 通知所有保管员                                    │
+│       │                    (ORG_DEPT_001 所有 keeper)                     │
+│       │                                                                  │
+│       ▼                                                                  │
+│  保管员(hutingting) ──▶ 确认订单 ──▶ 指派运输人                            │
+│  (ORG_DEPT_001)           │                  │                            │
+│       │                   │                  ▼                            │
+│       │                   │            运输人确认 ──▶ 完成                 │
+│       │                   │            (ORG_DEPT_XXX)                   │
+│       │                   ▼                                             │
+│       └─────> 班组长可查看:                                              │
+│               • 保管员确认状态                                            │
+│               • 运输人指派                                                │
+│               • 运输完成状态                                               │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+## 7.2 Data Access Rules by Role
+
+| 角色 | 可访问的订单 | 说明 |
+|------|-------------|------|
+| 班组长 | 自己创建的订单 (SELF) + 同组织订单 (ORG) | 始终可查看自己订单的完整流程 |
+| 保管员 | 同组织待确认订单 (submitted/partially_confirmed) + 被分配订单 (keeper_id) | 可跨组织确认订单 |
+| 运输人 | 被分配的运输订单 (transport_assignee_id) | 只能看到分配给自己的订单 |
+
+## 7.3 Key Implementation Details
+
+### 部门自动分配 (Department Auto-Assignment)
+
+When an order is submitted:
+1. System finds ALL keepers in the order's organization
+2. Sends `KEEPER_CONFIRM_REQUIRED` notification to each keeper
+3. Any keeper in the org can confirm the order
+
+### 跨组织确认 (Cross-Organization Confirmation)
+
+When a keeper confirms an order:
+1. Keeper's `keeper_id` is set to the confirming keeper's user_id
+2. After confirmation, only this specific keeper continues to have access
+3. Keeper can then assign a transport person
+
+### 运输指派 (Transport Assignment)
+
+When a keeper assigns transport:
+1. `transport_assignee_id` is set to the transport person's user_id
+2. Transport person can now see the order
+3. Transport person can execute transport workflow
+
+### 班组长监督 (Team Leader Monitoring)
+
+Team leader always sees their own orders regardless of:
+- Current order status
+- Which keeper confirmed
+- Which transport person was assigned
+- Organization of the keeper/transport person
+
+## 7.4 Status-Based Visibility Matrix
+
+| 订单状态 | 班组长 | 同组织保管员 | 分配的保管员 | 分配的运输人 |
+|---------|--------|-------------|-------------|-------------|
+| submitted | ✅ 看自己的 | ✅ 可见 | N/A | N/A |
+| keeper_confirmed | ✅ 看自己的 | ❌ | ✅ | ❌ |
+| transport_notified | ✅ 看自己的 | ❌ | ✅ | ✅ |
+| completed | ✅ 看自己的 | ❌ | ✅ | ✅ |
 
 # End of Document

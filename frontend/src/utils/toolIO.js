@@ -50,7 +50,7 @@ export function normalizeOrder(record = {}) {
       record,
       ['transport_operator_name', 'transport_assignee_name', '运输人姓名']
     ),
-    toolCount: Number(pickValue(record, ['tool_count', '工装数量'], 0)) || 0,
+    toolCount: Array.isArray(record.items) ? record.items.length : (Number(pickValue(record, ['tool_count', '工装数量'], 0)) || 0),
     approvedCount: Number(pickValue(record, ['approved_count', '已确认数量'], 0)) || 0,
     createdAt: pickValue(record, ['created_at', '创建时间']),
     updatedAt: pickValue(record, ['updated_at', '修改时间']),

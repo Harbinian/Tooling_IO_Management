@@ -1,0 +1,36 @@
+MIGRATION PREREQUISITES VALIDATION V2
+============================================================
+
+[1] Source Tables Check:
+  工装出入库单_主表: 39 columns
+  工装出入库单_明细: 28 columns
+  工装出入库单_操作日志: 11 columns
+  工装出入库单_通知记录: 13 columns
+  工装出入库单_位置: 8 columns
+  工装运输异常记录: 14 columns
+
+[2] Target Tables Check (should NOT exist):
+  tool_io_order: Not exists (OK)
+  tool_io_order_item: Not exists (OK)
+  tool_io_operation_log: Not exists (OK)
+  tool_io_notification: Not exists (OK)
+  tool_io_location: Not exists (OK)
+  tool_io_transport_issue: Not exists (OK)
+
+[3] Mappings Table: Not exists (OK)
+
+[4] Main Table Column Validation:
+  Actual columns in source: 39
+  [OK] All expected columns exist in source
+  [INFO] Extra columns in source (will be ignored): {'运输人ID', '运输人姓名'}
+
+============================================================
+VALIDATION SUMMARY:
+============================================================
+[PASS] Ready for migration
+
+Next steps:
+1. Backup database
+2. Run: migrations/001_rename_tables_to_english.sql
+3. Verify data in new tables
+4. Drop old tables (after verification)

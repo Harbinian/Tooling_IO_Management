@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import {
   createAdminUser,
   getAdminRoles,
@@ -11,6 +11,7 @@ import {
   updateAdminUserStatus
 } from '@/api/adminUsers'
 import { getOrgTree } from '@/api/orgs'
+import { DEBUG_IDS } from '@/debug/debugIds'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
@@ -19,6 +20,7 @@ import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
 import Input from '@/components/ui/Input.vue'
 import Select from '@/components/ui/Select.vue'
+import NativeSelect from '@/components/ui/NativeSelect.vue'
 
 // Temporary notification helper until toast library is set up
 const showToast = (msg) => {
@@ -87,6 +89,13 @@ function resetForm() {
   form.roleIds = []
   form.status = 'active'
   form.initialPassword = ''
+  // Scroll to form for visual feedback
+  nextTick(() => {
+    document.querySelector('[data-form-card]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Focus first input for immediate editing
+    const firstInput = document.querySelector('[data-form-card] input')
+    firstInput?.focus()
+  })
 }
 
 function applyUserDetail(user) {
@@ -207,56 +216,54 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 text-foreground">
     <section class="space-y-2">
-      <p class="text-xs font-medium uppercase tracking-[0.28em] text-slate-400">系统管理</p>
-      <h1 class="text-3xl font-semibold tracking-tight text-slate-900">账号管理</h1>
-      <p class="max-w-3xl text-sm leading-6 text-slate-500">
+      <p class="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">系统管理</p>
+      <h1 class="text-3xl font-semibold tracking-tight text-foreground">账号管理</h1>
+      <p class="max-w-3xl text-sm leading-6 text-muted-foreground">
         创建系统账号，维护员工身份信息，设置默认部门，并绑定一个或多个 RBAC 角色。
       </p>
     </section>
 
     <div class="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-      <Card class="overflow-hidden border-slate-200/80 bg-white shadow-sm">
-        <CardHeader class="border-b border-slate-100">
+      <Card v-debug-id="DEBUG_IDS.ADMIN.USER_LIST_CARD" class="overflow-hidden border-border bg-card shadow-sm">
+        <CardHeader class="border-b border-border bg-muted/30">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div class="space-y-1">
-              <CardTitle class="text-lg text-slate-900">账号列表</CardTitle>
+              <CardTitle class="text-lg text-foreground">账号列表</CardTitle>
               <CardDescription>仅管理员可见的账号清单，展示角色与部门归属信息。</CardDescription>
             </div>
             <div class="flex flex-wrap gap-2">
-              <Button variant="outline" @click="resetForm">新建账号</Button>
-              <Button variant="outline" @click="loadUsers">刷新</Button>
+              <Button v-debug-id="DEBUG_IDS.ADMIN.CREATE_USER_BTN" variant="outline" @click="resetForm">新建账号</Button>
+              <Button v-debug-id="DEBUG_IDS.ADMIN.REFRESH_BTN" variant="outline" @click="loadUsers">刷新</Button>
             </div>
           </div>
         </CardHeader>
         <CardContent class="space-y-4 pt-6">
           <div class="grid gap-3 md:grid-cols-3">
-            <Input v-model="filters.keyword" placeholder="登录名 / 员工姓名 / 工号" />
-            <Select v-model="filters.status">
+            <Input v-debug-id="DEBUG_IDS.ADMIN.KEYWORD_FILTER" v-model="filters.keyword" placeholder="登录名 / 员工姓名 / 工号" />
+            <Select v-debug-id="DEBUG_IDS.ADMIN.STATUS_FILTER" v-model="filters.status">
               <option value="">全部状态</option>
               <option value="active">启用</option>
               <option value="disabled">停用</option>
             </Select>
-            <Select v-model="filters.orgId">
-              <option value="">全部部门</option>
-              <option
-                v-for="org in flattenedOrgs"
-                :key="org.org_id"
-                :value="org.org_id"
-              >
-                {{ org.label }}
-              </option>
-            </Select>
+            <NativeSelect
+              v-debug-id="DEBUG_IDS.ADMIN.ORG_FILTER"
+              v-model="filters.orgId"
+              :options="flattenedOrgs"
+              option-label="label"
+              option-value="org_id"
+              placeholder="全部部门"
+            />
           </div>
 
           <div class="flex justify-end">
-            <Button @click="loadUsers">查询</Button>
+            <Button v-debug-id="DEBUG_IDS.ADMIN.QUERY_BTN" @click="loadUsers">查询</Button>
           </div>
 
-          <div class="overflow-hidden rounded-2xl border border-slate-200">
-            <table class="min-w-full divide-y divide-slate-200 text-sm">
-              <thead class="bg-slate-50 text-left text-slate-500">
+          <div class="overflow-hidden rounded-2xl border border-border">
+            <table class="min-w-full divide-y divide-border text-sm">
+              <thead class="bg-muted/50 text-left text-muted-foreground">
                 <tr>
                   <th class="px-4 py-3 font-medium">登录名</th>
                   <th class="px-4 py-3 font-medium">员工姓名</th>
@@ -267,30 +274,30 @@ onMounted(async () => {
                   <th class="px-4 py-3 font-medium">操作</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 bg-white">
+              <tbody class="divide-y divide-border bg-card">
                 <tr v-if="loading">
-                  <td colspan="7" class="px-4 py-10 text-center text-slate-400">正在加载账号数据...</td>
+                  <td colspan="7" class="px-4 py-10 text-center text-muted-foreground">正在加载账号数据...</td>
                 </tr>
                 <tr v-else-if="!users.length">
-                  <td colspan="7" class="px-4 py-10 text-center text-slate-400">未查询到账号数据。</td>
+                  <td colspan="7" class="px-4 py-10 text-center text-muted-foreground">未查询到账号数据。</td>
                 </tr>
                 <tr
                   v-for="user in users"
                   :key="user.user_id"
-                  class="cursor-pointer transition hover:bg-slate-50"
-                  :class="selectedUserId === user.user_id ? 'bg-slate-50' : ''"
+                  class="cursor-pointer transition hover:bg-muted/30"
+                  :class="selectedUserId === user.user_id ? 'bg-accent/50' : ''"
                   @click="selectUser(user.user_id)"
                 >
-                  <td class="px-4 py-3 font-medium text-slate-900">{{ user.login_name }}</td>
-                  <td class="px-4 py-3">{{ user.display_name }}</td>
-                  <td class="px-4 py-3">{{ user.employee_no || '-' }}</td>
-                  <td class="px-4 py-3">{{ user.default_org_name || '-' }}</td>
+                  <td class="px-4 py-3 font-medium text-foreground">{{ user.login_name }}</td>
+                  <td class="px-4 py-3 text-foreground/80">{{ user.display_name }}</td>
+                  <td class="px-4 py-3 text-foreground/80">{{ user.employee_no || '-' }}</td>
+                  <td class="px-4 py-3 text-foreground/80">{{ user.default_org_name || '-' }}</td>
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap gap-1">
                       <span
                         v-for="role in user.roles"
                         :key="`${user.user_id}-${role.role_id}`"
-                        class="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"
+                        class="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground border border-border/50"
                       >
                         {{ role.role_name }}
                       </span>
@@ -298,14 +305,14 @@ onMounted(async () => {
                   </td>
                   <td class="px-4 py-3">
                     <span
-                      class="rounded-full px-2 py-1 text-xs font-medium"
-                      :class="user.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
+                      class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+                      :class="user.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'"
                     >
                       {{ getStatusLabel(user.status) }}
                     </span>
                   </td>
-                  <td class="px-4 py-3">
-                    <Button size="sm" variant="outline" @click.stop="quickToggleStatus(user)">
+                  <td class="px-4 py-3" @click.stop>
+                    <Button variant="ghost" size="sm" @click="quickToggleStatus(user)" :class="user.status === 'active' ? 'text-rose-500' : 'text-emerald-500'">
                       {{ user.status === 'active' ? '停用' : '启用' }}
                     </Button>
                   </td>
@@ -316,119 +323,91 @@ onMounted(async () => {
         </CardContent>
       </Card>
 
-      <Card class="overflow-hidden border-slate-200/80 bg-white shadow-sm">
-        <CardHeader class="border-b border-slate-100">
-          <CardTitle class="text-lg text-slate-900">
-            {{ isCreateMode ? '创建账号' : '编辑账号' }}
-          </CardTitle>
-          <CardDescription>
-            密码以哈希方式存储。创建账号时需要设置初始密码，编辑账号时可单独执行密码重置。
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="pt-6">
-          <form class="space-y-5" @submit.prevent="submitForm">
-          <div class="grid gap-4 md:grid-cols-2">
-            <label class="space-y-2">
-              <span class="text-sm font-medium text-slate-700">登录名</span>
-              <Input v-model="form.loginName" placeholder="请输入登录名" autocomplete="username" />
-            </label>
-            <label class="space-y-2">
-              <span class="text-sm font-medium text-slate-700">员工姓名</span>
-              <Input v-model="form.displayName" placeholder="请输入员工姓名" autocomplete="name" />
-            </label>
-            <label class="space-y-2">
-              <span class="text-sm font-medium text-slate-700">工号</span>
-              <Input v-model="form.employeeNo" placeholder="请输入工号" autocomplete="off" />
-            </label>
-            <label class="space-y-2">
-              <span class="text-sm font-medium text-slate-700">账号状态</span>
-              <Select v-model="form.status">
-                <option value="active">启用</option>
-                <option value="disabled">停用</option>
-              </Select>
-            </label>
-            <label class="space-y-2 md:col-span-2">
-              <span class="text-sm font-medium text-slate-700">默认部门 / 组织</span>
-              <Select v-model="form.defaultOrgId">
-                <option value="">未分配</option>
-                <option
-                  v-for="org in flattenedOrgs"
-                  :key="org.org_id"
-                  :value="org.org_id"
-                >
-                  {{ org.label }}
-                </option>
-              </Select>
-            </label>
-            <label v-if="isCreateMode" class="space-y-2 md:col-span-2">
-              <span class="text-sm font-medium text-slate-700">初始密码</span>
-              <Input
-                v-model="form.initialPassword"
-                type="password"
-                placeholder="请输入初始密码"
-                autocomplete="new-password"
-              />
-            </label>
-          </div>
-
-          <div class="space-y-3">
-            <div>
-              <p class="text-sm font-medium text-slate-700">角色分配</p>
-              <p class="text-xs text-slate-500">可选择一个或多个角色，首个选中的角色视为主角色。</p>
-            </div>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <label
-                v-for="role in roles"
-                :key="role.role_id"
-                class="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm transition hover:border-slate-300"
-              >
-                <input
-                  :checked="form.roleIds.includes(role.role_id)"
-                  type="checkbox"
-                  class="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-300"
-                  @change="toggleRole(role.role_id)"
+      <div class="space-y-6">
+        <!-- Edit/Create Form Card -->
+        <Card data-form-card class="border-border bg-card shadow-lg">
+          <CardHeader class="border-b border-border bg-muted/30">
+            <CardTitle class="text-lg text-foreground">{{ isCreateMode ? '新建账号' : '编辑账号' }}</CardTitle>
+            <CardDescription>{{ isCreateMode ? '填写基本信息以创建新员工账号。' : '更新选定账号的身份信息与角色绑定。' }}</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-6 pt-6">
+            <div class="grid gap-4">
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">登录名</label>
+                <Input v-model="form.loginName" placeholder="登录用户名" :disabled="!isCreateMode" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">显示姓名</label>
+                <Input v-model="form.displayName" placeholder="员工真实姓名" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">工号</label>
+                <Input v-model="form.employeeNo" placeholder="员工唯一工号" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">默认部门</label>
+                <NativeSelect
+                  v-model="form.defaultOrgId"
+                  :options="flattenedOrgs"
+                  option-label="label"
+                  option-value="org_id"
+                  placeholder="请选择默认部门"
                 />
-                <span class="space-y-1">
-                  <span class="block font-medium text-slate-800">{{ role.role_name }}</span>
-                  <span class="block text-xs text-slate-500">{{ role.role_code }}</span>
-                </span>
-              </label>
+              </div>
+              <div v-if="isCreateMode" class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">初始密码</label>
+                <Input v-model="form.initialPassword" type="password" placeholder="留空则默认为 admin123" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">角色分配</label>
+                <div class="flex flex-wrap gap-2 pt-1">
+                  <button
+                    v-for="role in roles"
+                    :key="role.role_id"
+                    type="button"
+                    class="rounded-xl border px-3 py-1.5 text-xs font-medium transition-all"
+                    :class="form.roleIds.includes(role.role_id) ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:bg-accent'"
+                    @click="toggleRole(role.role_id)"
+                  >
+                    {{ role.role_name }}
+                  </button>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">账号状态</label>
+                <Select v-model="form.status">
+                  <option value="active">启用</option>
+                  <option value="disabled">停用</option>
+                </Select>
+              </div>
             </div>
-          </div>
 
-          <div class="flex flex-wrap gap-2">
-            <Button type="submit" :disabled="saving">
-              {{ saving ? '保存中...' : isCreateMode ? '创建账号' : '保存修改' }}
-            </Button>
-            <Button type="button" variant="outline" :disabled="saving" @click="resetForm">清空</Button>
-          </div>
-
-          </form>
-
-          <form
-            v-if="!isCreateMode"
-            class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
-            @submit.prevent="submitPasswordReset"
-          >
-            <div>
-              <p class="text-sm font-medium text-slate-700">密码重置</p>
-              <p class="text-xs text-slate-500">为当前选中的账号设置新的临时密码。</p>
-            </div>
-            <div class="flex flex-col gap-3 md:flex-row">
-              <Input
-                v-model="resetPassword"
-                type="password"
-                placeholder="请输入新密码"
-                autocomplete="new-password"
-                class="flex-1"
-              />
-              <Button type="submit" :disabled="saving || !resetPassword.trim()">
-                重置密码
+            <div class="flex gap-3 pt-2">
+              <Button class="flex-1 bg-primary text-primary-foreground border-none hover:bg-primary/90" :loading="saving" @click="submitForm">
+                {{ isCreateMode ? '确认创建' : '保存更新' }}
               </Button>
+              <Button v-if="!isCreateMode" variant="outline" @click="resetForm">取消编辑</Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <!-- Password Reset Card (Only for Edit Mode) -->
+        <Card v-if="!isCreateMode" class="border-border bg-card shadow-lg">
+          <CardHeader class="border-b border-border bg-muted/30">
+            <CardTitle class="text-lg text-foreground">重置密码</CardTitle>
+            <CardDescription>直接重置该账号的登录密码，操作后立即生效。</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-4 pt-6">
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-foreground">新密码</label>
+              <Input v-model="resetPassword" type="password" placeholder="请输入新密码" />
+            </div>
+            <Button variant="outline" class="w-full border-border" :disabled="!resetPassword.trim()" :loading="saving" @click="submitPasswordReset">
+              确认重置密码
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   </div>
 </template>

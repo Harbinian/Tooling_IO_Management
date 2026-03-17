@@ -41,6 +41,22 @@ class PermissionDeniedError(AuthError):
     """Raised when permission validation fails."""
 
 
+def _validate_new_password(new_password: str) -> str:
+    """Validate new password complexity and return stripped value."""
+    password = (new_password or "").strip()
+    if not password:
+        raise ValueError("new_password is required")
+    if len(password) < 8:
+        raise ValueError("new_password must be at least 8 characters")
+
+    has_upper = any(ch.isupper() for ch in password)
+    has_lower = any(ch.islower() for ch in password)
+    has_digit = any(ch.isdigit() for ch in password)
+    if not (has_upper and has_lower and has_digit):
+        raise ValueError("new_password must include uppercase, lowercase, and digit characters")
+    return password
+
+
 def _serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(settings.SECRET_KEY, salt=TOKEN_SALT)
 
@@ -149,6 +165,39 @@ def _update_last_login(user_id: str) -> None:
     DatabaseManager().execute_query(sql, (user_id, user_id), fetch=False)
 
 
+def _write_password_change_audit_log(
+    *,
+    user_id: str,
+    changed_by: str,
+    change_result: str,
+    remark: str = "",
+    client_ip: str = "",
+) -> None:
+    """Persist one password-change audit log row, without affecting main flow."""
+    if not user_id:
+        return
+
+    try:
+        DatabaseManager().execute_query(
+            """
+            INSERT INTO sys_user_password_change_log (
+                user_id, changed_by, change_result, remark, client_ip, changed_at
+            )
+            VALUES (?, ?, ?, ?, ?, SYSDATETIME())
+            """,
+            (
+                user_id,
+                changed_by or user_id,
+                change_result,
+                remark or "",
+                client_ip or "",
+            ),
+            fetch=False,
+        )
+    except Exception as exc:
+        logger.warning("failed to write password change audit log for user %s: %s", user_id, exc)
+
+
 def _build_user_identity(user_record: Dict) -> Dict:
     from backend.services.org_service import resolve_user_org_context
 
@@ -221,6 +270,67 @@ def require_permission(user: Dict, permission_code: str) -> None:
 
     if not has_permission(user, permission_code):
         raise PermissionDeniedError(f"missing required permission: {permission_code}")
+
+
+def change_current_user_password(
+    *,
+    user_id: str,
+    old_password: str,
+    new_password: str,
+    client_ip: str = "",
+) -> None:
+    """Change the current authenticated user's password."""
+    from backend.services.rbac_service import ensure_rbac_tables
+
+    ensure_rbac_tables()
+    normalized_user_id = (user_id or "").strip()
+    if not normalized_user_id:
+        raise AuthenticationRequiredError("authentication required")
+
+    old_password_value = (old_password or "").strip()
+    if not old_password_value:
+        raise ValueError("old_password is required")
+
+    validated_new_password = _validate_new_password(new_password)
+    if old_password_value == validated_new_password:
+        raise ValueError("new_password must be different from old_password")
+
+    user_record = _load_user_record_by_user_id(normalized_user_id)
+    if not user_record:
+        raise AuthenticationRequiredError("authenticated user no longer exists")
+
+    if not verify_password(old_password_value, user_record.get("password_hash", "")):
+        _write_password_change_audit_log(
+            user_id=normalized_user_id,
+            changed_by=normalized_user_id,
+            change_result="failed",
+            remark="old_password_mismatch",
+            client_ip=client_ip,
+        )
+        raise InvalidCredentialsError("old_password is incorrect")
+
+    DatabaseManager().execute_query(
+        """
+        UPDATE sys_user
+        SET password_hash = ?,
+            updated_at = SYSDATETIME(),
+            updated_by = ?
+        WHERE user_id = ?
+        """,
+        (
+            hash_password(validated_new_password),
+            normalized_user_id,
+            normalized_user_id,
+        ),
+        fetch=False,
+    )
+    _write_password_change_audit_log(
+        user_id=normalized_user_id,
+        changed_by=normalized_user_id,
+        change_result="success",
+        remark="password_changed",
+        client_ip=client_ip,
+    )
 
 
 def get_bootstrap_admin_sql(login_name: str = "admin", password_hash: str = "") -> str:

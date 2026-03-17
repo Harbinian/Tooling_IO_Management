@@ -1,12 +1,7 @@
-[2m14:46:28[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/me[39m
-Error: connect ECONNREFUSED 127.0.0.1:5000
+[2m14:19:03[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/login[39m
+Error: connect ECONNREFUSED 127.0.0.1:8151
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
-[2m14:46:29[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/login[39m
-Error: connect ECONNREFUSED 127.0.0.1:5000
+[2m14:19:05[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/login[39m
+Error: connect ECONNREFUSED 127.0.0.1:8151
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
-[2m14:46:47[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/login[39m
-Error: connect ECONNREFUSED 127.0.0.1:5000
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
-[2m14:48:46[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/login[39m
-Error: connect ECONNREFUSED 127.0.0.1:5000
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
+^C^C

@@ -32,6 +32,9 @@ class Settings:
     FLASK_HOST: str
     FLASK_PORT: int
     FLASK_DEBUG: bool
+    FLASK_THREADED: bool
+    FLASK_USE_RELOADER: bool
+    FLASK_RELOADER_TYPE: str
     FEISHU_APP_ID: str
     FEISHU_APP_SECRET: str
     FEISHU_APP_TOKEN: str
@@ -79,6 +82,11 @@ def _build_settings() -> Settings:
     flask_debug = _get_bool('FLASK_DEBUG', flask_env != 'production')
     if flask_env == 'production':
         flask_debug = False
+    flask_threaded = _get_bool('FLASK_THREADED', True)
+    flask_use_reloader = _get_bool('FLASK_USE_RELOADER', flask_debug)
+    flask_reloader_type = os.getenv('FLASK_RELOADER_TYPE', 'stat').strip().lower() or 'stat'
+    if flask_reloader_type not in {'stat', 'watchdog', 'auto'}:
+        flask_reloader_type = 'stat'
 
     db = DatabaseSettings(
         server=os.getenv('CESOFT_DB_SERVER', '192.168.19.220,1433'),
@@ -95,6 +103,9 @@ def _build_settings() -> Settings:
         FLASK_HOST=os.getenv('FLASK_HOST', '0.0.0.0'),
         FLASK_PORT=int(os.getenv('FLASK_PORT', '5000')),
         FLASK_DEBUG=flask_debug,
+        FLASK_THREADED=flask_threaded,
+        FLASK_USE_RELOADER=flask_use_reloader,
+        FLASK_RELOADER_TYPE=flask_reloader_type,
         FEISHU_APP_ID=os.getenv('FEISHU_APP_ID', ''),
         FEISHU_APP_SECRET=os.getenv('FEISHU_APP_SECRET', ''),
         FEISHU_APP_TOKEN=os.getenv('FEISHU_APP_TOKEN', ''),

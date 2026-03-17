@@ -16,8 +16,10 @@
 | /incident-monitor | 监控事件 / Monitor incidents |
 | /prompt-generator | 生成提示词 / Generate prompts |
 | /auto-task-generator | 自动生成任务 / Auto-generate tasks |
+| /plan-to-prompt | 将计划转换为提示词 / Convert plan to prompts |
 | /dev-inspector | 检查代码 / Inspect code |
 | /self-healing-dev-loop | 自愈开发循环 / Self-healing dev loop |
+| /start-dev | 启动开发环境并监控日志 / Start dev environment and monitor logs |
 
 ---
 

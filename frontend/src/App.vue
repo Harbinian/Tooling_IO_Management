@@ -3,8 +3,22 @@
 </template>
 
 <script setup>
-// Session persistence logic is now moved to MainLayout or can be kept here if needed for global scope.
-// However, since App.vue is the root, keeping it simple is better.
+import { onMounted } from 'vue'
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme')
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const isDark = savedTheme === 'dark' || (!savedTheme && systemDark)
+  
+  document.documentElement.classList.toggle('dark', isDark)
+  if (!savedTheme) {
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+  }
+}
+
+onMounted(() => {
+  initTheme()
+})
 </script>
 
 <style>

@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import types
 import unittest
 from unittest.mock import patch
@@ -146,6 +146,68 @@ class ToolIOOrderQueryTests(unittest.TestCase):
         self.assertEqual(result["data"], [{"order_no": "TO-001", "initiator_id": "U001"}])
         self.assertEqual(get_orders.call_args.kwargs["page_no"], 1)
         self.assertEqual(get_orders.call_args.kwargs["page_size"], 5000)
+
+    def test_list_orders_filters_draft_for_all_access_user(self):
+        with patch(
+            "backend.services.tool_io_service.get_tool_io_orders",
+            return_value={
+                "success": True,
+                "data": [
+                    {"order_no": "TO-001", "order_status": "draft"},
+                    {"order_no": "TO-002", "order_status": "submitted"},
+                ],
+                "total": 2,
+                "page_no": 1,
+                "page_size": 5000,
+            },
+        ), patch(
+            "backend.services.tool_io_service.resolve_order_data_scope",
+            return_value={
+                "all_access": True,
+                "scope_types": ["ALL"],
+                "org_ids": [],
+                "org_user_ids": [],
+                "self_user_ids": [],
+                "assigned_user_ids": [],
+                "current_user_id": "U-ADMIN",
+            },
+        ):
+            result = list_orders({"page_no": 1, "page_size": 20}, current_user={"user_id": "U-ADMIN"})
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(result["data"], [{"order_no": "TO-002", "order_status": "submitted"}])
+
+    def test_list_orders_keeps_draft_for_non_all_access_user_when_scope_allows(self):
+        with patch(
+            "backend.services.tool_io_service.get_tool_io_orders",
+            return_value={
+                "success": True,
+                "data": [{"order_no": "TO-003", "order_status": "draft", "initiator_id": "U001"}],
+                "total": 1,
+                "page_no": 1,
+                "page_size": 5000,
+            },
+        ), patch(
+            "backend.services.tool_io_service.resolve_order_data_scope",
+            return_value={
+                "all_access": False,
+                "scope_types": ["SELF"],
+                "org_ids": [],
+                "org_user_ids": [],
+                "self_user_ids": ["U001"],
+                "assigned_user_ids": [],
+                "current_user_id": "U001",
+            },
+        ):
+            result = list_orders({"page_no": 1, "page_size": 20}, current_user={"user_id": "U001"})
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(
+            result["data"],
+            [{"order_no": "TO-003", "order_status": "draft", "initiator_id": "U001"}],
+        )
 
     def test_create_order_stamps_org_id_from_authenticated_context(self):
         with patch("backend.services.tool_io_service.ensure_tool_io_tables"), patch(
@@ -331,15 +393,30 @@ class ToolIOFinalConfirmationServiceTests(unittest.TestCase):
 class ToolIONotificationUsageTests(unittest.TestCase):
     def test_get_notification_records_returns_order_notifications(self):
         with patch(
-            "backend.services.tool_io_service.get_order_detail",
-            return_value={"order_no": "TO-005"},
+            "backend.services.tool_io_service._load_order_scope_projection",
+            return_value={"order_no": "TO-005", "order_status": "submitted", "initiator_id": "U001"},
+        ), patch(
+            "backend.services.tool_io_service._is_order_accessible",
+            return_value=True,
         ), patch(
             "backend.services.tool_io_service.list_notifications_by_order",
             return_value={"success": True, "data": [{"notify_type": "transport_notice"}]},
         ):
-            result = get_notification_records("TO-005")
+            result = get_notification_records("TO-005", current_user={"user_id": "U001"})
 
         self.assertEqual(result, {"success": True, "data": [{"notify_type": "transport_notice"}]})
+
+    def test_get_notification_records_returns_not_found_when_scope_rejects_order(self):
+        with patch(
+            "backend.services.tool_io_service._load_order_scope_projection",
+            return_value={"order_no": "TO-005"},
+        ), patch(
+            "backend.services.tool_io_service._is_order_accessible",
+            return_value=False,
+        ):
+            result = get_notification_records("TO-005", current_user={"user_id": "U001"})
+
+        self.assertEqual(result, {"success": False, "error": "order not found", "data": []})
 
     def test_get_order_detail_returns_empty_when_scope_rejects_order(self):
         with patch(

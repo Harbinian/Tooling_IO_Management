@@ -21,19 +21,19 @@ const props = defineProps({
 
 <template>
   <div :class="cn('grid gap-4 md:grid-cols-2 lg:grid-cols-3', props.class)">
-    <Card v-for="(item, index) in features" :key="index" class="flex flex-col border-dashed hover:border-solid bg-white/50 backdrop-blur-sm border-slate-200/60 hover:bg-white transition-all">
+    <Card v-for="(item, index) in features" :key="index" class="flex flex-col border-dashed hover:border-solid bg-card/50 backdrop-blur-sm border-border hover:bg-card transition-all">
       <CardHeader>
-        <div v-if="item.icon" class="mb-3 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-900 text-white shadow-lg shadow-slate-200/50">
+        <div v-if="item.icon" class="mb-3 w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
           <component :is="item.icon" class="h-5 w-5" />
         </div>
-        <CardTitle class="text-base font-bold text-slate-900 tracking-tight">{{ item.title }}</CardTitle>
+        <CardTitle class="text-base font-bold text-foreground tracking-tight">{{ item.title }}</CardTitle>
       </CardHeader>
       <CardContent class="flex-1 flex flex-col justify-between">
-        <p class="text-[13px] leading-relaxed text-slate-500 mb-6">
+        <p class="text-[13px] leading-relaxed text-muted-foreground mb-6">
           {{ item.description }}
         </p>
         <router-link :to="item.link" class="mt-auto">
-          <Button variant="outline" size="sm" class="w-full justify-center font-bold text-slate-600 border-slate-200/60 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all">
+          <Button variant="outline" size="sm" class="w-full justify-center font-bold text-muted-foreground border-border hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
             {{ item.actionText }}
           </Button>
         </router-link>

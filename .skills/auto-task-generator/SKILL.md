@@ -78,19 +78,26 @@ Examples:
 - 仪表盘改进 / Dashboard improvement
 - 组件迁移 / Component migration
 
-提示词范围：
+提示词编号范围（必须使用5位）：
 
-Prompt range:
+Prompt numbering range (must use 5 digits):
 
-000–099
+| 范围 | 类别 |
+|------|------|
+| 00001–09999 | 功能开发 / Feature Development |
+| 10001–19999 | Bug 修复 / Bug Fix |
+| 20001–29999 | 重构 / Refactoring |
+| 30001–39999 | 测试 / Testing |
 
 执行器：
 
 Executor:
 
-Gemini → 前端任务 / frontend tasks
-Codex → 后端任务 / backend tasks
-Claude Code → 架构任务 / architecture tasks
+| 执行器 | 职责范围 |
+|--------|---------|
+| Gemini | 前端设计 / Frontend Design |
+| Codex | 后端实现 / Backend Implementation |
+| Claude Code | 架构任务 / Architecture Tasks |
 
 ---
 
@@ -106,18 +113,23 @@ Examples:
 - UI 渲染错误 / Incorrect UI rendering
 - 数据加载失败 / Data loading failures
 
-提示词范围：
+提示词编号范围（必须使用5位）：
 
-Prompt range:
+Prompt numbering range (must use 5 digits):
 
-100–199
+| 范围 | 类别 |
+|------|------|
+| 10001–19999 | Bug 修复 / Bug Fix |
 
 执行器取决于问题位置：
 
 Executor depends on the problem location.
 
-前端问题 → Gemini / Frontend issue → Gemini
-后端问题 → Codex / Backend issue → Codex
+| 问题位置 | 执行器 |
+|---------|--------|
+| 前端问题 / Frontend issue | Gemini (设计), Codex (实现) |
+| 后端问题 / Backend issue | Codex |
+| 数据库问题 / Database issue | Codex |
 
 ---
 
@@ -132,17 +144,21 @@ Examples:
 - 重复代码提取 / Duplicate code extraction
 - 技术债务清理 / Tech debt cleanup
 
-提示词范围：
+提示词编号范围（必须使用5位）：
 
-Prompt range:
+Prompt numbering range (must use 5 digits):
 
-200–299
+| 范围 | 类别 |
+|------|------|
+| 20001–29999 | 重构 / Refactoring |
 
 执行器：
 
 Executor:
 
-Claude Code → 重构任务 (架构变更) / Refactoring tasks (architecture changes)
+| 执行器 | 职责范围 |
+|--------|---------|
+| Claude Code | 架构变更、重构任务 / Architecture changes, Refactoring tasks |
 
 ---
 
@@ -157,32 +173,74 @@ Examples:
 - 端到端测试覆盖 / E2E test coverage
 - 回归测试套件 / Regression test suite
 
-提示词范围：
+提示词编号范围（必须使用5位）：
 
-Prompt range:
+Prompt numbering range (must use 5 digits):
 
-300–399
+| 范围 | 类别 |
+|------|------|
+| 30001–39999 | 测试 / Testing |
 
 执行器：
 
 Executor:
 
-Codex → 测试任务 / Testing tasks
+| 执行器 | 职责范围 |
+|--------|---------|
+| Codex | 测试任务 / Testing tasks |
+
+---
+
+## 统一执行规则 / Unified Execution Rule
+
+除非任务涉及以下情况，否则统一由 Claude Code 执行：
+
+| 任务类型 | 例外条件 | 执行者 |
+|---------|---------|--------|
+| 功能任务 (00001-09999) | 前端设计大改 | Claude Code |
+| Bug 修复 (10001-19999) | P0/P1 恶性bug、架构级bug | Claude Code |
+| 重构任务 (20001-29999) | 始终由 Claude Code 执行 | Claude Code |
+| 测试任务 (30001-39999) | 始终由 Claude Code 执行 | Claude Code |
+
+### 简化任务判定标准 / Simple Task Criteria
+
+以下情况视为"简化任务"，由 Claude Code 直接执行：
+
+- 参数类型不匹配修复
+- API 调用参数提取错误
+- 简单函数签名修正
+- docstring 更新
+- 文档同步
+- 单文件/单函数修改
+- 不涉及架构变更的 bug 修复
+
+### 恶性 Bug 定义 / Malignant Bug Definition
+
+以下情况视为"恶性 Bug"：
+
+- P0 级别：系统无法运行、数据损坏风险
+- P1 级别：核心功能损坏、API 不可用、工作流阻塞
+
+### Claude Code 执行优势
+
+- 无需跨模型协调
+- 直接执行减少流程开销
+- 保持上下文连贯性
 
 ---
 
 # 自动提示词编号 / Automatic Prompt Numbering
 
-系统必须根据任务类型选择正确的编号范围：
+系统必须根据任务类型选择正确的编号范围（必须使用5位格式）：
 
-The system must select the correct numbering range based on task type:
+The system must select the correct numbering range based on task type (must use 5-digit format):
 
 | 任务类型 / Task Type | 编号范围 / Number Range |
 |---------------------|----------------------|
-| 功能开发 / Feature Development | 000–099 |
-| Bug 修复 / Bug Fix | 100–199 |
-| 重构 / Refactoring | 200–299 |
-| 测试 / Testing | 300–399 |
+| 功能开发 / Feature Development | 00001–09999 |
+| Bug 修复 / Bug Fix | 10001–19999 |
+| 重构 / Refactoring | 20001–29999 |
+| 测试 / Testing | 30001–39999 |
 
 编号分配规则 / Number Assignment Rules:
 
@@ -194,11 +252,11 @@ The system must select the correct numbering range based on task type:
 
 Example:
 
-最新功能提示词：023 / Latest feature prompt: 023
-下一个功能提示词：024 / Next feature prompt: 024
+最新功能提示词：00017 / Latest feature prompt: 00017
+下一个功能提示词：00018 / Next feature prompt: 00018
 
-最新 Bug 提示词：103 / Latest bug prompt: 103
-下一个 Bug 提示词：104 / Next bug prompt: 104
+最新 Bug 提示词：10101 / Latest bug prompt: 10101
+下一个 Bug 提示词：10102 / Next bug prompt: 10102
 
 ---
 
@@ -208,16 +266,28 @@ Example:
 
 Generated prompts must follow the exact project specification.
 
-提示词头部：
+提示词头部（必须使用5位编号）：
 
-Prompt Header:
+Prompt Header (must use 5-digit numbering):
 
-Primary Executor / 主要执行器
-Task Type / 任务类型 (Feature Development | Bug Fix | Refactoring | Testing)
-Priority / 优先级 (P0 | P1 | P2)
-Stage / 阶段
-Goal / 目标
-Dependencies / 依赖 ("None" 或提示词编号列表)
+Primary Executor: <Agent>
+Task Type: <Feature Development | Bug Fix | Refactoring | Testing>
+Priority: <P0 | P1 | P2>
+Stage: <5-digit Prompt Number>
+Goal: <One-line description>
+Dependencies: <"None" or list of prompt numbers that must complete first>
+Execution: RUNPROMPT
+
+示例：
+
+Example:
+
+Primary Executor: Gemini
+Task Type: Feature Development
+Priority: P1
+Stage: 00017
+Goal: Migrate order list page UI to Element Plus
+Dependencies: None
 Execution: RUNPROMPT
 
 必需章节：
@@ -296,10 +366,10 @@ The system must NOT:
 
 - 不经分析就生成提示词 / Generate prompts without analysis
 - 违反编号规则 / Break numbering rules:
-  - 000–099 = Feature Development
-  - 100–199 = Bug Fix
-  - 200–299 = Refactoring
-  - 300–399 = Testing
+  - 00001–09999 = Feature Development
+  - 10001–19999 = Bug Fix
+  - 20001–29999 = Refactoring
+  - 30001–39999 = Testing
 - 跳过必需的提示词章节 / Skip required prompt sections
 - 跳过优先级声明 (P0/P1/P2) / Skip priority declaration (P0/P1/P2)
 - 假设数据库架构 / Assume database schema

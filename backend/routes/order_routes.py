@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 @order_bp.route("/api/tool-io-orders", methods=["GET"])
-@require_permission("order:list")
+@require_permission("order:list")  # TEAM_LEADER, KEEPER
 def api_tool_io_orders_list():
     try:
         from backend.services.tool_io_service import list_orders
@@ -49,7 +49,7 @@ def api_tool_io_orders_list():
 
 
 @order_bp.route("/api/tool-io-orders", methods=["POST"])
-@require_permission("order:create")
+@require_permission("order:create")  # TEAM_LEADER
 def api_tool_io_orders_create():
     try:
         from backend.services.tool_io_service import create_order
@@ -65,7 +65,7 @@ def api_tool_io_orders_create():
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>", methods=["GET"])
-@require_permission("order:view")
+@require_permission("order:view")  # TEAM_LEADER, KEEPER
 def api_tool_io_order_detail(order_no):
     try:
         from backend.services.tool_io_service import get_order_detail
@@ -79,8 +79,32 @@ def api_tool_io_order_detail(order_no):
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
+@order_bp.route("/api/tool-io-orders/<order_no>", methods=["PUT"])
+@require_permission("order:submit")  # TEAM_LEADER
+def api_tool_io_order_update(order_no):
+    """Update order content (items, remark) when order is in draft status."""
+    try:
+        from backend.services.tool_io_service import update_order
+
+        result = update_order(
+            order_no,
+            get_json_dict(required=True),
+            current_user=get_authenticated_user(),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        return jsonify(result), 400
+    except ValueError as exc:
+        return validation_error(str(exc))
+    except Exception as exc:
+        logger.error("failed to update order %s: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
 @order_bp.route("/api/tool-io-orders/<order_no>/submit", methods=["POST"])
-@require_permission("order:submit")
+@require_permission("order:submit")  # TEAM_LEADER
 def api_tool_io_order_submit(order_no):
     try:
         from backend.services.tool_io_service import submit_order
@@ -103,7 +127,7 @@ def api_tool_io_order_submit(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/keeper-confirm", methods=["POST"])
-@require_permission("order:keeper_confirm")
+@require_permission("order:keeper_confirm")  # KEEPER
 def api_tool_io_order_keeper_confirm(order_no):
     try:
         from backend.services.tool_io_service import keeper_confirm
@@ -125,7 +149,7 @@ def api_tool_io_order_keeper_confirm(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/final-confirm", methods=["POST"])
-@require_permission("order:final_confirm")
+@require_permission("order:final_confirm")  # TEAM_LEADER
 def api_tool_io_order_final_confirm(order_no):
     try:
         from backend.services.tool_io_service import final_confirm
@@ -148,7 +172,7 @@ def api_tool_io_order_final_confirm(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/final-confirm-availability", methods=["GET"])
-@require_permission("order:view")
+@require_permission("order:view")  # TEAM_LEADER, KEEPER
 def api_tool_io_order_final_confirm_availability(order_no):
     try:
         from backend.services.tool_io_service import get_final_confirm_availability
@@ -163,7 +187,7 @@ def api_tool_io_order_final_confirm_availability(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/assign-transport", methods=["POST"])
-@require_permission("order:keeper_confirm")
+@require_permission("order:keeper_confirm")  # KEEPER
 def api_tool_io_order_assign_transport(order_no):
     try:
         from backend.services.tool_io_service import assign_transport
@@ -186,7 +210,7 @@ def api_tool_io_order_assign_transport(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/transport-start", methods=["POST"])
-@require_permission("order:transport_execute")
+@require_permission("order:transport_execute")  # KEEPER
 def api_tool_io_order_transport_start(order_no):
     try:
         from backend.services.tool_io_service import start_transport
@@ -209,7 +233,7 @@ def api_tool_io_order_transport_start(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/transport-complete", methods=["POST"])
-@require_permission("order:transport_execute")
+@require_permission("order:transport_execute")  # KEEPER
 def api_tool_io_order_transport_complete(order_no):
     try:
         from backend.services.tool_io_service import complete_transport
@@ -231,8 +255,73 @@ def api_tool_io_order_transport_complete(order_no):
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
+@order_bp.route("/api/tool-io-orders/<order_no>/report-transport-issue", methods=["POST"])
+@require_permission("order:transport_execute")  # PRODUCTION_PREP/KEEPER
+def api_tool_io_order_report_transport_issue(order_no):
+    try:
+        from backend.services.transport_issue_service import report_transport_issue
+
+        result = report_transport_issue(
+            order_no,
+            get_json_dict(required=True),
+            current_user=get_authenticated_user(),
+        )
+        if result.get("success"):
+            return jsonify(result), 201
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        return jsonify(result), 400
+    except ValueError as exc:
+        return validation_error(str(exc))
+    except Exception as exc:
+        logger.error("failed to report transport issue for %s: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@order_bp.route("/api/tool-io-orders/<order_no>/transport-issues", methods=["GET"])
+@require_permission("order:view")  # TEAM_LEADER, KEEPER, PLANNER, AUDITOR
+def api_tool_io_order_transport_issues(order_no):
+    try:
+        from backend.services.transport_issue_service import get_transport_issues
+
+        result = get_transport_issues(order_no, current_user=get_authenticated_user())
+        if result.get("success"):
+            return jsonify(result)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        return jsonify(result), 400
+    except Exception as exc:
+        logger.error("failed to query transport issues for %s: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@order_bp.route("/api/tool-io-orders/<order_no>/resolve-transport-issue", methods=["POST"])
+@require_permission("order:keeper_confirm")  # KEEPER
+def api_tool_io_order_resolve_transport_issue(order_no):
+    try:
+        from backend.services.transport_issue_service import resolve_transport_issue
+
+        result = resolve_transport_issue(
+            order_no,
+            get_json_dict(required=True),
+            current_user=get_authenticated_user(),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        if result.get("error") == "issue not found":
+            return jsonify(result), 404
+        return jsonify(result), 400
+    except ValueError as exc:
+        return validation_error(str(exc))
+    except Exception as exc:
+        logger.error("failed to resolve transport issue for %s: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
 @order_bp.route("/api/tool-io-orders/<order_no>/reject", methods=["POST"])
-@require_permission("order:cancel")
+@require_permission("order:cancel")  # TEAM_LEADER, KEEPER
 def api_tool_io_order_reject(order_no):
     try:
         from backend.services.tool_io_service import reject_order
@@ -253,8 +342,31 @@ def api_tool_io_order_reject(order_no):
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
+@order_bp.route("/api/tool-io-orders/<order_no>/reset-to-draft", methods=["POST"])
+@require_permission("order:submit")  # TEAM_LEADER
+def api_tool_io_order_reset_to_draft(order_no):
+    try:
+        from backend.services.tool_io_service import reset_order_to_draft
+
+        result = reset_order_to_draft(
+            order_no,
+            build_actor_payload(get_json_dict(required=True)),
+            current_user=get_authenticated_user(),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        return jsonify(result), 400
+    except ValueError as exc:
+        return validation_error(str(exc))
+    except Exception as exc:
+        logger.error("failed to reset order %s to draft: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
 @order_bp.route("/api/tool-io-orders/<order_no>/cancel", methods=["POST"])
-@require_permission("order:cancel")
+@require_permission("order:cancel")  # TEAM_LEADER, KEEPER
 def api_tool_io_order_cancel(order_no):
     try:
         from backend.services.tool_io_service import cancel_order
@@ -276,8 +388,31 @@ def api_tool_io_order_cancel(order_no):
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
+@order_bp.route("/api/tool-io-orders/<order_no>", methods=["DELETE"])
+@require_permission("order:delete")  # ADMIN only
+def api_tool_io_order_delete(order_no):
+    try:
+        from backend.services.tool_io_service import delete_order
+
+        result = delete_order(
+            order_no,
+            build_actor_payload(get_json_dict(required=True)),
+            current_user=get_authenticated_user(),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        return jsonify(result), 400
+    except ValueError as exc:
+        return validation_error(str(exc))
+    except Exception as exc:
+        logger.error("failed to delete order %s: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
 @order_bp.route("/api/tool-io-orders/<order_no>/logs", methods=["GET"])
-@require_permission("order:view")
+@require_permission("order:view")  # TEAM_LEADER, KEEPER
 def api_tool_io_order_logs(order_no):
     try:
         from backend.services.tool_io_service import get_order_logs
@@ -290,20 +425,26 @@ def api_tool_io_order_logs(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/notification-records", methods=["GET"])
-@require_permission("notification:view")
+@require_permission("notification:view")  # TEAM_LEADER, KEEPER, PLANNER, AUDITOR
 def api_tool_io_order_notification_records(order_no):
     try:
         from backend.services.tool_io_service import get_notification_records
 
         result = get_notification_records(order_no, current_user=get_authenticated_user())
-        return jsonify(result) if result.get("success") else (jsonify(result), 404)
+        if result.get("success"):
+            return jsonify(result)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        if result.get("error") == "authentication required":
+            return jsonify(result), 401
+        return jsonify(result), 500
     except Exception as exc:
         logger.error("failed to load notification records %s: %s", order_no, exc)
         return jsonify({"success": False, "error": str(exc), "data": []}), 500
 
 
 @order_bp.route("/api/notifications", methods=["GET"])
-@require_permission("notification:view")
+@require_permission("notification:view")  # TEAM_LEADER, KEEPER, PLANNER, AUDITOR
 def api_notifications_list():
     try:
         from backend.services.tool_io_service import get_current_user_notifications
@@ -325,7 +466,7 @@ def api_notifications_list():
 
 
 @order_bp.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
-@require_permission("notification:view")
+@require_permission("notification:view")  # TEAM_LEADER, KEEPER, PLANNER, AUDITOR
 def api_notification_mark_read(notification_id):
     try:
         from backend.services.tool_io_service import mark_current_user_notification_read
@@ -342,7 +483,7 @@ def api_notification_mark_read(notification_id):
 
 
 @order_bp.route("/api/tool-io-orders/pending-keeper", methods=["GET"])
-@require_permission("order:keeper_confirm")
+@require_permission("order:keeper_confirm")  # KEEPER
 def api_tool_io_orders_pending_keeper():
     try:
         from backend.services.tool_io_service import get_pending_keeper_list
@@ -354,8 +495,23 @@ def api_tool_io_orders_pending_keeper():
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
+@order_bp.route("/api/tool-io-orders/pre-transport", methods=["GET"])
+@require_permission("order:transport_execute")  # PRODUCTION_PREP/KEEPER
+def api_tool_io_orders_pre_transport():
+    try:
+        from backend.services.tool_io_service import get_pre_transport_orders
+
+        result = get_pre_transport_orders(current_user=get_authenticated_user())
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+    except Exception as exc:
+        logger.error("failed to load pre-transport orders: %s", exc)
+        return jsonify({"success": False, "error": str(exc), "orders": []}), 500
+
+
 @order_bp.route("/api/tool-io-orders/<order_no>/generate-keeper-text", methods=["GET"])
-@require_permission("notification:create")
+@require_permission("notification:create")  # KEEPER
 def api_generate_keeper_text(order_no):
     try:
         from backend.services.tool_io_service import generate_keeper_text
@@ -370,7 +526,7 @@ def api_generate_keeper_text(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/generate-transport-text", methods=["GET"])
-@require_permission("notification:create")
+@require_permission("notification:create")  # KEEPER
 def api_generate_transport_text(order_no):
     try:
         from backend.services.tool_io_service import generate_transport_text
@@ -378,14 +534,17 @@ def api_generate_transport_text(order_no):
         result = generate_transport_text(order_no, current_user=get_authenticated_user())
         if result.get("success"):
             return jsonify(result)
-        return jsonify(result), 404 if result.get("error") == "order not found" else 400
+        # Return 200 with error message for business logic errors (e.g., no approved items)
+        if result.get("error") == "order not found":
+            return jsonify(result), 404
+        return jsonify(result), 200  # Return 200 with success: false for business errors
     except Exception as exc:
         logger.error("failed to generate transport text %s: %s", order_no, exc)
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/notify-transport", methods=["POST"])
-@require_permission("notification:send_feishu")
+@require_permission("notification:send_feishu")  # KEEPER
 def api_notify_transport(order_no):
     try:
         from backend.services.tool_io_service import notify_transport
@@ -408,7 +567,7 @@ def api_notify_transport(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/notify-keeper", methods=["POST"])
-@require_permission("notification:send_feishu")
+@require_permission("notification:send_feishu")  # KEEPER
 def api_notify_keeper(order_no):
     try:
         from backend.services.tool_io_service import notify_keeper

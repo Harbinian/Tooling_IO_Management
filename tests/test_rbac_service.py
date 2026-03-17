@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+from unittest.mock import Mock
 from unittest.mock import patch
 
 sys.modules.setdefault("pyodbc", types.SimpleNamespace(Connection=object, connect=lambda *args, **kwargs: None))
@@ -11,6 +12,33 @@ from backend.services import rbac_service
 
 
 class RBACServiceTests(unittest.TestCase):
+    def test_incremental_defaults_add_team_leader_order_view_permission(self):
+        db = Mock()
+
+        rbac_service._ensure_incremental_permission_defaults(db)
+
+        executed_sql = "\n".join(call.args[0] for call in db.execute_query.call_args_list)
+        self.assertIn("ROLE_TEAM_LEADER", executed_sql)
+        self.assertIn("order:view", executed_sql)
+
+    def test_incremental_defaults_add_admin_delete_permission_for_upgraded_envs(self):
+        db = Mock()
+
+        rbac_service._ensure_incremental_permission_defaults(db)
+
+        executed_sql = "\n".join(call.args[0] for call in db.execute_query.call_args_list)
+        self.assertIn("order:delete", executed_sql)
+        self.assertIn("ROLE_SYS_ADMIN", executed_sql)
+
+    def test_incremental_defaults_add_keeper_feishu_permission_for_upgraded_envs(self):
+        db = Mock()
+
+        rbac_service._ensure_incremental_permission_defaults(db)
+
+        executed_sql = "\n".join(call.args[0] for call in db.execute_query.call_args_list)
+        self.assertIn("ROLE_KEEPER", executed_sql)
+        self.assertIn("notification:send_feishu", executed_sql)
+
     def test_load_user_roles_returns_normalized_assignments(self):
         with patch("backend.services.org_service.ensure_org_tables"), patch(
             "backend.services.rbac_service.DatabaseManager.execute_query",

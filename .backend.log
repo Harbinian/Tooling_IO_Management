@@ -1,0 +1,1024 @@
+2026-03-25 14:13:43,752 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+ * Serving Flask app 'web_server'
+ * Debug mode: on
+2026-03-25 14:13:44,070 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://26.26.26.1:5000
+2026-03-25 14:13:44,071 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2026-03-25 14:13:44,097 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 14:13:44,664 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 14:13:44,697 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 14:13:44,720 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 15:14:11,335 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 15:14:11,394 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 15:14:11,935 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 15:14:11,966 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 15:14:11,986 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 16:49:32,243 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_query_service.py', reloading
+2026-03-25 16:49:32,288 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 16:49:32,914 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 16:49:32,950 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 16:49:32,973 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:02:32,162 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 17:02:32,193 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:02:32,735 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:02:32,768 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:02:32,789 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:02:41,928 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_runtime.py', reloading
+2026-03-25 17:02:41,958 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:02:42,501 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:02:42,537 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:02:42,559 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:03:06,449 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_runtime.py', reloading
+2026-03-25 17:03:06,479 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:03:07,038 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:03:07,072 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:03:07,094 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:03:22,598 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_runtime.py', reloading
+2026-03-25 17:03:22,628 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:03:23,161 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:03:23,195 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:03:23,215 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:22:09,222 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:22:09,253 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:22:09,801 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:22:09,837 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:22:09,859 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:22:28,518 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:22:28,544 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:22:29,063 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:22:29,096 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:22:29,116 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:22:37,947 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:22:37,973 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:22:38,494 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:22:38,527 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:22:38,548 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:22:48,887 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:22:48,914 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:22:49,438 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:22:49,470 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:22:49,490 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:24:05,785 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:24:05,828 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:24:06,483 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:24:06,521 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:24:06,545 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:24:31,818 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:24:31,848 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:24:32,423 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:24:32,466 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:24:32,488 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:24:44,350 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:24:44,380 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:24:44,938 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:24:44,972 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:24:44,994 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:25:16,684 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 17:25:16,712 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:25:17,288 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:25:17,321 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:25:17,342 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:25:43,575 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:25:43,607 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:25:44,187 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:25:44,222 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:25:44,246 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:25:55,201 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 17:25:55,231 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:25:55,776 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:25:55,825 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:25:55,851 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:50:34,559 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\rbac_data_scope_service.py', reloading
+2026-03-25 17:50:34,588 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:50:35,139 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:50:35,174 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:50:35,196 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 17:51:39,343 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\rbac_data_scope_service.py', reloading
+2026-03-25 17:51:39,374 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 17:51:39,953 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 17:51:39,992 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 17:51:40,014 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:11:03,107 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:11:03,135 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:11:03,716 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:11:03,754 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:11:03,775 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:11:13,733 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:11:13,761 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:11:14,320 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:11:14,358 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:11:14,381 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:11:23,808 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:11:23,837 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:11:24,384 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:11:24,419 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:11:24,440 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:13:28,295 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:13:28,326 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:13:28,915 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:13:28,948 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:13:28,971 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:18:45,917 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:18:45,945 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:18:46,466 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:18:46,498 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:18:46,518 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:19:50,108 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:19:50,135 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:19:50,634 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:19:50,663 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:19:50,680 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:20:12,917 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:20:12,945 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:20:13,469 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:20:13,499 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:20:13,517 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:21:19,625 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 18:21:19,652 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:21:20,187 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:21:20,225 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:21:20,246 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:58:10,378 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 18:58:10,413 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:58:11,009 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:58:11,045 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:58:11,068 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:58:27,354 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 18:58:27,383 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:58:27,944 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:58:27,980 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:58:28,001 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:59:13,866 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 18:59:13,894 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:59:14,443 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:59:14,477 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:59:14,499 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:59:37,300 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 18:59:37,333 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:59:37,907 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:59:37,941 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:59:37,962 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 18:59:56,096 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 18:59:56,124 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 18:59:56,658 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 18:59:56,692 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 18:59:56,712 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:00:26,328 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 19:00:26,355 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:00:26,888 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:00:26,922 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:00:26,943 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:00:54,666 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 19:00:54,695 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:00:55,219 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:00:55,252 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:00:55,272 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:01:12,874 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 19:01:12,901 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:01:13,428 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:01:13,459 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:01:13,480 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:01:52,875 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 19:01:52,905 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:01:53,438 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:01:53,473 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:01:53,495 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:02:09,891 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 19:02:09,918 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:02:10,452 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:02:10,486 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:02:10,507 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:24:03,584 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-25 19:24:03,613 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:24:04,178 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:24:04,213 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:24:04,234 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:24:21,483 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-25 19:24:21,509 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:24:22,062 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:24:22,097 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:24:22,119 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:24:40,959 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-25 19:24:40,992 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:24:41,568 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:24:41,602 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:24:41,623 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:25:00,334 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-25 19:25:00,363 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:25:00,942 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:25:00,975 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:25:00,993 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:25:31,431 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-25 19:25:31,463 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:25:31,985 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:25:32,018 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:25:32,037 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:33:39,476 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\schema_manager.py', reloading
+2026-03-25 19:33:39,507 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:33:40,114 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:33:40,152 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:33:40,175 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:34:29,791 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:34:29,819 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:34:30,395 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:34:30,434 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:34:30,459 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:34:42,114 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:34:42,143 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:34:42,707 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:34:42,744 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:34:42,766 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:35:00,019 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:35:00,047 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:35:00,561 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:35:00,595 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:35:00,617 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:35:12,117 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:35:12,147 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:35:12,687 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:35:12,723 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:35:12,744 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:35:21,349 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:35:21,380 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:35:21,885 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:35:21,916 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:35:21,935 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:35:32,624 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:35:32,653 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:35:33,214 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:35:33,250 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:35:33,269 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:35:57,461 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:35:57,487 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:35:57,991 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:35:58,024 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:35:58,043 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:36:07,113 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 19:36:07,143 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:36:07,696 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:36:07,729 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:36:07,750 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:36:44,159 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\transport_issue_repository.py', reloading
+2026-03-25 19:36:44,187 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:36:44,729 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:36:44,766 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:36:44,793 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:37:02,121 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-25 19:37:02,148 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:37:02,684 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:37:02,719 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:37:02,742 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:37:18,350 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-25 19:37:18,379 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:37:18,939 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:37:18,973 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:37:18,994 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:37:49,712 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\notification_service.py', reloading
+2026-03-25 19:37:49,742 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:37:50,263 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:37:50,297 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:37:50,317 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:38:06,571 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\notification_service.py', reloading
+2026-03-25 19:38:06,598 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:38:07,136 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:38:07,170 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:38:07,190 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:38:31,134 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\feishu_notification_adapter.py', reloading
+2026-03-25 19:38:31,161 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:38:31,691 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:38:31,725 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:38:31,745 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:41:28,017 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\tests\\test_order_repository.py', reloading
+2026-03-25 19:41:28,046 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:41:28,573 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:41:28,607 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:41:28,628 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:44:40,147 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-25 19:44:40,177 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:44:40,744 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:44:40,778 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:44:40,799 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:48:26,016 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_location_service.py', reloading
+2026-03-25 19:48:26,051 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:48:26,639 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:48:26,671 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:48:26,692 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:48:38,461 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_location_service.py', reloading
+2026-03-25 19:48:38,494 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:48:39,059 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:48:39,094 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:48:39,116 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:49:04,251 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_location_service.py', reloading
+2026-03-25 19:49:04,279 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:49:04,826 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:49:04,862 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:49:04,884 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 19:49:14,824 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\tool_repository.py', reloading
+2026-03-25 19:49:14,852 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 19:49:15,392 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 19:49:15,425 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 19:49:15,445 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:42:08,931 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:42:08,964 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:42:09,525 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:42:09,558 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:42:09,578 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:42:17,908 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:42:17,934 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:42:18,425 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:42:18,455 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:42:18,473 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:42:33,759 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:42:33,784 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:42:34,271 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:42:34,301 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:42:34,319 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:42:54,969 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:42:54,999 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:42:55,481 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:42:55,510 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:42:55,528 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:43:02,812 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:43:02,855 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:43:03,386 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:43:03,415 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:43:03,433 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:43:17,274 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:43:17,299 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:43:17,803 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:43:17,834 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:43:17,851 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:43:33,478 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:43:33,505 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:43:33,992 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:43:34,028 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:43:34,046 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:43:42,631 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:43:42,665 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:43:43,191 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:43:43,221 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:43:43,239 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:43:52,838 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:43:52,864 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:43:53,379 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:43:53,409 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:43:53,427 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:44:07,765 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:44:07,791 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:44:08,293 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:44:08,323 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:44:08,342 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:44:17,773 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:44:17,800 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:44:18,281 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:44:18,312 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:44:18,329 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:44:26,275 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:44:26,302 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:44:26,789 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:44:26,818 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:44:26,837 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:44:40,480 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:44:40,507 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:44:40,995 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:44:41,026 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:44:41,043 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:46:09,448 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\tool_repository.py', reloading
+2026-03-25 20:46:09,476 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:46:09,963 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:46:09,994 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:46:10,012 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:46:17,974 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\tool_repository.py', reloading
+2026-03-25 20:46:18,009 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:46:18,615 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:46:18,649 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:46:18,668 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 20:59:55,126 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 20:59:55,155 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 20:59:55,701 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 20:59:55,734 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 20:59:55,756 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-25 21:00:05,368 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-25 21:00:05,397 - werkzeug - INFO -  * Restarting with stat
+2026-03-25 21:00:05,967 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-25 21:00:06,006 - werkzeug - WARNING -  * Debugger is active!
+2026-03-25 21:00:06,029 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 11:42:03,838 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\tool_repository.py', reloading
+2026-03-26 11:42:03,867 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 11:42:04,420 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 11:42:04,454 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 11:42:04,475 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 11:42:32,582 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\core\\database_manager.py', reloading
+2026-03-26 11:42:32,629 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 11:42:33,213 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 11:42:33,249 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 11:42:33,271 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 11:43:08,155 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_location_service.py', reloading
+2026-03-26 11:43:08,198 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 11:43:08,809 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 11:43:08,846 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 11:43:08,869 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 11:43:33,784 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\core\\database_manager.py', reloading
+2026-03-26 11:43:33,822 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 11:43:34,389 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 11:43:34,423 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 11:43:34,445 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 11:48:39,995 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\database.py', reloading
+2026-03-26 11:48:40,031 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 11:48:40,622 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 11:48:40,662 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 11:48:40,684 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 11:52:46,918 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:52:46] "[33mGET / HTTP/1.1[0m" 404 -
+2026-03-26 11:52:46,987 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:52:46] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 11:53:01,192 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:53:01] "[33mGET / HTTP/1.1[0m" 404 -
+2026-03-26 11:53:05,297 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:53:05] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2026-03-26 11:54:06,663 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:54:06] "[33mGET / HTTP/1.1[0m" 404 -
+2026-03-26 11:54:06,689 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:54:06] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2026-03-26 11:54:11,052 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:54:11] "[33mGET / HTTP/1.1[0m" 404 -
+2026-03-26 11:54:11,365 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 11:54:11] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2026-03-26 12:20:39,276 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-26 12:20:39,309 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 12:20:39,876 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 12:20:39,915 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 12:20:39,937 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 13:22:22,204 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\column_names.py', reloading
+2026-03-26 13:22:22,234 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 13:22:22,761 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 13:22:22,794 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 13:22:22,814 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 13:24:48,960 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\rbac_service.py', reloading
+2026-03-26 13:24:48,989 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 13:24:49,530 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 13:24:49,563 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 13:24:49,585 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 13:28:55,808 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\database.py', reloading
+2026-03-26 13:28:55,847 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 13:28:56,348 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 13:28:56,378 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 13:28:56,399 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 13:29:06,840 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 13:29:06,878 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 13:29:07,459 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 13:29:07,496 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 13:29:07,520 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 13:48:47,095 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 13:48:47,126 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 13:48:47,697 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 13:48:47,737 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 13:48:47,760 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 13:57:38,329 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 13:57:38,362 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 13:57:38,931 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 13:57:38,966 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 13:57:38,989 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:05:35,444 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 14:05:35,473 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:05:35,996 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:05:36,029 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:05:36,050 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:10:46,815 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:10:46,844 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:10:47,389 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:10:47,422 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:10:47,443 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:11:04,515 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:11:04,547 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:11:05,138 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:11:05,174 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:11:05,197 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:11:30,785 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:11:30,817 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:11:31,389 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:11:31,447 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:11:31,469 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:14:33,864 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:14:33,897 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:14:34,471 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:14:34,504 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:14:34,526 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:20:23,860 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:20:23,904 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:20:24,482 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:20:24,519 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:20:24,540 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:20:59,251 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:20:59,292 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:20:59,851 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:20:59,887 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:20:59,911 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 14:24:07,371 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\CSTM\\CeSoftMonitor\\generate_inspection_plan.py', reloading
+2026-03-26 14:24:07,413 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 14:24:07,942 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 14:24:07,976 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 14:24:07,998 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 15:18:42,874 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\notification_service.py', reloading
+2026-03-26 15:18:42,902 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 15:18:43,453 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 15:18:43,490 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 15:18:43,511 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 16:59:06,221 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_location_service.py', reloading
+2026-03-26 16:59:06,298 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 16:59:07,406 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 16:59:07,468 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 16:59:07,506 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:03:47,888 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-26 17:03:47,920 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:03:48,448 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:03:48,477 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:03:48,497 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:04:04,287 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\database.py', reloading
+2026-03-26 17:04:04,316 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:04:04,833 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:04:04,865 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:04:04,885 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:04:21,073 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 17:04:21,104 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:04:21,589 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:04:21,620 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:04:21,639 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:07:00,542 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\routes\\order_routes.py', reloading
+2026-03-26 17:07:00,575 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:07:01,104 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:07:01,135 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:07:01,157 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:19:47,384 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\routes\\order_routes.py', reloading
+2026-03-26 17:19:47,426 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:19:47,963 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:19:47,995 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:19:48,013 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:20:07,285 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 17:20:07,325 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:20:07,816 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:20:07,846 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:20:07,864 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:20:48,585 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-26 17:20:48,624 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:20:49,137 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:20:49,165 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:20:49,183 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:23:26,301 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-26 17:23:26,342 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:23:26,983 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:23:27,016 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:23:27,040 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:28:07,560 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\notification_service.py', reloading
+2026-03-26 17:28:07,586 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:28:08,064 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:28:08,094 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:28:08,111 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:28:22,878 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\feishu_notification_adapter.py', reloading
+2026-03-26 17:28:22,907 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:28:23,390 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:28:23,419 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:28:23,438 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:28:37,946 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\transport_issue_service.py', reloading
+2026-03-26 17:28:37,972 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:28:38,454 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:28:38,483 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:28:38,502 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:28:59,495 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\transport_issue_repository.py', reloading
+2026-03-26 17:28:59,530 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:29:00,019 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:29:00,050 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:29:00,067 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:29:36,653 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-26 17:29:36,685 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:29:37,169 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:29:37,199 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:29:37,216 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:29:56,549 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\schema\\schema_manager.py', reloading
+2026-03-26 17:29:56,575 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 17:29:57,044 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 17:29:57,073 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 17:29:57,094 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 17:52:00,768 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,780 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,800 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,866 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,882 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,897 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,912 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,929 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,983 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:00,996 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,013 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,079 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,146 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,164 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,179 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,196 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,213 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,228 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,246 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,263 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,281 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,296 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,312 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,329 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,345 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,362 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,378 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,394 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,411 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,428 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,445 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,462 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,479 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,497 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,512 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,528 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,545 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,562 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,578 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,595 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,612 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,628 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,644 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,661 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,678 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,696 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,711 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,828 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,846 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,860 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,877 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,893 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,911 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,927 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,943 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,960 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,977 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:01,993 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:02,011 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:02] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 17:52:02,029 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 17:52:02] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 18:04:54,818 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\database\\repositories\\order_repository.py', reloading
+2026-03-26 18:04:54,854 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:04:55,384 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:04:55,417 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:04:55,439 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:06:03,463 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\database.py', reloading
+2026-03-26 18:06:03,492 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:06:04,040 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:06:04,072 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:06:04,093 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:06:15,035 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\order_workflow_service.py', reloading
+2026-03-26 18:06:15,065 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:06:15,589 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:06:15,623 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:06:15,644 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:06:38,000 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\tests\\test_order_repository.py', reloading
+2026-03-26 18:06:38,042 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:06:38,659 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:06:38,703 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:06:38,728 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:06:59,388 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\tests\\test_order_repository.py', reloading
+2026-03-26 18:06:59,421 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:06:59,950 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:06:59,978 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:06:59,997 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:07:09,548 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\tests\\test_order_repository.py', reloading
+2026-03-26 18:07:09,580 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:07:10,127 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:07:10,161 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:07:10,181 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:10:48,559 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\rbac_data_scope_service.py', reloading
+2026-03-26 18:10:48,590 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:10:49,103 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:10:49,146 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:10:49,172 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:45:13,431 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:45:13,462 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:45:14,031 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:45:14,065 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:45:14,088 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:45:36,351 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:45:36,379 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:45:36,946 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:45:36,981 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:45:37,002 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:47:24,484 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:47:24,515 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:47:25,096 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:47:25,131 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:47:25,154 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:48:56,494 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:48:56,525 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:48:57,103 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:48:57,138 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:48:57,159 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:50:12,971 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:50:12,998 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:50:13,502 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:50:13,533 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:50:13,552 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:52:00,762 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:52:00,788 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:52:01,318 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:52:01,353 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:52:01,375 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:52:22,553 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:52:22,580 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:52:23,130 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:52:23,164 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:52:23,189 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:54:55,671 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:54:55,708 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:54:56,282 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:54:56,318 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:54:56,342 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:57:04,788 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:57:04,820 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:57:05,382 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:57:05,417 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:57:05,440 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 18:57:43,475 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-26 18:57:43,502 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 18:57:44,002 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 18:57:44,034 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 18:57:44,053 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:06:54,187 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\sensing_integration.py', reloading
+2026-03-26 19:06:54,215 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:06:54,745 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:06:54,777 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:06:54,797 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:07:04,148 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\sensing_integration.py', reloading
+2026-03-26 19:07:04,177 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:07:04,701 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:07:04,735 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:07:04,757 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:07:32,053 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\sensing_integration.py', reloading
+2026-03-26 19:07:32,081 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:07:32,596 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:07:32,628 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:07:32,647 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:08:24,675 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\commands.py', reloading
+2026-03-26 19:08:24,703 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:08:25,256 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:08:25,289 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:08:25,309 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:08:36,164 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\commands.py', reloading
+2026-03-26 19:08:36,191 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:08:36,704 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:08:36,738 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:08:36,760 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:37:41,149 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-26 19:37:41,181 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:37:41,792 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:37:41,828 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:37:41,849 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:49:18,388 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-26 19:49:18,415 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:49:18,952 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:49:18,985 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:49:19,006 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:49:49,328 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-26 19:49:49,360 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:49:49,880 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:49:49,911 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:49:49,931 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:50:00,536 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-26 19:50:00,562 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:50:01,089 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:50:01,123 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:50:01,145 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:52:50,431 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-26 19:52:50,458 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:52:50,997 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:52:51,030 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:52:51,051 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 19:53:07,674 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-26 19:53:07,702 - werkzeug - INFO -  * Restarting with stat
+2026-03-26 19:53:08,261 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-26 19:53:08,298 - werkzeug - WARNING -  * Debugger is active!
+2026-03-26 19:53:08,320 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-26 20:01:08,390 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,399 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,416 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,435 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,640 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,648 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,665 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,683 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,699 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,715 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,732 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,749 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,765 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,782 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,798 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,815 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,833 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,849 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,865 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,882 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,898 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,915 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,932 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,948 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,965 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,982 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:08,999 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,015 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,031 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,049 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,065 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,082 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,098 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,115 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,132 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,148 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,165 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,182 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,198 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,214 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,232 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,247 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,263 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,281 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,297 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,317 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,330 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,347 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-26 20:01:09,461 - werkzeug - INFO - 192.168.19.142 - - [26/Mar/2026 20:01:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-27 09:04:24,793 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\rbac_service.py', reloading
+2026-03-27 09:04:24,832 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:04:25,375 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:04:25,409 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:04:25,430 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:14:15,170 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-27 09:14:15,207 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:14:15,724 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:14:15,756 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:14:15,776 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:14:45,592 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-27 09:14:45,620 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:14:46,142 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:14:46,173 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:14:46,193 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:15:23,291 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:15:23,322 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:15:23,843 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:15:23,874 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:15:23,895 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:15:32,470 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:15:32,501 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:15:32,993 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:15:33,025 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:15:33,044 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:15:54,884 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:15:54,916 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:15:55,438 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:15:55,470 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:15:55,489 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:16:04,822 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 09:16:04,852 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:16:05,378 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:16:05,409 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:16:05,430 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:16:35,513 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 09:16:35,542 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:16:36,089 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:16:36,127 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:16:36,148 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:16:57,848 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\sensing_integration.py', reloading
+2026-03-27 09:16:57,878 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:16:58,409 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:16:58,441 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:16:58,462 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:17:07,285 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\commands.py', reloading
+2026-03-27 09:17:07,314 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:17:07,827 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:17:07,858 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:17:07,878 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:17:18,209 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\commands.py', reloading
+2026-03-27 09:17:18,236 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:17:18,782 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:17:18,815 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:17:18,838 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:18:32,368 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-27 09:18:32,404 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:18:32,959 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:18:32,996 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:18:33,018 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:29:30,573 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:29:30,600 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:29:31,131 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:29:31,163 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:29:31,184 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:29:46,384 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:29:46,410 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:29:46,929 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:29:46,962 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:29:46,982 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:29:56,607 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:29:56,634 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:29:57,152 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:29:57,183 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:29:57,203 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 09:30:12,661 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 09:30:12,688 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 09:30:13,204 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 09:30:13,236 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 09:30:13,256 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 12:01:57,640 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 12:01:57,697 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 12:01:58,288 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 12:01:58,323 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 12:01:58,344 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 12:02:08,531 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 12:02:08,560 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 12:02:09,130 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 12:02:09,165 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 12:02:09,187 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 12:02:20,266 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 12:02:20,300 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 12:02:20,874 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 12:02:20,909 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 12:02:20,930 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:18:54,387 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 13:18:54,417 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:18:54,955 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:18:54,988 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:18:55,009 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:21:16,057 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 13:21:16,092 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:21:16,669 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:21:16,701 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:21:16,722 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:21:28,278 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 13:21:28,310 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:21:28,848 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:21:28,883 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:21:28,904 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:22:02,563 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 13:22:02,591 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:22:03,120 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:22:03,155 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:22:03,177 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:22:26,836 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 13:22:26,872 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:22:27,426 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:22:27,460 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:22:27,483 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:23:03,190 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 13:23:03,230 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:23:03,783 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:23:03,816 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:23:03,838 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:23:33,725 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 13:23:33,755 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:23:34,292 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:23:34,330 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:23:34,351 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:24:38,397 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 13:24:38,429 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:24:38,989 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:24:39,023 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:24:39,047 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:25:02,883 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 13:25:02,913 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:25:03,452 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:25:03,486 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:25:03,509 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:25:32,206 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 13:25:32,236 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:25:32,821 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:25:32,857 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:25:32,880 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:25:47,818 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\playwright_e2e.py', reloading
+2026-03-27 13:25:47,846 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:25:48,388 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:25:48,424 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:25:48,444 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:44:15,600 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\routes\\order_routes.py', reloading
+2026-03-27 13:44:15,630 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:44:16,203 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:44:16,239 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:44:16,261 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:44:31,968 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-27 13:44:31,998 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:44:32,552 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:44:32,587 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:44:32,610 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:44:42,645 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-27 13:44:42,678 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:44:43,261 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:44:43,300 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:44:43,324 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:44:52,385 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\tests\\test_get_tool_io_orders.py', reloading
+2026-03-27 13:44:52,415 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:44:52,948 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:44:52,985 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:44:53,005 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:45:01,878 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\tests\\test_rbac_enforcement.py', reloading
+2026-03-27 13:45:01,909 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:45:02,439 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:45:02,473 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:45:02,494 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:45:22,027 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\routes\\order_routes.py', reloading
+2026-03-27 13:45:22,060 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:45:22,605 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:45:22,637 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:45:22,660 - werkzeug - INFO -  * Debugger PIN: 119-855-334

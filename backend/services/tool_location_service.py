@@ -8,19 +8,20 @@ from typing import Dict, List
 
 from database import DatabaseManager
 from backend.services.audit_log_service import OPERATION_LOCATION_UPDATE, write_order_audit_log
+from backend.database.schema.column_names import TOOL_MASTER_COLUMNS
 
 logger = logging.getLogger(__name__)
 
 
 def resolve_tool_master_location(tool_code: str) -> Dict:
     rows = DatabaseManager().execute_query(
-        """
+        f"""
         SELECT
-            [序列号] AS tool_code,
-            [库位] AS current_location_text,
-            [应用历史] AS location_history_text
-        FROM [工装身份卡_主表]
-        WHERE [序列号] = ?
+            [{TOOL_MASTER_COLUMNS['tool_code']}] AS tool_code,
+            [{TOOL_MASTER_COLUMNS['storage_location']}] AS current_location_text,
+            [{TOOL_MASTER_COLUMNS['application_history']}] AS location_history_text
+        FROM [Tooling_ID_Main]
+        WHERE [{TOOL_MASTER_COLUMNS['tool_code']}] = ?
         """,
         (str(tool_code or "").strip(),),
     )
@@ -104,10 +105,10 @@ def update_tool_location(
         }
 
     DatabaseManager().execute_query(
-        """
-        UPDATE [工装身份卡_主表]
-        SET [库位] = ?
-        WHERE [序列号] = ?
+        f"""
+        UPDATE [Tooling_ID_Main]
+        SET [{TOOL_MASTER_COLUMNS['storage_location']}] = ?
+        WHERE [{TOOL_MASTER_COLUMNS['tool_code']}] = ?
         """,
         (next_location, tool_code),
         fetch=False,

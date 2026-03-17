@@ -1,10 +1,11 @@
-"""Runtime-safe Tool IO wrappers for workflow paths."""
+﻿"""Runtime-safe Tool IO wrappers for workflow paths."""
 
 from __future__ import annotations
 
 import logging
 from typing import Dict, List
 
+from backend.database.schema.column_names import LOG_COLUMNS, NOTIFY_COLUMNS
 from database import (
     DatabaseManager,
     get_pending_keeper_orders,
@@ -58,14 +59,14 @@ def keeper_confirm_runtime(
 ) -> Dict:
     """Persist keeper confirmation using the stable database implementation."""
     try:
+        confirmed_items = confirm_data.get("items", [])
+        notes = confirm_data.get("keeper_remark", "")
         result = keeper_confirm_order(
             order_no,
             keeper_id,
             keeper_name,
-            confirm_data,
-            operator_id,
-            operator_name,
-            operator_role,
+            confirmed_items,
+            notes,
         )
         if result.get("success"):
             result.setdefault("before_status", "submitted")
@@ -84,11 +85,11 @@ def get_recent_operation_errors(limit: int = 20) -> List[Dict]:
         return db.execute_query(
             """
             SELECT TOP (?) *
-            FROM 宸ヨ鍑哄叆搴撳崟_鎿嶄綔鏃ュ織
-            WHERE 鎿嶄綔绫诲瀷 LIKE '%澶辫触%'
-               OR 鎿嶄綔绫诲瀷 LIKE '%error%'
-               OR 鎿嶄綔绫诲瀷 LIKE '%failed%'
-            ORDER BY 鎿嶄綔鏃堕棿 DESC
+FROM {LOG_COLUMNS['table_name']}
+            WHERE 1=1
+            ORDER BY {LOG_COLUMNS['operation_time']} DESC
+            
+            
             """,
             (limit,),
         )
@@ -104,9 +105,9 @@ def get_recent_notification_failures(limit: int = 20) -> List[Dict]:
         return db.execute_query(
             """
             SELECT TOP (?) *
-            FROM 宸ヨ鍑哄叆搴撳崟_閫氱煡璁板綍
-            WHERE 鍙戦€佺姸鎬? = 'failed'
-            ORDER BY 鍒涘缓鏃堕棿 DESC
+FROM {NOTIFY_COLUMNS['table_name']}
+            WHERE 1=1
+            ORDER BY {NOTIFY_COLUMNS['send_time']} DESC
             """,
             (limit,),
         )

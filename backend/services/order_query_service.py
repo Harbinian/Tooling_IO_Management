@@ -59,11 +59,7 @@ def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
     filters = dict(filters) if filters else {}
 
     # Apply data scope filtering
-    scope_sql, scope_params = build_order_scope_sql(
-        scope_context.get("role_codes", []),
-        scope_context.get("user_id", ""),
-        scope_context.get("org_ids", []),
-    )
+    scope_sql, scope_params = build_order_scope_sql(scope_context)
 
     if scope_sql:
         filters["scope_sql"] = scope_sql
@@ -112,7 +108,13 @@ def get_order_detail(order_no: str, current_user: Optional[Dict] = None) -> Dict
 
 def search_tool_inventory(filters: Dict) -> Dict:
     """Search tool inventory."""
-    return search_tools(filters)
+    return search_tools(
+        keyword=filters.get("keyword"),
+        status=filters.get("status"),
+        location=filters.get("location"),
+        page=filters.get("page_no", 1),
+        page_size=filters.get("page_size", 20),
+    )
 
 
 def batch_query_tools(tool_codes: List[str]) -> Dict:

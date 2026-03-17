@@ -40,6 +40,68 @@ Claude Code 必须维护以下文档： / Claude Code must maintain these docume
 - docs/DB_SCHEMA.md - 数据库 Schema
 - docs/API_SPEC.md - API 规范
 - docs/TASKS.md - 任务清单
+- backend/database/schema/column_names.py - 统一字段名常量 (权威来源)
+
+---
+
+## Schema 变更协议 / Schema Change Protocol
+
+任何修改数据库 Schema 的操作必须同步更新 `backend/database/schema/column_names.py`：
+
+1. 在 `schema_manager.py` 中添加新字段 → 必须同步更新 `column_names.py`
+2. 在 `DB_SCHEMA.md` 中修改字段定义 → 必须同步更新 `column_names.py`
+3. 禁止直接修改 `column_names.py` 而不更新 `schema_manager.py`（反向同步）
+
+`column_names.py` 是所有 SQL 查询中中文字段名的唯一权威来源。
+
+---
+
+## 数据库表范围 / Database Table Scope
+
+工装出入库管理系统仅使用以下表（禁止直接访问未列出的表）：
+
+### 核心业务表（工装出入库）
+
+| 表名 | 用途 |
+|------|------|
+| `tool_io_order` | 订单主表 |
+| `tool_io_order_item` | 订单明细项 |
+| `tool_io_operation_log` | 操作审计跟踪 |
+| `tool_io_notification` | 通知发送历史 |
+| `tool_io_location` | 工装位置信息 |
+| `tool_io_transport_issue` | 运输异常记录 |
+
+### 外部系统表（禁止修改 Schema）
+
+| 表名 | 用途 | 访问规则 |
+|------|------|----------|
+| `工装身份卡_主表` | 工装主数据 | 只读查询 + 特定字段更新，必须通过 `TOOL_MASTER_COLUMNS` 常量 |
+
+### 工装主数据表
+
+| 表名 | 用途 |
+|------|------|
+| `工装身份卡_主表` | 工装主数据（含序列号、图号、状态等） |
+| `工装位置表` | 工装位置 |
+| `工装品种表` | 工装品种分类 |
+
+### Feedback 表
+
+| 表名 | 用途 |
+|------|------|
+| `tool_io_feedback` | 用户反馈 |
+| `tool_io_feedback_reply` | 反馈回复 |
+
+### 系统表
+
+| 表名 | 用途 |
+|------|------|
+| `sys_org` | 组织架构 |
+| `sys_user` | 用户账户 |
+| `sys_role` | 角色定义 |
+| `sys_permission` | 权限定义 |
+| `tool_io_order_no_sequence` | 订单号序列生成 |
+| `tool_status_change_history` | 工装状态变更历史 |
 
 ---
 
@@ -76,3 +138,4 @@ Claude Code 审查 Codex 输出时必须检查： / Claude Code reviews Codex ou
 3. 状态转换正确性 / state transition correctness
 4. 日志完整性 / logging completeness
 5. 通知持久化 / notification persistence
+6. **UI 一致性 / UI consistency**: 确认对话框、操作按钮在所有相关页面保持一致

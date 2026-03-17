@@ -174,15 +174,15 @@ def retry_feishu_delivery(notification_id: int) -> Dict:
         """
         SELECT
             id AS notification_id,
-            出入库单号 AS order_no,
-            通知类型 AS notification_type,
-            通知渠道 AS notify_channel,
-            接收人 AS receiver,
-            通知标题 AS title,
-            通知内容 AS body,
-            复制文本 AS copy_text
-        FROM 工装出入库单_通知记录
-        WHERE id = ? AND 通知渠道 = 'feishu'
+            order_no AS order_no,
+            notify_type AS notification_type,
+            notify_channel AS notify_channel,
+            receiver AS receiver,
+            notify_title AS title,
+            notify_content AS body,
+            copy_text AS copy_text
+        FROM tool_io_notification
+        WHERE id = ? AND notify_channel = 'feishu'
         """,
         (notification_id,),
     )

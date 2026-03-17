@@ -10,22 +10,51 @@ from backend.database.core.database_manager import DatabaseManager, ORDER_NO_SEQ
 
 logger = logging.getLogger(__name__)
 
-# Schema alignment indexes
+# Schema alignment indexes - using English table/column names
 SCHEMA_ALIGNMENT_INDEXES = (
-    ("工装出入库单_主表", "IX_工装出入库单_主表_单据类型", "单据类型"),
-    ("工装出入库单_主表", "IX_工装出入库单_主表_单据状态", "单据状态"),
-    ("工装出入库单_主表", "IX_工装出入库单_主表_发起人ID", "发起人ID"),
-    ("工装出入库单_主表", "IX_工装出入库单_主表_保管员ID", "保管员ID"),
-    ("工装出入库单_主表", "IX_工装出入库单_主表_创建时间", "创建时间"),
-    ("工装出入库单_明细", "IX_工装出入库单_明细_出入库单号", "出入库单号"),
-    ("工装出入库单_明细", "IX_工装出入库单_明细_工装编码", "工装编码"),
-    ("工装出入库单_明细", "IX_工装出入库单_明细_明细状态", "明细状态"),
-    ("工装出入库单_操作日志", "IX_工装出入库单_操作日志_出入库单号", "出入库单号"),
-    ("工装出入库单_操作日志", "IX_工装出入库单_操作日志_操作时间", "操作时间"),
-    ("工装出入库单_通知记录", "IX_工装出入库单_通知记录_出入库单号", "出入库单号"),
-    ("工装出入库单_通知记录", "IX_工装出入库单_通知记录_发送状态", "发送状态"),
-    ("工装出入库单_通知记录", "IX_工装出入库单_通知记录_通知渠道", "通知渠道"),
+    ("tool_io_order", "IX_tool_io_order_order_type", "order_type"),
+    ("tool_io_order", "IX_tool_io_order_order_status", "order_status"),
+    ("tool_io_order", "IX_tool_io_order_initiator_id", "initiator_id"),
+    ("tool_io_order", "IX_tool_io_order_keeper_id", "keeper_id"),
+    ("tool_io_order", "IX_tool_io_order_created_at", "created_at"),
+    ("tool_io_order_item", "IX_tool_io_order_item_order_no", "order_no"),
+    ("tool_io_order_item", "IX_tool_io_order_item_tool_code", "tool_code"),
+    ("tool_io_order_item", "IX_tool_io_order_item_item_status", "item_status"),
+    ("tool_io_operation_log", "IX_tool_io_operation_log_order_no", "order_no"),
+    ("tool_io_operation_log", "IX_tool_io_operation_log_operation_time", "operation_time"),
+    ("tool_io_notification", "IX_tool_io_notification_order_no", "order_no"),
+    ("tool_io_notification", "IX_tool_io_notification_send_status", "send_status"),
+    ("tool_io_notification", "IX_tool_io_notification_notify_channel", "notify_channel"),
+    ("tool_io_transport_issue", "IX_tool_io_transport_issue_order_no", "order_no"),
+    ("tool_io_transport_issue", "IX_tool_io_transport_issue_status", "status"),
+    ("tool_io_transport_issue", "IX_tool_io_transport_issue_report_time", "report_time"),
 )
+
+
+def _execute_statements_in_transaction(sql_statements: List[str], success_message: str) -> bool:
+    """Execute schema DDL statements atomically."""
+    db = DatabaseManager()
+    conn = None
+    cursor = None
+
+    try:
+        conn = db.connect()
+        cursor = conn.cursor()
+        for sql in sql_statements:
+            cursor.execute(sql)
+        conn.commit()
+        logger.info(success_message)
+        return True
+    except Exception as exc:
+        if conn is not None:
+            conn.rollback()
+        logger.error('%s failed: %s', success_message, exc)
+        return False
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            db.close(conn)
 
 
 def _build_schema_alignment_sql() -> List[str]:
@@ -33,18 +62,170 @@ def _build_schema_alignment_sql() -> List[str]:
     from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
 
     sql_statements = [
-        build_add_column_sql("工装出入库单_主表", "工装数量", "INT NULL"),
-        build_add_column_sql("工装出入库单_主表", "已确认数量", "INT NULL"),
-        build_add_column_sql("工装出入库单_主表", "最终确认人", "VARCHAR(64) NULL"),
-        build_add_column_sql("工装出入库单_主表", "取消原因", "VARCHAR(500) NULL"),
-        build_add_column_sql("工装出入库单_明细", "确认时间", "DATETIME NULL"),
-        build_add_column_sql("工装出入库单_明细", "出入库完成时间", "DATETIME NULL"),
+        build_add_column_sql("tool_io_order", "org_id", "VARCHAR(64) NULL"),
+        build_add_column_sql("tool_io_order", "tool_quantity", "INT NULL"),
+        build_add_column_sql("tool_io_order", "confirmed_count", "INT NULL"),
+        build_add_column_sql("tool_io_order", "final_confirm_by", "VARCHAR(64) NULL"),
+        build_add_column_sql("tool_io_order", "cancel_reason", "VARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_order_item", "confirm_time", "DATETIME NULL"),
+        build_add_column_sql("tool_io_order_item", "io_complete_time", "DATETIME NULL"),
     ]
 
     for table_name, index_name, column_list in SCHEMA_ALIGNMENT_INDEXES:
         sql_statements.append(build_create_index_sql(table_name, index_name, column_list))
 
     return sql_statements
+
+
+def ensure_feedback_table() -> bool:
+    """Create or align feedback persistence table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_feedback', N'U') IS NULL
+        CREATE TABLE [tool_io_feedback] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [category] VARCHAR(32) NOT NULL,
+            [subject] NVARCHAR(200) NOT NULL,
+            [content] NVARCHAR(2000) NOT NULL,
+            [login_name] VARCHAR(100) NOT NULL,
+            [user_name] NVARCHAR(100) NOT NULL,
+            [status] VARCHAR(32) NOT NULL DEFAULT 'pending',
+            [created_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+        )
+        """,
+        build_add_column_sql("tool_io_feedback", "category", "VARCHAR(32) NOT NULL DEFAULT 'other'"),
+        build_add_column_sql("tool_io_feedback", "subject", "NVARCHAR(200) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback", "content", "NVARCHAR(2000) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback", "login_name", "VARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback", "user_name", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback", "status", "VARCHAR(32) NOT NULL DEFAULT 'pending'"),
+        build_add_column_sql("tool_io_feedback", "created_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_feedback", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_create_index_sql("tool_io_feedback", "IX_tool_io_feedback_login_name", "login_name"),
+        build_create_index_sql("tool_io_feedback", "IX_tool_io_feedback_created_at", "created_at"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Feedback table ensured")
+
+
+def ensure_feedback_reply_table() -> bool:
+    """Create or align feedback reply table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_feedback_reply', N'U') IS NULL
+        CREATE TABLE [tool_io_feedback_reply] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [feedback_id] BIGINT NOT NULL,
+            [reply_content] NVARCHAR(1000) NOT NULL,
+            [replier_login_name] VARCHAR(100) NOT NULL,
+            [replier_user_name] NVARCHAR(100) NOT NULL,
+            [created_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            CONSTRAINT FK_feedback_reply FOREIGN KEY (feedback_id) REFERENCES [tool_io_feedback](id) ON DELETE CASCADE
+        )
+        """,
+        build_add_column_sql("tool_io_feedback_reply", "feedback_id", "BIGINT NOT NULL DEFAULT 0"),
+        build_add_column_sql("tool_io_feedback_reply", "reply_content", "NVARCHAR(1000) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback_reply", "replier_login_name", "VARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback_reply", "replier_user_name", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_feedback_reply", "created_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        """
+        IF OBJECT_ID(N'tool_io_feedback_reply', N'U') IS NOT NULL
+           AND OBJECT_ID(N'FK_feedback_reply', N'F') IS NULL
+        BEGIN
+            ALTER TABLE [tool_io_feedback_reply]
+            ADD CONSTRAINT FK_feedback_reply
+            FOREIGN KEY (feedback_id)
+            REFERENCES [tool_io_feedback](id)
+            ON DELETE CASCADE
+        END
+        """,
+        build_create_index_sql("tool_io_feedback_reply", "IX_tool_io_feedback_reply_feedback_id", "feedback_id"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Feedback reply table ensured")
+
+
+def ensure_tool_status_change_history_table() -> bool:
+    """Create or align tool status change history table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_status_change_history', N'U') IS NULL
+        CREATE TABLE [tool_status_change_history] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [tool_code] NVARCHAR(100) NOT NULL,
+            [old_status] NVARCHAR(50) NOT NULL,
+            [new_status] NVARCHAR(50) NOT NULL,
+            [remark] NVARCHAR(500) NULL,
+            [operator_id] NVARCHAR(64) NOT NULL,
+            [operator_name] NVARCHAR(100) NOT NULL,
+            [change_time] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [client_ip] NVARCHAR(64) NULL
+        )
+        """,
+        build_add_column_sql("tool_status_change_history", "tool_code", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_status_change_history", "old_status", "NVARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_status_change_history", "new_status", "NVARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_status_change_history", "remark", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_status_change_history", "operator_id", "NVARCHAR(64) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_status_change_history", "operator_name", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_status_change_history", "change_time", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_status_change_history", "client_ip", "NVARCHAR(64) NULL"),
+        build_create_index_sql(
+            "tool_status_change_history",
+            "IX_tool_status_change_history_tool_code_time",
+            "tool_code, change_time",
+        ),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Tool status change history table ensured")
+
+
+def ensure_transport_issue_table() -> bool:
+    """Create or align transport issue persistence table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_transport_issue', N'U') IS NULL
+        CREATE TABLE [tool_io_transport_issue] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [order_no] VARCHAR(64) NOT NULL,
+            [issue_type] VARCHAR(50) NOT NULL,
+            [description] NVARCHAR(500) NULL,
+            [image_urls] NVARCHAR(2000) NULL,
+            [reporter_id] VARCHAR(64) NULL,
+            [reporter_name] NVARCHAR(50) NULL,
+            [report_time] DATETIME NOT NULL DEFAULT GETDATE(),
+            [status] VARCHAR(20) NOT NULL DEFAULT 'pending',
+            [handler_id] VARCHAR(64) NULL,
+            [handler_name] NVARCHAR(50) NULL,
+            [handle_time] DATETIME NULL,
+            [handle_reply] NVARCHAR(500) NULL,
+            [created_at] DATETIME NOT NULL DEFAULT GETDATE()
+        )
+        """,
+        build_add_column_sql("tool_io_transport_issue", "order_no", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_transport_issue", "issue_type", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_transport_issue", "description", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "image_urls", "NVARCHAR(2000) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "reporter_id", "VARCHAR(64) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "reporter_name", "NVARCHAR(50) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "report_time", "DATETIME NOT NULL DEFAULT GETDATE()"),
+        build_add_column_sql("tool_io_transport_issue", "status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
+        build_add_column_sql("tool_io_transport_issue", "handler_id", "VARCHAR(64) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "handler_name", "NVARCHAR(50) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "handle_time", "DATETIME NULL"),
+        build_add_column_sql("tool_io_transport_issue", "handle_reply", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_transport_issue", "created_at", "DATETIME NOT NULL DEFAULT GETDATE()"),
+        build_create_index_sql("tool_io_transport_issue", "IX_tool_io_transport_issue_order_no", "order_no"),
+        build_create_index_sql("tool_io_transport_issue", "IX_tool_io_transport_issue_status", "status"),
+        build_create_index_sql("tool_io_transport_issue", "IX_tool_io_transport_issue_report_time", "report_time"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Transport issue table ensured")
 
 
 def ensure_tool_io_tables() -> bool:
@@ -54,117 +235,117 @@ def ensure_tool_io_tables() -> bool:
     Returns:
         True if successful, False otherwise
     """
-    db = DatabaseManager()
     create_statements = [
         """
-        IF OBJECT_ID(N'工装出入库单_主表', N'U') IS NULL
-        CREATE TABLE [工装出入库单_主表] (
+        IF OBJECT_ID(N'tool_io_order', N'U') IS NULL
+        CREATE TABLE [tool_io_order] (
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-            [出入库单号] VARCHAR(64) NOT NULL UNIQUE,
-            [单据类型] VARCHAR(16) NOT NULL,
-            [单据状态] VARCHAR(32) NOT NULL DEFAULT 'draft',
-            [发起人ID] VARCHAR(64) NOT NULL,
-            [发起人姓名] VARCHAR(64) NOT NULL,
-            [发起人角色] VARCHAR(32) NOT NULL,
-            [部门] VARCHAR(64) NULL,
-            [项目代号] VARCHAR(64) NULL,
-            [用途] VARCHAR(255) NULL,
-            [计划使用时间] DATETIME NULL,
-            [计划归还时间] DATETIME NULL,
-            [目标位置ID] BIGINT NULL,
-            [目标位置文本] VARCHAR(255) NULL,
-            [保管员ID] VARCHAR(64) NULL,
-            [保管员姓名] VARCHAR(64) NULL,
-            [运输类型] VARCHAR(32) NULL,
-            [运输AssigneeID] VARCHAR(64) NULL,
-            [运输AssigneeName] VARCHAR(64) NULL,
-            [保管员确认时间] DATETIME NULL,
-            [已确认数量] INT NOT NULL DEFAULT 0,
-            [最终确认人] VARCHAR(64) NULL,
-            [最终确认时间] DATETIME NULL,
-            [取消原因] VARCHAR(500) NULL,
-            [驳回原因] VARCHAR(500) NULL,
-            [备注] VARCHAR(500) NULL,
+            [order_no] VARCHAR(64) NOT NULL UNIQUE,
+            [order_type] VARCHAR(16) NOT NULL,
+            [order_status] VARCHAR(32) NOT NULL DEFAULT 'draft',
+            [initiator_id] VARCHAR(64) NOT NULL,
+            [initiator_name] VARCHAR(64) NOT NULL,
+            [initiator_role] VARCHAR(32) NOT NULL,
+            [department] VARCHAR(64) NULL,
+            [project_code] VARCHAR(64) NULL,
+            [usage_purpose] VARCHAR(255) NULL,
+            [planned_use_time] DATETIME NULL,
+            [planned_return_time] DATETIME NULL,
+            [target_location_id] BIGINT NULL,
+            [target_location_text] VARCHAR(255) NULL,
+            [keeper_id] VARCHAR(64) NULL,
+            [keeper_name] VARCHAR(64) NULL,
+            [transport_type] VARCHAR(32) NULL,
+            [transport_operator_id] VARCHAR(64) NULL,
+            [transport_operator_name] VARCHAR(64) NULL,
+            [keeper_confirm_time] DATETIME NULL,
+            [tool_quantity] INT NOT NULL DEFAULT 0,
+            [confirmed_count] INT NOT NULL DEFAULT 0,
+            [final_confirm_by] VARCHAR(64) NULL,
+            [final_confirm_time] DATETIME NULL,
+            [cancel_reason] VARCHAR(500) NULL,
+            [reject_reason] VARCHAR(500) NULL,
+            [remark] VARCHAR(500) NULL,
             [org_id] VARCHAR(64) NULL,
-            [创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
-            [修改时间] DATETIME NOT NULL DEFAULT GETDATE(),
-            [创建人] VARCHAR(64) NULL,
-            [修改人] VARCHAR(64) NULL,
-            [IS_DELETED] TINYINT NOT NULL DEFAULT 0
+            [created_at] DATETIME NOT NULL DEFAULT GETDATE(),
+            [updated_at] DATETIME NOT NULL DEFAULT GETDATE(),
+            [created_by] VARCHAR(64) NULL,
+            [updated_by] VARCHAR(64) NULL,
+            [is_deleted] TINYINT NOT NULL DEFAULT 0
         )
         """,
         """
-        IF OBJECT_ID(N'工装出入库单_明细', N'U') IS NULL
-        CREATE TABLE [工装出入库单_明细] (
+        IF OBJECT_ID(N'tool_io_order_item', N'U') IS NULL
+        CREATE TABLE [tool_io_order_item] (
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-            [出入库单号] VARCHAR(64) NOT NULL,
-            [工装ID] BIGINT NULL,
-            [序列号] VARCHAR(64) NOT NULL,
-            [工装名称] VARCHAR(255) NULL,
-            [工装图号] VARCHAR(255) NULL,
-            [机型] VARCHAR(255) NULL,
-            [申请数量] DECIMAL(18,2) NOT NULL DEFAULT 1,
-            [确认数量] DECIMAL(18,2) NOT NULL DEFAULT 0,
-            [明细状态] VARCHAR(32) NOT NULL DEFAULT 'pending_check',
-            [工装快照状态] VARCHAR(255) NULL,
-            [工装快照位置文本] VARCHAR(255) NULL,
-            [工装快照位置ID] BIGINT NULL,
-            [确认人] VARCHAR(255) NULL,
-            [确认人ID] BIGINT NULL,
-            [确认人姓名] VARCHAR(64) NULL,
-            [确认时间] VARCHAR(500) NULL,
-            [驳回原因] VARCHAR(500) NULL,
-            [出入库完成时间] DATETIME NULL,
-            [排序号] INT NOT NULL DEFAULT 1,
-            [创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
-            [修改时间] DATETIME NOT NULL DEFAULT GETDATE()
+            [order_no] VARCHAR(64) NOT NULL,
+            [tool_id] BIGINT NULL,
+            [tool_code] VARCHAR(64) NOT NULL,
+            [tool_name] VARCHAR(255) NULL,
+            [drawing_no] VARCHAR(255) NULL,
+            [spec_model] VARCHAR(255) NULL,
+            [apply_qty] DECIMAL(18,2) NOT NULL DEFAULT 1,
+            [confirmed_qty] DECIMAL(18,2) NOT NULL DEFAULT 0,
+            [item_status] VARCHAR(32) NOT NULL DEFAULT 'pending_check',
+            [tool_snapshot_status] VARCHAR(255) NULL,
+            [tool_snapshot_location_text] VARCHAR(255) NULL,
+            [tool_snapshot_location_id] BIGINT NULL,
+            [confirm_by] VARCHAR(255) NULL,
+            [confirm_by_id] BIGINT NULL,
+            [confirm_by_name] VARCHAR(64) NULL,
+            [confirm_time] DATETIME NULL,
+            [reject_reason] VARCHAR(500) NULL,
+            [io_complete_time] DATETIME NULL,
+            [sort_order] INT NOT NULL DEFAULT 1,
+            [created_at] DATETIME NOT NULL DEFAULT GETDATE(),
+            [updated_at] DATETIME NOT NULL DEFAULT GETDATE()
         )
         """,
         """
-        IF OBJECT_ID(N'工装出入库单_操作日志', N'U') IS NULL
-        CREATE TABLE [工装出入库单_操作日志] (
+        IF OBJECT_ID(N'tool_io_operation_log', N'U') IS NULL
+        CREATE TABLE [tool_io_operation_log] (
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-            [出入库单号] VARCHAR(64) NOT NULL,
-            [明细ID] BIGINT NULL,
-            [操作类型] VARCHAR(64) NOT NULL,
-            [操作人ID] VARCHAR(64) NULL,
-            [操作人姓名] VARCHAR(64) NULL,
-            [操作人角色] VARCHAR(64) NULL,
-            [变更前状态] VARCHAR(64) NULL,
-            [变更后状态] VARCHAR(64) NULL,
-            [操作内容] TEXT NULL,
-            [操作时间] DATETIME NOT NULL DEFAULT GETDATE()
+            [order_no] VARCHAR(64) NOT NULL,
+            [item_id] BIGINT NULL,
+            [operation_type] VARCHAR(64) NOT NULL,
+            [operator_id] VARCHAR(64) NULL,
+            [operator_name] VARCHAR(64) NULL,
+            [operator_role] VARCHAR(64) NULL,
+            [from_status] VARCHAR(64) NULL,
+            [to_status] VARCHAR(64) NULL,
+            [operation_content] TEXT NULL,
+            [operation_time] DATETIME NOT NULL DEFAULT GETDATE()
         )
         """,
         """
-        IF OBJECT_ID(N'工装出入库单_通知记录', N'U') IS NULL
-        CREATE TABLE [工装出入库单_通知记录] (
+        IF OBJECT_ID(N'tool_io_notification', N'U') IS NULL
+        CREATE TABLE [tool_io_notification] (
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-            [出入库单号] VARCHAR(64) NOT NULL,
-            [通知类型] VARCHAR(64) NOT NULL,
-            [通知渠道] VARCHAR(64) NULL,
-            [接收人] VARCHAR(255) NULL,
-            [通知标题] VARCHAR(255) NULL,
-            [通知内容] TEXT NULL,
-            [复制文本] TEXT NULL,
-            [发送状态] VARCHAR(32) NOT NULL DEFAULT 'pending',
-            [发送时间] DATETIME NULL,
-            [发送结果] TEXT NULL,
-            [重试次数] INT NOT NULL DEFAULT 0,
-            [创建时间] DATETIME NOT NULL DEFAULT GETDATE()
+            [order_no] VARCHAR(64) NOT NULL,
+            [notify_type] VARCHAR(64) NOT NULL,
+            [notify_channel] VARCHAR(64) NULL,
+            [receiver] VARCHAR(255) NULL,
+            [notify_title] VARCHAR(255) NULL,
+            [notify_content] TEXT NULL,
+            [copy_text] TEXT NULL,
+            [send_status] VARCHAR(32) NOT NULL DEFAULT 'pending',
+            [send_time] DATETIME NULL,
+            [send_result] TEXT NULL,
+            [retry_count] INT NOT NULL DEFAULT 0,
+            [created_at] DATETIME NOT NULL DEFAULT GETDATE()
         )
         """,
         """
-        IF OBJECT_ID(N'工装出入库单_位置', N'U') IS NULL
-        CREATE TABLE [工装出入库单_位置] (
+        IF OBJECT_ID(N'tool_io_location', N'U') IS NULL
+        CREATE TABLE [tool_io_location] (
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-            [位置编码] VARCHAR(64) NOT NULL,
-            [位置名称] VARCHAR(255) NOT NULL,
-            [位置描述] VARCHAR(255) NULL,
-            [库区] VARCHAR(64) NULL,
-            [库位] VARCHAR(64) NULL,
-            [货架] VARCHAR(255) NULL,
-            [备注] VARCHAR(500) NULL
+            [location_code] VARCHAR(64) NOT NULL,
+            [location_name] VARCHAR(255) NOT NULL,
+            [location_desc] VARCHAR(255) NULL,
+            [warehouse_area] VARCHAR(64) NULL,
+            [storage_slot] VARCHAR(64) NULL,
+            [shelf] VARCHAR(255) NULL,
+            [remark] VARCHAR(500) NULL
         )
         """,
         f"""
@@ -176,27 +357,30 @@ def ensure_tool_io_tables() -> bool:
         )
         """,
         """
-        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_工装出入库单_主表_出入库单号' AND object_id = OBJECT_ID(N'工装出入库单_主表'))
-        CREATE INDEX [IX_工装出入库单_主表_出入库单号] ON [工装出入库单_主表]([出入库单号])
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_tool_io_order_order_no' AND object_id = OBJECT_ID(N'tool_io_order'))
+        CREATE INDEX [IX_tool_io_order_order_no] ON [tool_io_order]([order_no])
         """,
         """
-        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_工装出入库单_主表_单据状态' AND object_id = OBJECT_ID(N'工装出入库单_主表'))
-        CREATE INDEX [IX_工装出入库单_主表_单据状态] ON [工装出入库单_主表]([单据状态])
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_tool_io_order_order_status' AND object_id = OBJECT_ID(N'tool_io_order'))
+        CREATE INDEX [IX_tool_io_order_order_status] ON [tool_io_order]([order_status])
         """,
         """
-        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_工装出入库单_主表_创建时间' AND object_id = OBJECT_ID(N'工装出入库单_主表'))
-        CREATE INDEX [IX_工装出入库单_主表_创建时间] ON [工装出入库单_主表]([创建时间])
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_tool_io_order_created_at' AND object_id = OBJECT_ID(N'tool_io_order'))
+        CREATE INDEX [IX_tool_io_order_created_at] ON [tool_io_order]([created_at])
         """,
     ]
 
-    try:
-        for sql in create_statements:
-            db.execute_query(sql, fetch=False)
-        logger.info('Tool IO tables created successfully')
-        return True
-    except Exception as e:
-        logger.error('Failed to create Tool IO tables: %s', e)
+    if not _execute_statements_in_transaction(create_statements, 'Tool IO tables ensured'):
         return False
+    if not ensure_schema_alignment():
+        return False
+    if not ensure_feedback_table():
+        return False
+    if not ensure_feedback_reply_table():
+        return False
+    if not ensure_tool_status_change_history_table():
+        return False
+    return ensure_transport_issue_table()
 
 
 def ensure_schema_alignment() -> bool:
@@ -206,14 +390,5 @@ def ensure_schema_alignment() -> bool:
     Returns:
         True if successful, False otherwise
     """
-    db = DatabaseManager()
     sql_statements = _build_schema_alignment_sql()
-
-    try:
-        for sql in sql_statements:
-            db.execute_query(sql, fetch=False)
-        logger.info('Schema alignment completed')
-        return True
-    except Exception as e:
-        logger.error('Schema alignment failed: %s', e)
-        return False
+    return _execute_statements_in_transaction(sql_statements, 'Schema alignment completed')

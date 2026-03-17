@@ -8,7 +8,7 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('@/pages/auth/LoginPage.vue'),
-    meta: { public: true, title: 'Login' }
+    meta: { public: true, title: '登录' }
   },
   {
     path: '/',
@@ -19,38 +19,56 @@ const routes = [
         path: 'dashboard',
         name: 'dashboard',
         component: () => import('@/pages/dashboard/DashboardOverview.vue'),
-        meta: { title: 'Dashboard', permission: 'dashboard:view' }
+        meta: { title: '仪表盘', permission: 'dashboard:view' }
       },
       {
         path: 'inventory',
         name: 'tool-io-list',
         component: () => import('@/pages/tool-io/OrderList.vue'),
-        meta: { title: 'Order List', permission: 'order:list' }
+        meta: { title: '订单列表', permission: 'order:list' }
       },
       {
         path: 'inventory/create',
         name: 'tool-io-create',
         component: () => import('@/pages/tool-io/OrderCreate.vue'),
-        meta: { title: 'Create Request', permission: 'order:create' }
+        meta: { title: '创建申请', permission: 'order:create' }
       },
       {
         path: 'inventory/keeper',
         name: 'tool-io-keeper',
         component: () => import('@/pages/tool-io/KeeperProcess.vue'),
-        meta: { title: 'Keeper Workspace', permission: 'order:keeper_confirm' }
+        meta: { title: '保管员工作台', permission: 'order:keeper_confirm' }
+      },
+      {
+        path: 'inventory/pre-transport',
+        name: 'tool-io-pre-transport',
+        component: () => import('@/pages/tool-io/PreTransportList.vue'),
+        meta: { title: '预知运输任务', permission: 'order:transport_execute' }
       },
       {
         path: 'inventory/:orderNo',
         name: 'tool-io-detail',
         component: () => import('@/pages/tool-io/OrderDetail.vue'),
         props: true,
-        meta: { title: 'Order Detail', permission: 'order:view' }
+        meta: { title: '订单详情', permission: 'order:list' }
       },
       {
         path: 'admin/users',
         name: 'admin-users',
         component: () => import('@/pages/admin/UserAdminPage.vue'),
-        meta: { title: 'Account Management', permission: 'admin:user_manage' }
+        meta: { title: '账号管理', permission: 'admin:user_manage' }
+      },
+      {
+        path: 'admin/feedback',
+        name: 'admin-feedback',
+        component: () => import('@/pages/admin/FeedbackAdminPage.vue'),
+        meta: { title: '反馈管理', permission: 'admin:user_manage' }
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('@/pages/settings/SettingsPage.vue'),
+        meta: { title: '个人设置', permission: 'dashboard:view' }
       }
     ]
   }
@@ -77,7 +95,9 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.public) {
-    if (to.name === 'login' && session.token) {
+    // Don't auto-redirect to dashboard if user was denied access (permission check failed)
+    // This prevents infinite redirect loop when user lacks required permissions
+    if (to.name === 'login' && session.token && !to.query.denied) {
       return { name: 'dashboard' }
     }
     return true
@@ -94,8 +114,34 @@ router.beforeEach(async (to) => {
     }
   }
 
+  // RBAC: Explicit role-based route access control
+  // This provides a secondary check to ensure role-based access control is enforced
+  const roleCodes = new Set((session.roles || []).map((role) => role.role_code))
+  const isKeeper = roleCodes.has('keeper')
+  const isTeamLeader = roleCodes.has('team_leader') || roleCodes.has('planner') || roleCodes.has('sys_admin')
+
+  // /keeper route (keeper workspace) - only KEEPER role can access
+  // DENY: TEAM_LEADER, PLANNER, PRODUCTION_PREP, AUDITOR
+  if (to.path === '/inventory/keeper' && !isKeeper) {
+    if (session.hasPermission('dashboard:view')) {
+      return { name: 'dashboard' }
+    }
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  // /create route (order creation) - only TEAM_LEADER, PLANNER, SYS_ADMIN can access
+  // DENY: KEEPER, PRODUCTION_PREP, AUDITOR
+  if (to.path === '/inventory/create' && !isTeamLeader) {
+    if (session.hasPermission('dashboard:view')) {
+      return { name: 'dashboard' }
+    }
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
   if (to.meta.permission && !session.hasPermission(to.meta.permission)) {
-    return { name: 'dashboard' }
+    // User lacks required permission - show access denied instead of redirect loop
+    // This prevents infinite redirect when user doesn't have dashboard:view
+    return { name: 'login', query: { redirect: to.fullPath, denied: '1' } }
   }
 
   return true

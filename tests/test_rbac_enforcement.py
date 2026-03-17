@@ -116,6 +116,14 @@ PROTECTED_ENDPOINTS = [
         json_body={},
     ),
     EndpointCase(
+        name="transport_issues",
+        method="GET",
+        path="/api/tool-io-orders/ORD-001/transport-issues",
+        permission="order:view",
+        patch_target="backend.services.transport_issue_service.get_transport_issues",
+        patch_value={"success": True, "data": []},
+    ),
+    EndpointCase(
         name="order_reject",
         method="POST",
         path="/api/tool-io-orders/ORD-001/reject",

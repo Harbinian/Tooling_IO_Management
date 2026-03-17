@@ -1,21 +1,21 @@
-<template>
-  <div class="animate-in fade-in space-y-10 pb-20 duration-500">
-    <header class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-12 text-white shadow-2xl">
+﻿<template>
+  <div class="animate-in fade-in space-y-10 pb-20 duration-500 text-foreground">
+    <header class="relative overflow-hidden rounded-3xl bg-primary px-8 py-12 text-primary-foreground shadow-2xl">
       <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <Badge variant="outline" class="mb-4 border-slate-700 bg-slate-800/50 text-slate-400 backdrop-blur-sm">
+          <Badge variant="outline" class="mb-4 border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground backdrop-blur-sm">
             创建单据
           </Badge>
-          <h1 class="text-3xl font-bold tracking-tight md:text-4xl">工装出入库申请</h1>
-          <p class="mt-2 max-w-lg text-slate-400">
-            先从工装主表选择工装，再填写用途、目标位置和计划时间，最后生成并提交出入库单。
+          <h1 class="text-3xl font-bold tracking-tight md:text-4xl text-primary-foreground">工装出入库申请</h1>
+          <p class="mt-2 max-w-lg text-primary-foreground/80">
+            先从工装主表选择工装，再填写用途、目标位置和计划时间，最终生成并提交流出库单。
           </p>
         </div>
         <div class="flex items-center gap-3">
           <Button
             v-debug-id="DEBUG_IDS.ORDER_CREATE.CANCEL_BTN"
-            variant="outline"
-            class="border-slate-700 text-white hover:bg-slate-800"
+            variant="ghost"
+            class="border border-primary-foreground/20 text-primary-foreground hover:bg-white/10"
             @click="resetForm"
           >
             <RefreshCw class="mr-2 h-4 w-4" />
@@ -23,7 +23,7 @@
           </Button>
           <Button
             v-debug-id="DEBUG_IDS.ORDER_CREATE.TOOL_SEARCH_FIELD"
-            class="bg-white font-bold text-slate-900 shadow-lg hover:bg-slate-100"
+            class="bg-white font-bold text-slate-900 shadow-lg hover:bg-slate-100 border-none"
             @click="searchDialogVisible = true"
           >
             <Search class="mr-2 h-4 w-4" />
@@ -32,23 +32,23 @@
         </div>
       </div>
 
-      <div class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl"></div>
+      <div class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary-foreground/10 blur-3xl"></div>
       <div class="absolute bottom-0 left-1/2 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl"></div>
     </header>
 
     <div class="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_400px]">
       <div class="space-y-8">
-        <Card v-debug-id="DEBUG_IDS.ORDER_CREATE.FORM" class="overflow-hidden border-slate-200/80 bg-white shadow-sm">
-          <CardHeader class="border-b border-slate-100 bg-slate-50/30 py-4">
+        <Card v-debug-id="DEBUG_IDS.ORDER_CREATE.FORM" class="overflow-hidden border-border bg-card shadow-sm">
+          <CardHeader class="border-b border-border bg-muted/30 py-4">
             <div class="flex items-center gap-2">
               <div class="h-8 w-1 rounded-full bg-primary" />
-              <CardTitle class="text-base font-bold">基本信息</CardTitle>
+              <CardTitle class="text-base font-bold text-foreground">基本信息</CardTitle>
             </div>
           </CardHeader>
           <CardContent class="p-6">
             <div class="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
               <div class="space-y-2 md:col-span-2">
-                <label class="text-sm font-semibold text-slate-700">单据类型</label>
+                <label class="text-sm font-semibold text-foreground">单据类型</label>
                 <TabsList v-debug-id="DEBUG_IDS.ORDER_CREATE.ORDER_TYPE_FIELD" v-model="form.orderType" class="w-full md:w-auto">
                   <TabsTrigger value="outbound" :model-value="form.orderType" @update:model-value="(v) => (form.orderType = v)" class="px-8">
                     出库
@@ -60,8 +60,8 @@
               </div>
 
               <div v-if="form.orderType === 'outbound'" class="space-y-2">
-                <label class="text-sm font-semibold text-slate-700">用途</label>
-                <Select v-model="form.usagePurpose" placeholder="请选择用途">
+                <label class="text-sm font-semibold text-foreground">用途</label>
+                <Select v-debug-id="DEBUG_IDS.ORDER_CREATE.USAGE_PURPOSE_SELECT" v-model="form.usagePurpose" placeholder="请选择用途">
                   <option value="" disabled>请选择用途</option>
                   <option v-for="opt in usagePurposeOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -69,13 +69,13 @@
                 </Select>
               </div>
 
-              <div v-if="form.orderType === 'outbound'" class="space-y-2">
-                <label class="text-sm font-semibold text-slate-700">目标位置</label>
+              <div v-if="form.orderType === 'outbound'" class="space-y-2" v-debug-id="DEBUG_IDS.ORDER_CREATE.TARGET_LOCATION_FIELD">
+                <label class="text-sm font-semibold text-foreground">目标位置</label>
                 <Input v-model="form.targetLocationText" placeholder="输入目标位置" />
               </div>
 
               <div class="space-y-2" v-debug-id="DEBUG_IDS.ORDER_CREATE.RETURN_TIME_FIELD">
-                <label class="text-sm font-semibold text-slate-700">
+                <label class="text-sm font-semibold text-foreground">
                   {{ form.orderType === 'outbound' ? '计划使用时间' : '计划归还时间' }}
                 </label>
                 <el-date-picker
@@ -88,7 +88,7 @@
               </div>
 
               <div class="space-y-2 md:col-span-2">
-                <label class="text-sm font-semibold text-slate-700">备注</label>
+                <label class="text-sm font-semibold text-foreground">备注</label>
                 <Textarea
                   v-debug-id="DEBUG_IDS.ORDER_CREATE.REMARK_FIELD"
                   v-model="form.remark"
@@ -99,57 +99,55 @@
           </CardContent>
         </Card>
 
-        <Card v-debug-id="DEBUG_IDS.ORDER_CREATE.TOOL_TABLE" class="overflow-hidden border-slate-200/80 bg-white shadow-sm">
-          <CardHeader class="border-b border-slate-100 bg-slate-50/30 py-4">
+        <Card v-debug-id="DEBUG_IDS.ORDER_CREATE.TOOL_LIST" class="overflow-hidden border-border bg-card shadow-sm">
+          <CardHeader class="border-b border-border bg-muted/30 py-4">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div class="h-8 w-1 rounded-full bg-emerald-500" />
-                <CardTitle class="text-base font-bold">已选工装明细</CardTitle>
+                <CardTitle class="text-base font-bold text-foreground">已选工装明细</CardTitle>
               </div>
-              <Badge variant="secondary" class="border-emerald-100 bg-emerald-50 text-emerald-700">
-                已选 {{ selectedTools.length }} 项
+              <Badge variant="secondary" class="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                {{ selectedTools.length }} 项已选
               </Badge>
             </div>
           </CardHeader>
           <CardContent class="p-0">
             <div v-if="selectedTools.length > 0" class="overflow-x-auto">
               <table class="w-full border-collapse text-left text-sm">
-                <thead class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <thead class="border-b border-border bg-muted/50 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   <tr>
-                    <th class="px-6 py-3">序列号</th>
-                    <th class="px-6 py-3">工装名称</th>
-                    <th class="px-6 py-3">工装图号</th>
-                    <th class="px-6 py-3">工作包</th>
-                    <th class="w-32 px-6 py-3">申请数量</th>
+                    <th class="px-6 py-3">工装信息</th>
+                    <th class="px-6 py-3">图号 / 机型</th>
+                    <th class="px-6 py-3">当前库位</th>
+                    <th class="px-6 py-3 w-32">申请数量</th>
                     <th class="px-6 py-3 text-right">操作</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
-                  <tr v-for="(item, index) in selectedTools" :key="item.toolCode" class="group transition-colors hover:bg-slate-50/50">
+                <tbody class="divide-y divide-border">
+                  <tr v-for="(item, index) in selectedTools" :key="item.toolCode" class="group hover:bg-muted/30 transition-colors">
                     <td class="px-6 py-4">
-                      <div class="font-mono text-xs font-semibold text-slate-900">{{ item.toolCode }}</div>
+                      <div class="font-semibold text-foreground">{{ item.toolCode }}</div>
+                      <div class="mt-0.5 max-w-[200px] truncate text-xs text-muted-foreground">{{ item.toolName }}</div>
                     </td>
                     <td class="px-6 py-4">
-                      <div class="max-w-[240px] truncate font-semibold text-slate-900">{{ item.toolName || '-' }}</div>
+                      <div class="font-mono text-[13px] text-muted-foreground">{{ item.drawingNo || '-' }}</div>
+                      <div class="mt-0.5 text-[11px] text-muted-foreground/60">{{ item.specModel || '-' }}</div>
                     </td>
                     <td class="px-6 py-4">
-                      <div class="font-mono text-[13px] text-slate-600">{{ item.drawingNo || '-' }}</div>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
-                        {{ item.workPackage || '-' }}
+                      <span class="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                        {{ item.currentLocationText || '未知' }}
                       </span>
                     </td>
                     <td class="px-6 py-4">
                       <Input
                         type="number"
                         v-model.number="item.applyQty"
-                        class="h-8 w-20 border-slate-200 text-center text-xs"
+                        class="h-8 w-20 border-border text-center text-xs"
                         :min="1"
                       />
                     </td>
                     <td class="px-6 py-4 text-right">
-                      <Button variant="ghost" size="sm" class="text-slate-400 hover:bg-rose-50 hover:text-rose-600" @click="removeTool(index)">
+                      <Button variant="ghost" size="sm" class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" @click="removeTool(index)">
                         <Trash2 class="h-4 w-4" />
                       </Button>
                     </td>
@@ -159,15 +157,15 @@
             </div>
 
             <div v-else class="flex flex-col items-center justify-center p-12 text-center">
-              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50">
-                <Box class="h-8 w-8 text-slate-300" />
+              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Box class="h-8 w-8 text-muted-foreground/40" />
               </div>
-              <h3 class="text-sm font-semibold text-slate-900">尚未选择工装</h3>
-              <p class="mt-1 max-w-[260px] text-xs text-slate-500">
-                点击右上角搜索并添加工装按钮，从工装主表中选择需要的工装。
+              <h3 class="text-sm font-semibold text-foreground">尚未选择工装</h3>
+              <p class="mt-1 max-w-[240px] text-xs text-muted-foreground">
+                点击右上角的“搜索并添加工装”按钮，从工装主表中选择您需要的项目。
               </p>
               <Button variant="outline" size="sm" class="mt-4" @click="searchDialogVisible = true">
-                打开搜索弹窗
+                立即去搜索
               </Button>
             </div>
           </CardContent>
@@ -175,10 +173,10 @@
       </div>
 
       <div class="space-y-6">
-        <Card class="sticky top-8 overflow-hidden border-slate-200/80 bg-white shadow-sm">
-          <CardHeader class="border-b border-slate-100 bg-slate-50/30 py-4">
+        <Card class="sticky top-8 overflow-hidden border-border bg-card shadow-sm">
+          <CardHeader class="border-b border-border bg-muted/30 py-4">
             <div class="flex items-center justify-between">
-              <CardTitle class="text-base font-bold">通知预览</CardTitle>
+              <CardTitle class="text-base font-bold text-foreground">文本预览</CardTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -194,15 +192,14 @@
             <NotificationPreview
               type="keeper"
               :content="keeperText"
-              empty-text="创建单据后可在这里预览保管员通知文本。"
-              class="border-none bg-slate-50/50 shadow-none"
+              empty-text="生成预览后，此处将显示发送给保管员的结构化申请文本。"
+              class="border-none bg-muted/50 shadow-none"
             />
           </CardContent>
-          <CardFooter class="flex flex-col gap-3 border-t border-slate-50 bg-slate-50/30 p-6 pt-0">
+          <CardFooter class="flex flex-col gap-3 border-t border-border bg-muted/30 p-6 pt-0 mt-4">
             <Button
-              v-debug-id="DEBUG_IDS.ORDER_CREATE.SUBMIT_BTN"
               v-permission="'order:submit'"
-              class="w-full bg-slate-900 text-white"
+              class="w-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
               :disabled="!selectedTools.length"
               :loading="submittingOrder"
               @click="submitCreatedOrder"
@@ -212,16 +209,15 @@
             <Button
               v-permission="'order:create'"
               variant="outline"
-              class="w-full bg-white"
+              class="w-full bg-card hover:bg-accent hover:text-accent-foreground"
               :disabled="!selectedTools.length"
               :loading="savingDraft"
               @click="saveDraft"
             >
               保存草稿
             </Button>
-
-            <p class="mt-1 text-center text-[10px] text-slate-400">
-              提交后会进入保管员确认流程，单据号将在详情页中生成。
+            <p class="mt-1 text-center text-[10px] text-muted-foreground">
+              提交后单据将流转至“已提交”状态，等待保管员确认。
             </p>
           </CardFooter>
         </Card>
@@ -383,6 +379,9 @@ async function handlePreview() {
     ElMessage.error(created.error || '生成预览失败')
     return
   }
+  if (created.warning) {
+    ElMessage.warning(created.warning)
+  }
 
   const preview = await generateKeeperText(created.order_no)
   if (preview.success) {
@@ -400,7 +399,7 @@ async function saveDraft() {
   try {
     const result = await createOrder(buildPayload())
     if (!result.success) {
-      ElMessage.error(result.error || '保存草稿失败')
+      ElMessage.error(result.error || '提交单据失败')
       return
     }
 
@@ -421,6 +420,9 @@ async function submitCreatedOrder() {
       ElMessage.error(created.error || '创建单据失败')
       return
     }
+    if (created.warning) {
+      ElMessage.warning(created.warning)
+    }
 
     const result = await submitOrder(created.order_no, {
       operator_id: session.userId || 'anonymous',
@@ -429,8 +431,11 @@ async function submitCreatedOrder() {
     })
 
     if (!result.success) {
-      ElMessage.error(result.error || '提交单据失败')
+      ElMessage.error(result.error || '保存草稿失败')
       return
+    }
+    if (result.warning) {
+      ElMessage.warning(result.warning)
     }
 
     ElMessage.success(`单据已提交：${created.order_no}`)

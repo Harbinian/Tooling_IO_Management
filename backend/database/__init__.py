@@ -13,6 +13,7 @@ from backend.database.core import (
 from backend.database.schema import (
     ensure_tool_io_tables,
     ensure_schema_alignment,
+    ensure_feedback_table,
     SCHEMA_ALIGNMENT_INDEXES,
 )
 
@@ -68,6 +69,7 @@ __all__ = [
     # Schema
     "ensure_tool_io_tables",
     "ensure_schema_alignment",
+    "ensure_feedback_table",
     "SCHEMA_ALIGNMENT_INDEXES",
     # Utils - date
     "normalize_date",

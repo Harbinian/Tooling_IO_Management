@@ -7,7 +7,7 @@ sys.modules.setdefault("pyodbc", types.SimpleNamespace(Connection=object, connec
 sys.modules.setdefault("requests", types.SimpleNamespace())
 sys.modules.setdefault("dotenv", types.SimpleNamespace(load_dotenv=lambda *args, **kwargs: None))
 
-from backend.services.auth_service import hash_password, verify_password
+from backend.services.auth_service import InvalidCredentialsError, hash_password, verify_password
 from web_server import app
 
 
@@ -80,6 +80,54 @@ class AuthenticationRouteTests(unittest.TestCase):
         self.assertEqual(payload["role_codes"], ["sys_admin"])
         self.assertIn("admin:user_manage", payload["permissions"])
         self.assertEqual(payload["current_org"]["org_id"], "ORG_COMPANY")
+
+    def test_change_password_success(self):
+        with patch(
+            "backend.services.auth_service.get_current_user_from_token",
+            return_value={
+                "user_id": "U001",
+                "login_name": "admin",
+                "display_name": "Admin",
+                "roles": [{"role_code": "sys_admin", "role_name": "System Administrator", "is_primary": True}],
+                "role_codes": ["sys_admin"],
+                "permissions": ["dashboard:view"],
+            },
+        ), patch("backend.services.auth_service.change_current_user_password") as mocked_change_password:
+            response = self.client.post(
+                "/api/user/change-password",
+                headers={"Authorization": "Bearer signed-token"},
+                json={"old_password": "old-password", "new_password": "NewPassword123"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["success"])
+        mocked_change_password.assert_called_once()
+
+    def test_change_password_rejects_incorrect_old_password(self):
+        with patch(
+            "backend.services.auth_service.get_current_user_from_token",
+            return_value={
+                "user_id": "U001",
+                "login_name": "admin",
+                "display_name": "Admin",
+                "roles": [{"role_code": "sys_admin", "role_name": "System Administrator", "is_primary": True}],
+                "role_codes": ["sys_admin"],
+                "permissions": ["dashboard:view"],
+            },
+        ), patch(
+            "backend.services.auth_service.change_current_user_password",
+            side_effect=InvalidCredentialsError("old_password is incorrect"),
+        ):
+            response = self.client.post(
+                "/api/user/change-password",
+                headers={"Authorization": "Bearer signed-token"},
+                json={"old_password": "wrong", "new_password": "NewPassword123"},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.get_json()
+        self.assertFalse(payload["success"])
+        self.assertEqual(payload["error"], "old_password is incorrect")
 
     def test_permission_guard_rejects_missing_permission(self):
         with patch(

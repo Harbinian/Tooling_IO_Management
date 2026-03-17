@@ -34,7 +34,7 @@ def get_dashboard_stats(current_user: Optional[Dict] = None) -> Dict:
         # Get counts by status
         status_counts_sql = """
             SELECT order_status, COUNT(*) as count
-            FROM 工装出入库单_主表
+            FROM tool_io_order
             WHERE 1=1
         """
         params = []
@@ -71,7 +71,7 @@ def get_dashboard_stats(current_user: Optional[Dict] = None) -> Dict:
             SELECT
                 COUNT(CASE WHEN order_type = 'outbound' THEN 1 END) as today_outbound,
                 COUNT(CASE WHEN order_type = 'inbound' THEN 1 END) as today_inbound
-            FROM 工装出入库单_主表
+            FROM tool_io_order
             WHERE CAST(created_at AS DATE) = CAST(SYSDATETIME() AS DATE)
         """
         if scope_sql:

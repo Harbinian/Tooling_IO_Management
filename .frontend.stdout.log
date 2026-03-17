@@ -1,0 +1,80 @@
+
+> tooling-io-frontend@0.1.0 dev
+> vite
+
+Port 8150 is in use, trying another one...
+Port 8151 is in use, trying another one...
+
+  [32m[1mVITE[22m v6.4.1[39m  [2mready in [0m[1m890[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m8152[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://26.26.26.1:[1m8152[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.19.199:[1m8152[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.5.34:[1m8152[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://169.254.215.125:[1m8152[22m/[39m
+^C^Cooling-io-frontend@0.1.0 dev
+> vite
+
+Port 8150 is in use, trying another one...
+Port 8151 is in use, trying another one...
+Port 8152 is in use, trying another one...
+
+  [32m[1mVITE[22m v6.4.1[39m  [2mready in [0m[1m827[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m8153[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://26.26.26.1:[1m8153[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.19.199:[1m8153[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.5.34:[1m8153[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://169.254.215.125:[1m8153[22m/[39m
+^C^C
+> tooling-io-frontend@0.1.0 dev
+> vite
+
+
+  [32m[1mVITE[22m v6.4.1[39m  [2mready in [0m[1m832[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m8150[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://26.26.26.1:[1m8150[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.19.199:[1m8150[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.5.34:[1m8150[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://169.254.215.125:[1m8150[22m/[39m
+[2m20:07:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m20:07:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderList.vue, /src/assets/index.css[22m
+[2m20:08:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderList.vue, /src/assets/index.css[22m
+[2m08:31:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:00:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue[22m
+[2m11:00:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m11:01:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:38[22m [36m[1m[vite][22m[39m server restarted.
+[22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m11:01:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m11:01:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/page[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
+90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m11:22:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue[22m
+[2m11:22:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:23:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/layouts/MainLayout.vue, /src/assets/index.css[22m
+[2m11:25:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/components/tool-io/ToolSearchDialog.vue[22m
+[2m11:26:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/components/tool-io/ToolSearchDialog.vue[22m
+[2m11:31:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/components/tool-io/ToolSearchDialog.vue[22m
+[2m11:31:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/components/tool-io/ToolSearchDialog.vue[22m
+[2m14:19:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
+9m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue[22m
+[2m14:26:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
+src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue[22m
+[2m17:20:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue, /src/pages/tool-io/PreTransportList.vue, /src/pages/tool-io/OrderCreate.vue[22m
+[2m17:21:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m17:21:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m17:21:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m17:21:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m08:53:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m09:00:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m09:00:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/LoginPage.vue, /src/assets/index.css[22m
+[2m09:01:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m09:02:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/LoginPage.vue, /src/assets/index.css[22m

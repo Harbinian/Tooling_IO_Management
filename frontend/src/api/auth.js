@@ -16,3 +16,12 @@ export async function getCurrentUser() {
   const { data } = await client.get('/auth/me')
   return data.user
 }
+
+/**
+ * Change password for the current authenticated user.
+ * @param {Object} payload { old_password, new_password }
+ */
+export async function changePassword(payload) {
+  const { data } = await client.post('/user/change-password', payload)
+  return data
+}

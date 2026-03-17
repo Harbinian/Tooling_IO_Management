@@ -56,6 +56,9 @@ from backend.database.core import (
 from backend.database.schema import (
     ensure_tool_io_tables,
     ensure_schema_alignment,
+    ensure_feedback_table,
+    ensure_feedback_reply_table,
+    ensure_tool_status_change_history_table,
     SCHEMA_ALIGNMENT_INDEXES,
 )
 
@@ -240,6 +243,9 @@ def get_tool_io_orders(
     status: Optional[str] = None,
     keeper_id: Optional[str] = None,
     applicant_id: Optional[str] = None,
+    keyword: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
     page: int = 1,
     page_size: int = 20
 ) -> dict:
@@ -251,6 +257,9 @@ def get_tool_io_orders(
         status: Status filter
         keeper_id: Keeper ID filter
         applicant_id: Applicant ID filter
+        keyword: Search keyword
+        date_from: Start date
+        date_to: End date
         page: Page number (1-based)
         page_size: Page size
 
@@ -260,14 +269,17 @@ def get_tool_io_orders(
     repo = OrderRepository()
     return repo.get_orders(
         order_type=order_type,
-        status=status,
+        order_status=status,
         keeper_id=keeper_id,
-        applicant_id=applicant_id,
-        page=page,
+        initiator_id=applicant_id,
+        keyword=keyword,
+        date_from=date_from,
+        date_to=date_to,
+        page_no=page,
         page_size=page_size
     )
 
-def keeper_confirm_order(order_no: str, keeper_id: str, keeper_name: str, confirmed_items: List[Dict], notes: str = "") -> dict:
+def keeper_confirm_order(order_no: str, keeper_id: str, keeper_name: str, confirmed_items: List[Dict], notes: str = "", operator_id: str = "", operator_name: str = "", operator_role: str = "") -> dict:
     """
     Keeper confirms a tool IO order.
 
@@ -277,12 +289,16 @@ def keeper_confirm_order(order_no: str, keeper_id: str, keeper_name: str, confir
         keeper_name: Keeper name
         confirmed_items: List of confirmed items
         notes: Optional notes
+        operator_id: Operator ID
+        operator_name: Operator name
+        operator_role: Operator role
 
     Returns:
         Result dictionary
     """
     repo = OrderRepository()
-    return repo.keeper_confirm(order_no, keeper_id, keeper_name, confirmed_items, notes)
+    confirm_data = {"items": confirmed_items, "keeper_remark": notes}
+    return repo.keeper_confirm(order_no, keeper_id, keeper_name, confirm_data, operator_id or keeper_id, operator_name or keeper_name, operator_role or "keeper")
 
 def final_confirm_order(order_no: str, operator_id: str, operator_name: str, operator_role: str) -> dict:
     """
@@ -300,7 +316,7 @@ def final_confirm_order(order_no: str, operator_id: str, operator_name: str, ope
     repo = OrderRepository()
     return repo.final_confirm(order_no, operator_id, operator_name, operator_role)
 
-def reject_tool_io_order(order_no: str, operator_id: str, operator_name: str, reason: str) -> dict:
+def reject_tool_io_order(order_no: str, operator_id: str, operator_name: str, operator_role: str, reason: str) -> dict:
     """
     Reject a tool IO order.
 
@@ -308,15 +324,38 @@ def reject_tool_io_order(order_no: str, operator_id: str, operator_name: str, re
         order_no: Order number
         operator_id: Operator ID
         operator_name: Operator name
+        operator_role: Operator role
         reason: Rejection reason
 
     Returns:
         Result dictionary
     """
     repo = OrderRepository()
-    return repo.reject_order(order_no, operator_id, operator_name, reason)
+    return repo.reject_order(order_no, reason, operator_id, operator_name, operator_role)
 
-def cancel_tool_io_order(order_no: str, operator_id: str, operator_name: str, reason: str) -> dict:
+def reset_order_to_draft_order(order_no: str, operator_id: str, operator_name: str, operator_role: str) -> dict:
+    """
+    Reset a rejected order back to draft status.
+
+    Args:
+        order_no: Order number
+        operator_id: Operator ID
+        operator_name: Operator name
+        operator_role: Operator role
+
+    Returns:
+        Result dictionary
+    """
+    repo = OrderRepository()
+    return repo.reset_order_to_draft(order_no, operator_id, operator_name, operator_role)
+
+def cancel_tool_io_order(
+    order_no: str,
+    operator_id: str,
+    operator_name: str,
+    operator_role: str,
+    reason: str = "",
+) -> dict:
     """
     Cancel a tool IO order.
 
@@ -324,13 +363,14 @@ def cancel_tool_io_order(order_no: str, operator_id: str, operator_name: str, re
         order_no: Order number
         operator_id: Operator ID
         operator_name: Operator name
+        operator_role: Operator role
         reason: Cancellation reason
 
     Returns:
         Result dictionary
     """
     repo = OrderRepository()
-    return repo.cancel_order(order_no, operator_id, operator_name, reason)
+    return repo.cancel_order(order_no, operator_id, operator_name, operator_role, reason)
 
 def get_pending_keeper_orders(keeper_id: str = None) -> list:
     """
@@ -362,7 +402,7 @@ def search_tools(
     Args:
         keyword: Search keyword (tool code, name, etc.)
         status: Tool status filter
-        location: Location filter
+        location: Location filter (supports LIKE wildcard matching)
         page: Page number
         page_size: Page size
 
@@ -370,7 +410,7 @@ def search_tools(
         Dictionary with tools list and pagination info
     """
     repo = ToolRepository()
-    return repo.search_tools(keyword, status, location, page, page_size)
+    return repo.search_tools(keyword, status, location_keyword=location, page_no=page, page_size=page_size)
 
 def check_tools_available(tool_codes: List[str], exclude_order_no: Optional[str] = None) -> Dict[str, Any]:
     """
@@ -507,6 +547,9 @@ __all__ = [
     # Schema
     "ensure_tool_io_tables",
     "ensure_schema_alignment",
+    "ensure_feedback_table",
+    "ensure_feedback_reply_table",
+    "ensure_tool_status_change_history_table",
     "SCHEMA_ALIGNMENT_INDEXES",
 
     # Utils - date

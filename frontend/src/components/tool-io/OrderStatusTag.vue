@@ -46,11 +46,11 @@ const presentation = computed(() => {
 })
 
 const toneMap = {
-  info: 'border-slate-200 bg-slate-50 text-slate-600',
-  warning: 'border-amber-200 bg-amber-50/50 text-amber-700',
-  success: 'border-emerald-200 bg-emerald-50/50 text-emerald-700',
-  primary: 'border-sky-200 bg-sky-50/50 text-sky-700',
-  danger: 'border-rose-200 bg-rose-50/50 text-rose-700'
+  info: 'border-muted bg-muted text-muted-foreground',
+  warning: 'border-amber-500/20 bg-amber-500/10 text-amber-500',
+  success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500',
+  primary: 'border-blue-500/20 bg-blue-500/10 text-blue-500',
+  danger: 'border-rose-500/20 bg-rose-500/10 text-rose-500'
 }
 
 const badgeClass = computed(() =>

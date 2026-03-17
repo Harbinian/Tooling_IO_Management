@@ -127,10 +127,10 @@ Prompt numbering:
 
 | 范围 / Range | 类别 / Category |
 |-------------|----------------|
-| 000–099 | 功能开发 / Feature Development |
-| 100–199 | Bug 修复 / Bug Fix |
-| 200–299 | 重构 / Refactoring |
-| 300–399 | 测试 / Testing |
+| 00001–09999 | 功能开发 / Feature Development |
+| 10001–19999 | Bug 修复 / Bug Fix |
+| 20001–29999 | 重构 / Refactoring |
+| 30001–39999 | 测试 / Testing |
 
 执行器规则：
 
@@ -138,9 +138,9 @@ Executor rules:
 
 | Executor | Scope |
 |----------|-------|
-| Gemini | Frontend tasks |
-| Codex | Backend tasks, Testing tasks |
-| Claude Code | Architecture tasks, Refactoring tasks |
+| Gemini | Frontend Design tasks |
+| Codex | Backend Implementation, Testing tasks |
+| Claude Code | Architecture, Refactoring tasks |
 
 ---
 
@@ -174,6 +174,26 @@ Status → Completed
 
 ---
 
+## Lock 文件管理 / Lock File Management
+
+Lock 文件用于防止多 Agent 抢同一任务。创建规则：
+
+Lock file creation rules:
+
+| 场景 | 行为 |
+|------|------|
+| Executor ≠ Claude Code | **创建 lock 文件**，交给目标执行器 |
+| Executor = Claude Code | **不创建 lock 文件**，直接执行 |
+| Claude Code 主动接手非 Claude Code 任务 | **创建 lock 文件**，记住锁是 Claude Code 上的，可由 Claude Code 移除 |
+
+Lock 文件命名：`promptsRec/active/<prompt_name>.lock`
+
+Claude Code 必须记录自己上了哪些锁，以便后续移除。
+
+Claude Code must record which locks it has created so it can remove them later.
+
+---
+
 ## RUNPROMPT 执行 / RUNPROMPT Execution
 
 管道注册后，执行生成的提示词。
@@ -186,9 +206,11 @@ Execution flow:
 
 RUNPROMPT 从 promptsRec/active/ 读取提示词 / RUNPROMPT reads prompt from promptsRec/active/
 ↓
-创建 .lock 文件 / Creates .lock file
+检查是否需要创建 lock 文件 / Check if lock file needed (see above)
 ↓
 分配的代理执行实现 / Assigned agent performs implementation
+↓
+删除 lock 文件（如果是 Claude Code 锁） / Remove lock file if Claude Code lock
 ↓
 生成执行报告 / Execution report generated
 ↓
@@ -307,13 +329,28 @@ All fixes must be executed through prompts.
 
 ---
 
+# Claude Code 锁记录 / Claude Code Lock Recording
+
+当 Claude Code 创建 lock 文件时，必须记录锁的信息，以便后续移除。
+
+Claude Code should maintain a record of locks it creates:
+
+记录内容：
+- lock 文件路径
+- 创建原因（主动创建 / 接手他人任务）
+- 创建时间
+
+存储位置：建议记录在任务执行报告或记忆文件中。
+
+When Claude Code finishes executing a task it locked, it must remove the lock file.
+
+---
+
 # 示例工作流 / Example Workflow
 
+## 示例 1：任务交给 Codex 执行
+
 示例情况：
-
-Example situation:
-
-浏览器控制台：
 
 Browser console:
 
@@ -321,38 +358,57 @@ GET /api/tool-io-orders → 500
 
 Dev Inspector 结果：
 
-Dev Inspector result:
-
 Layer: Backend
 Problem: API failure
 
 Auto Task Generator 创建：
 
-Auto Task Generator creates:
-
 104_bug_order_api_endpoint_failure.md
+(Executor: Codex → 创建 lock 文件)
 
 pipeline-dashboard 注册：
-
-pipeline-dashboard registers:
 
 Task: 104_bug_order_api_endpoint_failure
 Executor: Codex
 Status: Pending
 
-RUNPROMPT 执行任务。
-
-RUNPROMPT executes task.
-
-Codex 实现修复。
+RUNPROMPT 将任务交给 Codex，Codex 执行实现。
 
 Codex implements fix.
 
-pipeline-dashboard 更新：
+完成后删除 lock 文件，归档提示词。
 
-pipeline-dashboard updates:
+---
 
-Status → Completed
+## 示例 2：Claude Code 直接执行
+
+示例情况：
+
+E2E 测试报告发现多个 bug，Dev Inspector 分析后确定需要 Claude Code 执行。
+
+Auto Task Generator 创建：
+
+104_bug_keeper_cross_org_access.md
+(Executor: Claude Code → 不创建 lock 文件)
+
+Claude Code 直接读取提示词并执行实现。
+
+完成后归档提示词为 `✅_*.md`。
+
+---
+
+## 示例 3：Claude Code 接手他人任务
+
+示例情况：
+
+Codex 的任务卡住了，Claude Code 决定接手。
+
+Claude Code：
+
+1. 创建 lock 文件（接手标记）
+2. 记录："这是我接手的锁，可移除"
+3. 执行实现
+4. 完成后删除 lock 并归档
 
 ---
 

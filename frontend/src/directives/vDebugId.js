@@ -99,21 +99,22 @@ function syncDebugBadge(el, binding) {
 
   Object.assign(badge.style, {
     position: 'absolute',
-    top: '0',
-    right: '0',
+    top: '-2px',
+    right: '-2px',
     backgroundColor: '#ef4444',
     color: 'white',
     fontSize: '10px',
-    padding: '1px 4px',
-    borderRadius: '0 0 0 4px',
+    padding: '2px 5px',
+    borderRadius: '0 4px 0 4px',
     zIndex: '10000',
     pointerEvents: 'auto',
     fontFamily: 'monospace',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.3)',
     whiteSpace: 'nowrap',
     opacity: isPinMode ? '1' : '0',
     transition: 'opacity 0.2s ease-in-out',
-    cursor: 'copy'
+    cursor: 'copy',
+    fontWeight: 'bold'
   })
 
   const voidElements = ['INPUT', 'IMG', 'BR', 'HR', 'SELECT', 'TEXTAREA']

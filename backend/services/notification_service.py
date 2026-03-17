@@ -259,37 +259,38 @@ def list_notifications_for_user(
     page_size: int = 20,
     status: str = "",
 ) -> Dict:
+    ensure_tool_io_tables()
     receiver_sql, receiver_params = _build_user_receiver_filters(current_user)
-    where_clauses = ["通知渠道 = ?", receiver_sql]
+    where_clauses = ["notify_channel = ?", receiver_sql]
     params: List[object] = [INTERNAL_CHANNEL, *receiver_params]
     if _clean_text(status):
-        where_clauses.append("发送状态 = ?")
+        where_clauses.append("send_status = ?")
         params.append(_clean_text(status))
 
     where_sql = " AND ".join(where_clauses)
     offset = max(page_no - 1, 0) * page_size
     db = DatabaseManager()
 
-    count_sql = f"SELECT COUNT(*) AS total_count FROM 工装出入库单_通知记录 WHERE {where_sql}"
+    count_sql = f"SELECT COUNT(*) AS total_count FROM tool_io_notification WHERE {where_sql}"
     total_count = int((db.execute_query(count_sql, tuple(params)) or [{"total_count": 0}])[0].get("total_count", 0))
 
     list_sql = f"""
     SELECT
         id AS notification_id,
-        出入库单号 AS order_id,
-        通知类型 AS notification_type,
-        通知渠道 AS notify_channel,
-        接收人 AS receiver,
-        通知标题 AS message_title,
-        通知内容 AS message_body,
-        发送状态 AS status,
-        发送结果 AS send_result,
-        复制文本 AS copy_text,
-        创建时间 AS created_time,
-        发送时间 AS updated_time
-    FROM 工装出入库单_通知记录
+        order_no AS order_id,
+        notify_type AS notification_type,
+        notify_channel AS notify_channel,
+        receiver AS receiver,
+        notify_title AS message_title,
+        notify_content AS message_body,
+        send_status AS status,
+        send_result AS send_result,
+        copy_text AS copy_text,
+        created_at AS created_time,
+        send_time AS updated_time
+    FROM tool_io_notification
     WHERE {where_sql}
-    ORDER BY 创建时间 DESC, id DESC
+    ORDER BY created_at DESC, id DESC
     OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
     """
     rows = db.execute_query(list_sql, tuple(params))
@@ -305,25 +306,26 @@ def list_notifications_for_user(
 
 
 def list_notifications_by_order(order_no: str) -> Dict:
+    ensure_tool_io_tables()
     db = DatabaseManager()
     rows = db.execute_query(
         """
         SELECT
             id AS notification_id,
-            出入库单号 AS order_id,
-            通知类型 AS notification_type,
-            通知渠道 AS notify_channel,
-            接收人 AS receiver,
-            通知标题 AS message_title,
-            通知内容 AS message_body,
-            发送状态 AS status,
-            发送结果 AS send_result,
-            复制文本 AS copy_text,
-            创建时间 AS created_time,
-            发送时间 AS updated_time
-        FROM 工装出入库单_通知记录
-        WHERE 出入库单号 = ?
-        ORDER BY 创建时间 DESC, id DESC
+            order_no AS order_id,
+            notify_type AS notification_type,
+            notify_channel AS notify_channel,
+            receiver AS receiver,
+            notify_title AS message_title,
+            notify_content AS message_body,
+            send_status AS status,
+            send_result AS send_result,
+            copy_text AS copy_text,
+            created_at AS created_time,
+            send_time AS updated_time
+        FROM tool_io_notification
+        WHERE order_no = ?
+        ORDER BY created_at DESC, id DESC
         """,
         (_clean_text(order_no),),
     )
@@ -331,6 +333,7 @@ def list_notifications_by_order(order_no: str) -> Dict:
 
 
 def mark_notification_as_read(notification_id: int, current_user: Dict) -> Dict:
+    ensure_tool_io_tables()
     receiver_sql, receiver_params = _build_user_receiver_filters(current_user)
     params: List[object] = [int(notification_id), INTERNAL_CHANNEL, *receiver_params]
     db = DatabaseManager()
@@ -339,20 +342,20 @@ def mark_notification_as_read(notification_id: int, current_user: Dict) -> Dict:
         f"""
         SELECT
             id AS notification_id,
-            出入库单号 AS order_id,
-            通知类型 AS notification_type,
-            通知渠道 AS notify_channel,
-            接收人 AS receiver,
-            通知标题 AS message_title,
-            通知内容 AS message_body,
-            发送状态 AS status,
-            发送结果 AS send_result,
-            复制文本 AS copy_text,
-            创建时间 AS created_time,
-            发送时间 AS updated_time
-        FROM 工装出入库单_通知记录
+            order_no AS order_id,
+            notify_type AS notification_type,
+            notify_channel AS notify_channel,
+            receiver AS receiver,
+            notify_title AS message_title,
+            notify_content AS message_body,
+            send_status AS status,
+            send_result AS send_result,
+            copy_text AS copy_text,
+            created_at AS created_time,
+            send_time AS updated_time
+        FROM tool_io_notification
         WHERE id = ?
-          AND 通知渠道 = ?
+          AND notify_channel = ?
           AND {receiver_sql}
         """,
         tuple(params),

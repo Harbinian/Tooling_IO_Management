@@ -193,7 +193,7 @@ class DatabaseManager:
     # ========================================
 
     def get_tool_basic_info(self) -> List[Dict]:
-        """Get basic tool information from 工装身份卡_主表."""
+        """Get basic tool information from Tooling_ID_Main."""
         sql = """
             SELECT
                 m.序列号,
@@ -208,7 +208,7 @@ class DatabaseManager:
                 m.定检派工状态,
                 m.定检有效期剩余天,
                 m.应用历史
-            FROM 工装身份卡_主表 m
+            FROM Tooling_ID_Main m
             WHERE m.定检有效截止 IS NOT NULL
               AND (m.定检属性 IS NULL OR m.定检属性 <> '否')
               AND (m.应用历史 IS NULL OR m.应用历史 NOT LIKE '%封存%')
@@ -473,7 +473,7 @@ class DatabaseManager:
                    r.返工类型, r.目标版次, r.返工内容, r.需求日期, r.转录人, r.转录日期,
                    r.验收日期, r.验收人员, r.工装计划员, r.计划确认日期, t.当前版次 as 身份卡版次
             FROM 工艺装备返工申请单_主表 r
-            LEFT JOIN 工装身份卡_主表 t ON r.序列号 = t.序列号
+            LEFT JOIN Tooling_ID_Main t ON r.序列号 = t.序列号
             WHERE r.OA申请单编号 IS NOT NULL
               AND r.派工号 NOT LIKE 'C%'
               AND NOT EXISTS (SELECT 1 FROM 工装验收管理_主表 m WHERE m.派工号 = r.派工号)

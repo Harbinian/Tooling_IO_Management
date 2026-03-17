@@ -1,0 +1,4 @@
+# Requirements for Dev Server Launcher
+# Install with: pip install -r requirements_launcher.txt
+
+requests>=2.31.0

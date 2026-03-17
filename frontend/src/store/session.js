@@ -9,6 +9,7 @@ const defaults = {
   userId: '',
   loginName: '',
   userName: '',
+  employeeNo: '',
   role: '',
   roleName: '',
   roles: [],
@@ -42,6 +43,7 @@ function normalizeUser(user, token = '') {
     userId: user.user_id || '',
     loginName: user.login_name || '',
     userName: user.display_name || '',
+    employeeNo: user.employee_no || '',
     role: mapLegacyRole(user),
     roleName: primaryRole.role_name || primaryRole.role_code || '',
     roles,
@@ -80,6 +82,7 @@ const state = reactive({
         userId: state.userId,
         loginName: state.loginName,
         userName: state.userName,
+        employeeNo: state.employeeNo,
         role: state.role,
         roleName: state.roleName,
         roles: state.roles,
@@ -123,6 +126,10 @@ const state = reactive({
   },
   hasPermission(permission) {
     return state.permissions.includes(permission)
+  },
+  isAdmin() {
+    const roleCodes = new Set((state.roles || []).map((role) => role.role_code))
+    return roleCodes.has('sys_admin') || state.permissions.includes('admin:user_manage')
   }
 })
 

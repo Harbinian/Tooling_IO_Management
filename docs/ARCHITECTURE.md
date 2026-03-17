@@ -12,13 +12,13 @@
 │         (Vue3 + Element Plus)           │
 ├─────────────────────────────────────────┤
 │             API Layer                   │
-│            (FastAPI)                     │
+│            (Flask)                       │
 ├─────────────────────────────────────────┤
 │           Service Layer                  │
 │     (Business Logic Processing)         │
 ├─────────────────────────────────────────┤
 │          Data Access Layer               │
-│           (SQLAlchemy)                   │
+│           (pyodbc)                       │
 ├─────────────────────────────────────────┤
 │            Database                      │
 │          (SQL Server)                    │
@@ -29,8 +29,8 @@
 
 | 层级 | 技术 | 说明 |
 |------|------|------|
-| 后端 | Python + FastAPI | 高性能异步Web框架 |
-| ORM | SQLAlchemy | Python SQL工具包和ORM |
+| 后端 | Python + Flask | 轻量级Web框架 |
+| 数据库访问 | pyodbc | Python SQL Server数据库访问 |
 | 数据库 | SQL Server | 企业级关系型数据库 |
 | 前端 | Vue3 + Element Plus | 渐进式前端框架 + UI组件库 |
 | 通知 | 飞书Webhook | 企业即时通讯通知 |
@@ -124,13 +124,33 @@
            │ keeper_confirm      │
            ↓                     │
    ┌───────────────┐      ┌──────────┐
-   │keeper_confirmed│     │ rejected │
-   └───────┬───────┘      └────┬─────┘
-           │                   │ cancel
-           │ notify             ↓
+   │partially_      │     │ rejected │
+   │confirmed       │     └────┬─────┘
+   └───────┬───────┘          │ cancel
+           │                   ↓
+           │ keeper_confirm    ┌──────────┐
            ↓              ┌──────────┐
    ┌───────────────┐      │ cancelled │
-   │   notified   │      └──────────┘
+   │keeper_confirmed│     └──────────┘
+   └───────┬───────┘
+           │
+           │ notify_transport
+           ↓
+   ┌───────────────┐
+   │transport_notified│
+   └───────┬───────┘
+           │
+           │ transport_start
+           ↓
+   ┌───────────────┐
+   │transport_in_progress│
+   └───────┬───────┘
+           │
+           │ transport_complete
+           ↓
+   ┌───────────────┐
+   │final_confirm_│
+   │pending        │
    └───────┬───────┘
            │
            │ final_confirm
@@ -144,8 +164,11 @@
 |------|------|------|
 | draft | 草稿 | 订单刚创建，未提交 |
 | submitted | 已提交 | 已提交给保管员 |
+| partially_confirmed | 部分确认 | 部分明细已确认 |
 | keeper_confirmed | 保管员已确认 | 保管员已确认工装状态 |
-| notified | 已通知 | 已发送运输通知 |
+| transport_notified | 已通知运输 | 已发送运输通知 |
+| transport_in_progress | 运输中 | 运输进行中 |
+| final_confirmation_pending | 待最终确认 | 等待最终确认 |
 | completed | 已完成 | 订单流程结束 |
 | rejected | 已拒绝 | 保管员拒绝 |
 | cancelled | 已取消 | 已取消 |
@@ -237,7 +260,7 @@ AuditService 记录日志
      │ HTTP Request
      ↓
 ┌─────────────┐
-│   FastAPI   │
+│   Flask     │
 │  (API层)    │
 └──────┬──────┘
        │
@@ -280,17 +303,17 @@ AuditService 记录日志
 ### 5.2 审计日志表结构
 
 ```
-工装出入库单_操作日志
-├── 出入库单号 (FK)
-├── 明细ID (可选, FK)
-├── 操作类型
-├── 操作人ID
-├── 操作人姓名
-├── 操作人角色
-├── 变更前状态
-├── 变更后状态
-├── 操作内容
-└── 操作时间
+tool_io_operation_log
+├── order_no (FK)
+├── item_id (可选, FK)
+├── operation_type
+├── operator_id
+├── operator_name
+├── operator_role
+├── from_status
+├── to_status
+├── operation_content
+└── operation_time
 ```
 
 ### 5.3 审计场景
@@ -322,14 +345,14 @@ AuditService 记录日志
 所有通知必须持久化存储：
 
 ```
-工装出入库单_通知记录
-├── 出入库单号 (FK)
-├── 通知类型
-├── 通知方式 (飞书/微信/邮件)
-├── 接收人
-├── 发送状态 (成功/失败)
-├── 发送时间
-└── 响应内容
+tool_io_notification
+├── order_no (FK)
+├── notify_type
+├── notify_channel (飞书/微信/邮件)
+├── receiver
+├── send_status (成功/失败)
+├── send_time
+└── response_content
 ```
 
 ### 6.3 飞书通知格式
@@ -433,32 +456,32 @@ def update_order_status(order_no: str, new_status: str):
 
 ```
 ┌─────────────────────┐       ┌─────────────────────┐
-│   工装出入库单_主表  │       │      工装基本信息    │
+│    tool_io_order    │       │      工装基本信息    │
 ├─────────────────────┤       ├─────────────────────┤
-│ 出入库单号 (PK)     │       │ 工装ID (PK)         │
-│ 单据类型            │       │ 工装编码             │
-│ 单据状态            │──────→│ 工装名称             │
-│ 发起人信息          │       │ 工装图号             │
-│ 保管员信息          │       │ 工装状态             │
-│ 运输信息            │       │ 位置信息             │
+│ order_no (PK)      │       │ 工装ID (PK)         │
+│ order_type          │       │ 工装编码             │
+│ order_status        │──────→│ 工装名称             │
+│ initiator_info      │       │ 工装图号             │
+│ keeper_info         │       │ 工装状态             │
+│ transport_info      │       │ 位置信息             │
 └─────────────────────┘       └─────────────────────┘
          │
          │ 1:N
          ↓
 ┌─────────────────────┐
-│  工装出入库单_明细   │
+│  tool_io_order_item │
 ├─────────────────────┤
-│ 出入库单号 (FK)     │
-│ 明细ID (PK)        │
-│ 工装ID (FK)        │
-│ 工装快照            │
-│ 明细状态            │
+│ order_no (FK)       │
+│ item_id (PK)        │
+│ tool_id (FK)        │
+│ tool_snapshot        │
+│ item_status         │
 └─────────────────────┘
          │
          │ N:1
          ↓
 ┌─────────────────────┐
-│ 工装出入库单_操作日志 │
+│tool_io_operation_log│
 ├─────────────────────┤
 │ 操作ID (PK)         │
 │ 出入库单号 (FK)     │

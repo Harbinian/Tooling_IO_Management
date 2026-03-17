@@ -28,6 +28,14 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+
+  --color-header: hsl(var(--header));
+  --color-header-foreground: hsl(var(--header-foreground));
+  --color-header-border: hsl(var(--header-border));
+
   --radius-2xl: 1rem;
   --radius-xl: 0.75rem;
   --radius-lg: var(--radius);
@@ -69,6 +77,15 @@
     --ring: 240 5.9% 10%;
 
     --radius: 1rem;
+
+    /* Sidebar & Layout */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 240 10% 3.9%;
+    --sidebar-border: 240 5.9% 90%;
+    
+    --header: 0 0% 100%;
+    --header-foreground: 240 10% 3.9%;
+    --header-border: 240 5.9% 90%;
   }
 
   .dark {
@@ -81,14 +98,15 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    /* Keep Primary as a distinct dark color in dark mode, or use a specific brand color */
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted-foreground: 240 5% 84.9%; /* Increased from 64.9% to 84.9% for better contrast */
 
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
@@ -96,15 +114,25 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 240 3.7% 25.9%; /* Increased from 15.9% to 25.9% for visibility */
+    --input: 240 3.7% 25.9%;  /* Increased from 15.9% to 25.9% for visibility */
     --ring: 240 4.9% 83.9%;
+
+    /* Sidebar & Layout */
+    --sidebar: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+
+    --header: 240 10% 3.9%;
+    --header-foreground: 0 0% 98%;
+    --header-border: 240 3.7% 15.9%;
   }
 }
 
 @layer base {
   * {
     border-color: hsl(var(--border) / 0.5);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   }
   html {
     scroll-behavior: smooth;

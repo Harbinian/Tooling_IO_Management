@@ -10,6 +10,7 @@ import logging
 from typing import Dict, List, Optional
 
 from database import (
+    DatabaseManager,
     cancel_tool_io_order,
     final_confirm_order,
     reject_tool_io_order,
@@ -206,12 +207,12 @@ def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
         transport_contact = payload.get("transport_contact", "")
 
         update_sql = """
-            UPDATE 工装出入库单_主表
-            SET transport_operator = ?,
-                transport_operator_name = ?,
-                transport_contact = ?,
-                updated_at = SYSDATETIME()
-            WHERE order_no = ?
+            UPDATE tool_io_order
+            SET æ©æ„¯ç·­æµœç¯’D = ?,
+                æ©æ„¯ç·­æµœå“„î˜éš?= ?,
+                æ·‡æ¿ˆî…¸é›æ¨¼â€˜ç’ã‚†æ¤‚é—‚?= ?,
+                æ·‡î†½æ•¼éƒå •æ£¿ = SYSDATETIME()
+            WHERE é‘å“„å†æ´æ’³å´Ÿé™?= ?
         """
         db.execute_query(
             update_sql,
@@ -262,10 +263,10 @@ def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] =
     db = DatabaseManager()
     try:
         update_sql = """
-            UPDATE 工装出入库单_主表
-            SET order_status = 'transport_in_progress',
-                updated_at = SYSDATETIME()
-            WHERE order_no = ?
+            UPDATE tool_io_order
+            SET {ORDER_COLUMNS['order_status']} = 'transport_in_progress',
+                {ORDER_COLUMNS['updated_at']} = SYSDATETIME()
+            WHERE {ORDER_COLUMNS['order_no']} = ?
         """
         db.execute_query(update_sql, (order_no,), fetch=False)
     except Exception as exc:
@@ -310,10 +311,10 @@ def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict
     db = DatabaseManager()
     try:
         update_sql = """
-            UPDATE 工装出入库单_主表
-            SET order_status = 'transport_completed',
-                updated_at = SYSDATETIME()
-            WHERE order_no = ?
+            UPDATE tool_io_order
+            SET {ORDER_COLUMNS['order_status']} = 'transport_completed',
+                {ORDER_COLUMNS['updated_at']} = SYSDATETIME()
+            WHERE {ORDER_COLUMNS['order_no']} = ?
         """
         db.execute_query(update_sql, (order_no,), fetch=False)
     except Exception as exc:
@@ -395,6 +396,7 @@ def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         actor.get("user_id", ""),
         actor.get("user_name", ""),
         actor.get("user_role", ""),
+        payload.get("cancel_reason", ""),
     )
 
     if result.get("success"):

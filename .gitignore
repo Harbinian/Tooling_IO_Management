@@ -7,12 +7,21 @@ env/
 venv/
 ENV/
 .env
+.backend.stderr.log
+.backend.stdout.log
+.frontend.stdout.log
+.frontend.stderr.log
+*.log
 
 # Logs
 logs/
 !logs/.gitkeep
-.backend.stderr.log
-.backend.stdout.log
+
+# Build and Dist
+build/
+dist/
+bin/
+obj/
 
 # Frontend
 frontend/node_modules/

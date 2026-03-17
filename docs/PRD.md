@@ -146,9 +146,12 @@
 | 当前状态 | 可转向状态 | 触发操作 |
 |----------|------------|----------|
 | draft | submitted | 班组长提交 |
-| submitted | keeper_confirmed, rejected | 保管员确认/拒绝 |
-| keeper_confirmed | notified, completed | 通知/直接完成 |
-| notified | completed | 最终确认 |
+| submitted | partially_confirmed, keeper_confirmed, rejected | 保管员确认/拒绝 |
+| partially_confirmed | keeper_confirmed, transport_notified, rejected | 保管员确认或发送运输通知 |
+| keeper_confirmed | transport_notified, final_confirmation_pending, rejected | 发送运输通知或直接最终确认 |
+| transport_notified | transport_in_progress | 开始运输 |
+| transport_in_progress | final_confirmation_pending | 完成运输 |
+| final_confirmation_pending | completed | 最终确认 |
 | completed | - | 终态 |
 | rejected | cancelled | 班组长取消 |
 | cancelled | - | 终态 |
@@ -271,5 +274,5 @@
 - 系统为单体应用，不引入微服务
 - 使用 SQL Server 数据库
 - 使用 pyodbc 进行数据库访问
-- 后端使用 Python + FastAPI
+- 后端使用 Python + Flask
 - 前端使用 Vue3 + Element Plus

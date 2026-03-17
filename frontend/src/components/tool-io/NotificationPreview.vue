@@ -1,15 +1,15 @@
 <template>
-  <Card :class="cn('h-full bg-white/50 backdrop-blur-sm border-white/20 shadow-shimmer flex flex-col', props.class)">
-    <CardHeader class="border-b border-slate-100/50 bg-slate-50/30 py-3 shrink-0">
+  <Card :class="cn('h-full bg-card/50 backdrop-blur-sm border-border/20 shadow-shimmer flex flex-col', props.class)">
+    <CardHeader class="border-b border-border/50 bg-muted/30 py-3 shrink-0">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <component :is="typeIcon" class="h-4 w-4 text-slate-400" />
-          <CardTitle class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ displayTitle }}</CardTitle>
+          <component :is="typeIcon" class="h-4 w-4 text-muted-foreground" />
+          <CardTitle class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{{ displayTitle }}</CardTitle>
         </div>
         <Button
           variant="ghost"
           size="sm"
-          class="h-7 px-2 text-[10px] font-bold uppercase tracking-tight text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all"
+          class="h-7 px-2 text-[10px] font-bold uppercase tracking-tight text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           :disabled="!content || loading"
           @click="handleCopy"
         >
@@ -20,26 +20,26 @@
     </CardHeader>
 
     <CardContent class="p-0 flex-1 relative min-h-[160px]">
-      <div v-if="loading" class="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-        <RefreshCw class="h-5 w-5 text-slate-300 animate-spin" />
+      <div v-if="loading" class="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+        <RefreshCw class="h-5 w-5 text-muted-foreground animate-spin" />
       </div>
 
       <div class="p-4 h-full">
         <div v-if="content" class="h-full animate-in fade-in duration-300">
-          <pre class="preview-text">{{ content }}</pre>
+          <pre class="preview-text text-foreground">{{ content }}</pre>
         </div>
 
         <div v-else class="h-full flex flex-col items-center justify-center text-center opacity-40 py-8">
-          <FileText class="h-8 w-8 text-slate-300 mb-2" />
-          <p class="text-[11px] text-slate-500 font-medium">
+          <FileText class="h-8 w-8 text-muted-foreground mb-2" />
+          <p class="text-[11px] text-muted-foreground font-medium">
             {{ emptyText || '暂无预览内容' }}
           </p>
         </div>
       </div>
     </CardContent>
 
-    <div v-if="content && showHint" class="px-4 py-2 bg-slate-50/50 border-t border-slate-50 shrink-0">
-      <p class="text-[10px] text-slate-400 flex items-center gap-1.5">
+    <div v-if="content && showHint" class="px-4 py-2 bg-muted/50 border-t border-border/50 shrink-0">
+      <p class="text-[10px] text-muted-foreground flex items-center gap-1.5">
         <Info class="h-3 w-3" />
         当前文本已按结构化格式生成，可直接复制发送。
       </p>

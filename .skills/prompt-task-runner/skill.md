@@ -29,13 +29,13 @@
 当多个执行者（Claude Code、Codex、Gemini）可能并行执行任务时，必须：
 
 1. **先创建锁文件**: 在执行任何任务前创建 .lock 文件，防止重复执行
-2. **动态计算序列号**: 使用 Step 7 的算法动态确定归档序号，而非假设序号顺序
-3. **先扫描再归档**: 在归档前必须扫描所有现有归档，确保序号未被占用
+2. **动态计算执行顺序号**: 使用 Step 7 的算法动态确定归档执行顺序号，而非假设序号顺序
+3. **先扫描再归档**: 在归档前必须扫描所有现有归档，确保执行顺序号未被占用
 
 When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parallel, you must:
 
 1. **Create lock file first**: Create .lock file before executing any task to prevent duplicate execution
-2. **Dynamically calculate sequence number**: Use Step 7's algorithm to dynamically determine archive sequence number, not assume sequential order
+2. **Dynamically calculate execution sequence number**: Use Step 7's algorithm to dynamically determine archive sequence number, not assume sequential order
 3. **Scan before archiving**: Must scan all existing archives before archiving to ensure sequence number is not occupied
 
 ---
@@ -130,6 +130,89 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 
 ---
 
+### 5.1 默认规则调用 / Default Rule Invocation
+
+根据任务类型，执行者必须调用相应的项目规则：
+
+| 任务类型 | 编号范围 | 默认调用规则 |
+|---------|---------|------------|
+| 功能任务 / Feature | 00001-09999 | `.claude\rules\50_hotfix_sop.md` (热修复标准操作流程) |
+| Bug修复任务 / Bug Fix | 10001-19999 | `.claude\rules\40_debug_8d.md` (8D问题解决协议) |
+| 重构任务 / Refactoring | 20001-29999 | `.claude\rules\60_ADP-Protocol.md` (ADP开发协议) |
+| 测试任务 / Testing | 30001-39999 | `.claude\rules\40_debug_8d.md` (8D问题解决协议) |
+
+**规则调用方式**: 在执行任务前，先加载对应的规则文件，按照规则中定义的流程执行。规则文件内容作为执行者的必须遵守的约束条件。
+
+**优先级**: 如果提示词中明确指定了不同的规则或流程，以提示词中的指示为准。
+
+**功能任务规则 (50_hotfix_sop.md)**:
+- 最小影响范围
+- 原子性变更
+- 立即验证
+
+**Bug修复任务规则 (40_debug_8d.md)**:
+- D1 团队组建
+- D2 问题描述
+- D3 遏制措施
+- D4 根本原因分析
+- D5 永久解决方案
+- D6 实施
+- D7 预防
+- D8 文档
+
+**重构任务规则 (60_ADP-Protocol.md)**:
+- Phase 1: 业务需求与场景
+- Phase 2: 数据流转与深度穿透防御
+- Phase 3: 架构设计与约束
+- Phase 4: 精确执行与集成验证
+- Phase 5: UI一致性验证
+
+---
+
+### 5.1.1 统一执行规则 / Unified Execution Rule
+
+根据任务类型，执行者必须遵循以下规则：
+
+| 任务类型 | 条件 | 执行者 |
+|---------|------|--------|
+| 重构任务 (20001-29999) | 始终 | Claude Code |
+| 测试任务 (30001-39999) | 始终 | Claude Code |
+| 恶性 Bug (P0/P1) | 始终 | Claude Code |
+| 简化任务 | 始终 | Claude Code |
+| 功能任务/普通 Bug | 前端设计 | Gemini |
+| 功能任务/普通 Bug | 后端实现 | Codex |
+| 功能任务/普通 Bug | 前端实现 | Codex |
+
+**简化任务判定**：以下情况视为"简化任务"：
+- 参数类型不匹配修复
+- API 调用参数提取错误
+- 简单函数签名修正
+- docstring 更新
+- 文档同步
+- 单文件/单函数修改
+
+**恶性 Bug 判定**：
+- P0：系统无法运行、数据损坏风险
+- P1：核心功能损坏、API 不可用、工作流阻塞
+
+---
+
+### 5.2 文档同步检查 / Documentation Sync Check
+
+执行任务时如发现文档与实现不一致，应立即同步更新文档：
+
+1. **功能实现后**: 检查 PRD.md 是否反映最新功能
+2. **API 实现后**: 检查 API_SPEC.md 是否与实现一致
+3. **权限变更后**: 检查 RBAC 文档是否同步
+4. **Schema 变更后**: 检查 DB_SCHEMA.md 和 column_names.py 是否同步
+
+如需更新权威文档，在执行报告中记录：
+- 更新的文档
+- 更新原因
+- 主要变更内容
+
+---
+
 ### 6. 编写执行报告 / Write Execution Report
 
 在以下位置创建报告: / Create a report in:
@@ -179,33 +262,57 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 
 ### 7. 归档提示词 / Archive Prompt
 
-**关键步骤：确定正确的序列号**
+**关键步骤：确定正确的执行顺序号和类型编号**
 
+归档文件名使用**双5位编号**格式：
+
+```
+✅_<执行顺序号>_<类型编号>_<原始编号>_<描述>_done.md
+```
+
+**执行顺序号分配规则**:
 1. **扫描所有归档**: 扫描 `promptsRec/archive/` 目录，查找所有以 `✅_` 或 `🔶_` 开头的文件
-2. **提取最大序列号**: 从所有归档文件名中解析数字部分（如 `✅_00029_...` → 29），找出最大值
-3. **确定新序列号**: 新序号 = 最大序号 + 1，使用5位格式（如 29 → 00030）
+2. **提取最大执行顺序号**: 从归档文件名中解析第一个5位数字（如 `✅_00029_...` → 29），找出最大值
+3. **确定新执行顺序号**: 新序号 = 最大序号 + 1，使用5位格式（如 29 → 00030）
 4. **验证未被占用**: 确认 `✅_00030_` 或 `🔶_00030_` 格式的文件名尚未存在
-5. **并发保护**: 如果新序号已被占用（多执行者并行工作场景），重新扫描并使用更大序号
+
+**类型编号分配规则**:
+根据任务类型分配类型编号（第二个5位）：
+
+| 任务类型 | 原始编号范围 | 类型编号范围 | 示例 |
+|---------|------------|------------|------|
+| 功能任务 | 00001-09999 | 00001-09999 (自增) | `00001`, `00002` |
+| Bug修复任务 | 10101-19999 | 10101-19999 (自增) | `10101`, `10102` |
+| 重构任务 | 20101-29999 | 20101-29999 (自增) | `20101`, `20102` |
+| 测试任务 | 30101-39999 | 30101-39999 (自增) | `30101`, `30102` |
+
+**并发保护**: 如果新序号已被占用（多执行者并行工作场景），重新扫描并使用更大序号。
 
 **禁止直接使用固定序号**: 严禁硬编码任何序号，必须基于现有归档动态计算。
 
 Archive format:
 
-`✅_[5位序列号]_[原始文件名]_[摘要].md`
+`✅_<执行顺序号>_<类型编号>_<原始编号>_<描述>_done.md`
 
 示例: / Example:
 
 ```
-003_backend_implementation.md
-→
-✅_00003_003_backend_implementation_backend_done.md
+003_backend_implementation.md (功能任务)
+
+✅_00003_00003_003_backend_implementation_done.md
+```
+
+```
+101_bug_tool_search_routing.md (Bug任务)
+
+✅_00015_10101_101_bug_tool_search_routing_done.md
 ```
 
 #### 任务类型归档图标规则 / Task Type Archive Icon Rules
 
 根据任务类型使用不同的归档规则:
 
-1. **Bug 修复任务** (文件名匹配 `*_bug_*.md` 或编号 100–199):
+1. **Bug 修复任务** (文件名匹配 `*_bug_*.md` 或编号 10001–19999):
 
    - **确认状态判断**: 检查任务是否需要人工确认 / Check if the task requires human confirmation
 
@@ -216,22 +323,22 @@ Archive format:
 
      | 确认状态 / Confirmation Status | 图标 / Icon | 示例 / Example |
      |-------------------------------|------------|---------------|
-     | 已确认 (AI 确认) / Confirmed | ✅ | ✅_00017_103_bug_xxx.md |
-     | 待确认 (需人工) / Pending | 🔶 | 🔶_00019_103_bug_xxx.md |
+     | 已确认 (AI 确认) / Confirmed | ✅ | ✅_00015_10101_101_bug_xxx_done.md |
+     | 待确认 (需人工) / Pending | 🔶 | 🔶_00017_10102_103_bug_xxx_done.md |
 
-2. **重构任务** (编号 200–299):
+2. **重构任务** (编号 20001–29999):
 
    - 重构任务需要完整测试验证后才能归档
    - 始终使用 ✅ 图标
    - 如果验证失败，创建 🔶 前缀归档等待重新验证
 
-3. **测试/质量任务** (编号 300–399):
+3. **测试/质量任务** (编号 30001–39999):
 
    - 测试任务基于测试结果决定归档图标
    - 所有测试通过 → ✅ 图标
    - 有测试失败 → 🔶 图标
 
-4. **功能/开发任务** (编号 000–099):
+4. **功能/开发任务** (编号 00001–09999):
 
    - 始终使用 ✅ 图标，不适用其他规则
 
@@ -245,21 +352,21 @@ Archive format:
 
 在归档前，检测是否为已有归档的后续任务: / Before archiving, detect if this is a follow-up to an existing archive:
 
-1. **提取任务编号**: 从当前提示词文件名提取任务编号 (如 `103_bug_xxx.md` 中的 `103`，或 `201_refactor_xxx.md` 中的 `201`)
+1. **提取任务编号**: 从当前提示词文件名提取任务编号 (如 `10003_bug_xxx.md` 中的 `10003`，或 `20001_refactor_xxx.md` 中的 `20001`)
 
-   / Extract task number from current prompt filename (e.g., `103` from `103_bug_xxx.md`, or `201` from `201_refactor_xxx.md`)
+   / Extract task number from current prompt filename (e.g., `10003` from `10003_bug_xxx.md`, or `20001` from `20001_refactor_xxx.md`)
 
 2. **扫描归档目录**: 扫描 `promptsRec/archive/` 目录，查找文件名中包含相同编号的归档文件
 
    / Scan `promptsRec/archive/` directory for archived files containing the same task number
 
-3. **自动匹配**: 如果找到匹配编号的归档文件 (如 `✅_00017_103_bug_order_list_api_500.md` 或 `✅_00025_201_refactor_service_layer.md`):
+3. **自动匹配**: 如果找到匹配编号的归档文件 (如 `✅_00017_10003_bug_order_list_api_500_done.md` 或 `✅_00067_20101_201_refactor_service_layer_done.md`):
 
    / If a matching archived file is found:
 
    - 读取原始归档的完整内容 / Read the complete original archive content
    - 将当前提示词内容追加到原始归档的 `## 后续工作 / Follow-up Work` 部分 / Append current prompt content to original archive's `## Follow-up Work` section
-   - 将合并后的内容写入原始归档文件 (保留原序列号) / Write merged content to the original archive file (preserve original sequence number)
+   - 将合并后的内容写入原始归档文件 (保留原执行顺序号和类型编号) / Write merged content to the original archive file (preserve original sequence and type numbers)
    - 删除当前提示词文件 (而非归档) / Delete current prompt file (instead of archiving)
 
 4. **无匹配**: 如果没有找到匹配编号的归档，执行标准归档流程 (Step 7)
@@ -267,14 +374,14 @@ Archive format:
    / If no matching archive found, proceed with standard archiving (Step 7)
 
 **注意**: 后续任务合并适用于所有任务类型:
-- Bug 修复 (100–199)
-- 重构任务 (200–299)
-- 测试任务 (300–399)
+- Bug 修复 (10001–19999)
+- 重构任务 (20001–29999)
+- 测试任务 (30001–39999)
 
 **Note**: Follow-up task merge applies to all task types:
-- Bug fixes (100–199)
-- Refactoring tasks (200–299)
-- Testing tasks (300–399)
+- Bug fixes (10001–19999)
+- Refactoring tasks (20001–29999)
+- Testing tasks (30001–39999)
 
 **合并格式示例 / Merge Format Example**:
 
@@ -318,7 +425,15 @@ Archive format:
 
 提示词归档成功: / Prompt archived successfully:
 
-`✅_00003_003_backend_implementation_backend_done.md`
+```
+✅_00003_00003_backend_implementation_done.md
+```
+
+或 Bug 任务:
+
+```
+✅_00015_10003_bug_tool_search_routing_done.md
+```
 
 ---
 

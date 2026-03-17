@@ -39,3 +39,20 @@ export async function batchQueryTools(toolCodes) {
     data: Array.isArray(result.data) ? result.data.map((item) => normalizeItem(item)) : []
   }
 }
+
+/**
+ * 批量更新工装状态
+ * @param {Object} data { tool_codes: string[], new_status: string, remark: string, operator_id, operator_name, operator_role }
+ */
+export async function batchUpdateToolStatus(data) {
+  return await client.patch('/tools/batch-status', data)
+}
+
+/**
+ * 查询工装状态变更历史
+ * @param {string} toolCode 
+ * @param {Object} params { page, page_size }
+ */
+export async function getToolStatusHistory(toolCode, params) {
+  return await client.get(`/tools/status-history/${toolCode}`, { params })
+}

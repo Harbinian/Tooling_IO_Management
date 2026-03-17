@@ -181,14 +181,16 @@ Bug 任务必须在范围内生成：
 
 Bug tasks must be generated in range:
 
-100–199
+10001–19999
 
 执行器：
 
 Executor:
 
-前端 bug → Gemini / Frontend bug → Gemini
-后端 bug → Codex / Backend bug → Codex
+| 问题位置 | 执行器 |
+|---------|--------|
+| 前端 bug / Frontend bug | Gemini (设计), Codex (实现) |
+| 后端 bug / Backend bug | Codex |
 
 ---
 
@@ -203,15 +205,20 @@ Examples:
 - 不完整的仪表盘 / incomplete dashboard
 - 缺失日志能力 / missing logging capability
 
-功能任务必须在范围内生成：
+功能任务必须在范围内生成（必须使用5位编号）：
 
-Feature tasks must be generated in range:
+Feature tasks must be generated in range (must use 5-digit numbering):
 
-000–099
+00001–09999
 
-执行器由领域决定。
+执行器由领域决定：
 
-Executor determined by domain.
+Executor determined by domain:
+
+| 领域 | 执行器 |
+|------|--------|
+| 前端设计 / Frontend Design | Gemini |
+| 后端实现 / Backend Implementation | Codex |
 
 ---
 
@@ -226,17 +233,19 @@ Examples:
 - 难以维护的代码结构 / Hard to maintain code structure
 - 需要优化架构 / Architecture needs optimization
 
-重构任务必须在范围内生成：
+重构任务必须在范围内生成（必须使用5位编号）：
 
-Refactoring tasks must be generated in range:
+Refactoring tasks must be generated in range (must use 5-digit numbering):
 
-200–299
+20001–29999
 
 执行器：
 
 Executor:
 
-Claude Code → 重构任务 / Refactoring tasks
+| 执行器 | 职责范围 |
+|--------|---------|
+| Claude Code | 重构任务 / Refactoring tasks |
 
 ---
 
@@ -250,17 +259,19 @@ Examples:
 - 需要增加测试覆盖率 / Need to increase test coverage
 - 回归测试套件不完整 / Regression test suite incomplete
 
-测试任务必须在范围内生成：
+测试任务必须在范围内生成（必须使用5位编号）：
 
-Testing tasks must be generated in range:
+Testing tasks must be generated in range (must use 5-digit numbering):
 
-300–399
+30001–39999
 
 执行器：
 
 Executor:
 
-Codex → 测试任务 / Testing tasks
+| 执行器 | 职责范围 |
+|--------|---------|
+| Codex | 测试任务 / Testing tasks |
 
 ---
 

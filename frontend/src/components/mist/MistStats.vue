@@ -20,21 +20,21 @@ const props = defineProps({
 
 <template>
   <div :class="cn('grid gap-4 md:grid-cols-2 lg:grid-cols-4', props.class)">
-    <Card v-for="(item, index) in stats" :key="index" v-debug-id="item.debugId" class="overflow-hidden bg-white/50 backdrop-blur-sm border-white/20 shadow-shimmer">
+    <Card v-for="(item, index) in stats" :key="index" v-debug-id="item.debugId" class="overflow-hidden bg-card/50 backdrop-blur-sm border-border/20 shadow-shimmer">
 
       <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <CardTitle class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           {{ item.title }}
         </CardTitle>
-        <component v-if="item.icon" :is="item.icon" class="h-4 w-4 text-slate-400" />
+        <component v-if="item.icon" :is="item.icon" class="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div class="text-2xl font-bold tracking-tight text-slate-900">{{ item.value }}</div>
+        <div class="text-2xl font-bold tracking-tight text-foreground">{{ item.value }}</div>
         <div v-if="item.description || item.trend" class="flex items-center gap-1.5 mt-1">
-          <span v-if="item.trend" :class="cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', item.trend.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')">
+          <span v-if="item.trend" :class="cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', item.trend.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500')">
             {{ item.trend }}
           </span>
-          <p v-if="item.description" class="text-[11px] text-slate-400 font-medium">
+          <p v-if="item.description" class="text-[11px] text-muted-foreground font-medium">
             {{ item.description }}
           </p>
         </div>

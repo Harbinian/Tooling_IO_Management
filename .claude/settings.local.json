@@ -3,7 +3,19 @@
     "allow": [
       "Bash(curl:*)",
       "Bash(ping:*)",
-      "Bash(nslookup:*)"
+      "Bash(nslookup:*)",
+      "Bash(xxd -l 20 \"e:\\\\CA001\\\\Tooling_IO_Management\\\\backend\\\\services\\\\tool_io_service.py\")",
+      "Bash(python3:*)",
+      "Bash(python fix_garbled.py)",
+      "Bash(python -m py_compile backend/services/tool_io_service.py)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(python -m py_compile dev_server_launcher.py)",
+      "Bash(python -m pytest tests/test_dev_server_launcher_silent_launch.py -v)",
+      "Bash(python -m PyInstaller dev_server_launcher.spec --noconfirm)",
+      "Bash(python:*)",
+      "Bash(python -c \"from test_runner.commands import start, advance, status; s=start\\(''full_workflow''\\); print\\(''START:'', s[''state'']\\); a=advance\\(''login_taidongxu'', 0, 0\\); print\\(''ADVANCE:'', a[''operation_index''], ''->'', a[''next_operation'']\\)\")",
+      "Bash(powershell -Command \"Test-NetConnection -ComputerName localhost -Port 8150 -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object -ExpandProperty TcpTestSucceeded; Test-NetConnection -ComputerName localhost -Port 8151 -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object -ExpandProperty TcpTestSucceeded\")"
     ]
   }
 }

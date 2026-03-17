@@ -128,18 +128,18 @@ Bug 报告可能来自: / A bug report may come from:
 
 `promptsRec/active/`
 
-文件名格式: / Filename format:
+文件名格式（必须使用5位编号）: / Filename format (must use 5-digit numbering):
 
-`101_bug_<简短名称>.md`
+`10101_bug_<简短名称>.md`
 
-如果 101 已存在，递增到下一个可用编号。 / If 101 already exists, increment to the next available number.
+如果 10101 已存在，递增到下一个可用编号。 / If 10101 already exists, increment to the next available number.
 
 示例: / Examples:
 
 ```
-101_bug_missing_field.md
-102_bug_api_mismatch.md
-103_bug_frontend_submit_fail.md
+10101_bug_missing_field.md
+10102_bug_api_mismatch.md
+10103_bug_frontend_submit_fail.md
 ```
 
 ---
@@ -149,11 +149,25 @@ Bug 报告可能来自: / A bug report may come from:
 生成的提示词必须包含标准头: / The generated prompt must include the standard header:
 
 ```
-主要执行者: <Claude Code | Codex | Gemini> / Primary Executor: <Claude Code | Codex | Gemini>
-任务类型: Bug 修复 / Task Type: Bug Fix
-阶段: <bug 序列> / Stage: <bug sequence>
-目标: <一行 bug 修复目标> / Goal: <one-line bug fix objective>
-执行: RUNPROMPT / Execution: RUNPROMPT
+Primary Executor: <Claude Code | Codex | Gemini>
+Task Type: Bug Fix
+Priority: <P0 | P1 | P2>
+Stage: <5-digit Bug Number>
+Goal: <one-line bug fix objective>
+Dependencies: <"None" or list of prompt numbers that must complete first>
+Execution: RUNPROMPT
+```
+
+示例:
+
+```
+Primary Executor: Codex
+Task Type: Bug Fix
+Priority: P1
+Stage: 10101
+Goal: Fix order API parameter mismatch
+Dependencies: None
+Execution: RUNPROMPT
 ```
 
 然后包含: / Then include:

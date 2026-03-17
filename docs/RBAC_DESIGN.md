@@ -100,7 +100,7 @@ Additionally, a data scope layer defines the range of accessible records.
 
 Users represent authenticated system identities.
 
-## 表: users / Table: users
+## 表: sys_user / Table: sys_user
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|
@@ -117,6 +117,7 @@ Users represent authenticated system identities.
 
 - login_name 用于身份验证。/ login_name is used during authentication.
 - display_name 显示在界面和操作日志中。/ display_name appears in UI and operation logs.
+- 注意：旧文档曾使用 `users` 表名，实际表名为 `sys_user`。/ Note: Old documentation used `users`, actual table name is `sys_user`.
 
 ---
 
@@ -126,7 +127,7 @@ Users represent authenticated system identities.
 
 Organizations represent the enterprise hierarchy.
 
-## 表: organizations / Table: organizations
+## 表: sys_org / Table: sys_org
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|
@@ -135,6 +136,8 @@ Organizations represent the enterprise hierarchy.
 | org_type | 组织类型 / Organization type |
 | parent_org_id | 父组织 / Parent organization |
 | status | 启用或禁用 / Active or disabled |
+
+注意：旧文档曾使用 `organizations` 表名，实际表名为 `sys_org`。/ Note: Old documentation used `organizations`, actual table name is `sys_org`.
 
 组织类型示例：/ Example organization types:
 
@@ -331,6 +334,7 @@ order:list / 订单:列表
 order:keeper_confirm / 订单:保管员确认
 order:final_confirm / 订单:最终确认
 notification:view / 通知:查看
+notification:send_feishu / 通知:发送飞书
 
 数据范围：/ Data scope:
 
@@ -472,7 +476,202 @@ POST /api/notifications/{id}/send-feishu
 
 ---
 
-# 13. 实施阶段 / Implementation Phases
+# 13. 跨部门工作流设计规范 / Cross-Department Workflow Design
+
+## 13.1 核心设计原则 / Core Design Principles
+
+### 原则一：申请人全程可见 / Applicant Always Sees Full Workflow
+
+**规则**：订单申请人始终可以查看自己创建的订单的完整流程，无论订单跨越多少个部门。
+
+**实现**：申请人（`initiator_id`）始终具有对自己订单的访问权限（SELF 范围），不受组织边界限制。
+
+```
+申请人 ──创建──▶ 订单 ──提交──▶ 部门A保管员确认 ──部门B运输 ──▶ 完成
+   │                                      │
+   └──────────── 全程可见 ─────────────────┘
+```
+
+### 原则二：业务流是部门到部门 / Business Flow is Department-to-Department
+
+**规则**：工作流的传递是基于组织（部门），而非基于角色。
+
+**含义**：
+- 当订单需要跨部门处理时，目标是目的部门的所有相关角色，而非特定个人
+- 部门内的角色可以自动分配（如同部门的所有保管员都可以处理）
+- 具体的执行角色由目的部门内部决定
+
+```
+部门A                           部门B
+  │                               │
+  │  订单流转到"物资保障部"         │
+  │ ─────────────────────────────▶ │
+  │                               │
+  │                    部门内自动分配
+  │                    (所有保管员可见)
+  │                    (具体由谁处理由部门决定)
+```
+
+### 原则三：特定业务可配置自动分配 / Specific Business Auto-Assignment
+
+**规则**：某些业务流程可以配置为自动分配到部门内的所有可执行角色。
+
+**示例**：工装出入库业务
+- 提交订单时，自动通知目的部门的所有保管员
+- 任何保管员都可以确认订单
+- 第一个确认的保管员被正式分配
+
+**注意**：其它业务流程的自动分配规则需要和需求方确认后再实现。
+
+---
+
+## 13.2 数据范围与跨部门访问 / Data Scope & Cross-Department Access
+
+### 标准数据范围类型 / Standard Data Scope Types
+
+| 范围类型 | 代码 | 含义 |
+|---------|------|------|
+| 本人 | SELF | 访问用户自己创建的记录 |
+| 组织 | ORG | 访问当前用户所在组织的记录 |
+| 组织及子组织 | ORG_AND_CHILDREN | 访问组织及所有子组织的记录 |
+| 被分配 | ASSIGNED | 访问被分配给自己的记录 |
+| 全部 | ALL | 访问所有记录（仅管理员） |
+
+### 跨部门访问控制矩阵 / Cross-Department Access Control Matrix
+
+| 订单状态 | 申请人 | 同部门保管员 | 跨部门保管员 | 运输人 |
+|---------|--------|-------------|-------------|--------|
+| submitted | ✅ 可见 | ✅ 可见 | ✅ 可见（自动分配） | ❌ |
+| keeper_confirmed | ✅ 可见 | ❌ | ✅ 可见（被分配的） | ❌ |
+| transport_notified | ✅ 可见 | ❌ | ✅ 可见（被分配的） | ✅ 可见 |
+| completed | ✅ 可见 | ❌ | ✅ 可见（被分配的） | ✅ 可见 |
+
+---
+
+## 13.3 工装出入库业务跨部门流程 / Tool IO Cross-Department Workflow
+
+### 流程图 / Flow Diagram
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         工装出入库跨部门协同流程                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  班组长 (部门A)                    保管员 (部门B)                 运输人      │
+│  taidongxu                        hutingting                     transport   │
+│  ORG_DEPT_005                     ORG_DEPT_001                              │
+│       │                                │                               │      │
+│       │  1. 创建订单                    │                               │      │
+│       │───────────────────────────────▶│                               │      │
+│       │                                │                               │      │
+│       │  2. 提交订单                    │                               │      │
+│       │  (自动分配给部门B所有保管员)      │                               │      │
+│       │───────────────────────────────▶│  3. 确认订单                  │      │
+│       │                                │──────────────────────────────▶│      │
+│       │                                │                               │      │
+│       │  4. 查看完整流程                │                               │      │
+│       │  • 保管员: hutingting ✓        │                               │      │
+│       │  • 运输人: xxx ✓              │                               │      │
+│       │  • 当前状态: transport_notified│                               │      │
+│       │◀──────────────────────────────│                               │      │
+│       │                                │                               │      │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 关键实现 / Key Implementation
+
+#### 部门自动分配 / Department Auto-Assignment
+
+当订单提交时：
+
+```python
+# submit_order 函数中的部门自动分配逻辑
+def submit_order(order_no, payload, current_user):
+    # ...
+    # 查找订单目的部门的所有保管员
+    from backend.services.rbac_data_scope_service import load_keeper_ids_for_org_ids
+    order_org_id = order.get("org_id")
+    all_keepers = load_keeper_ids_for_org_ids([order_org_id])
+
+    # 向每个保管员发送通知
+    for keeper_info in all_keepers:
+        _emit_internal_notification(
+            KEEPER_CONFIRM_REQUIRED,
+            order=order,
+            target_user_id=keeper_info["user_id"],
+            target_role="keeper",
+            metadata={"auto_assigned": True}  # 标记为部门自动分配
+        )
+```
+
+#### 跨部门访问判断 / Cross-Department Access Logic
+
+```python
+def order_matches_scope(order, scope_context):
+    # ...
+
+    # 1. 申请人始终可以访问自己的订单（无论组织）
+    if initiator_id == current_user_id:
+        return True
+
+    # 2. 任何保管员都可以查看 submitted 订单（部门自动分配）
+    if is_keeper and order_status == "submitted":
+        return True
+
+    # 3. 被分配的保管员可以继续访问
+    if is_keeper and keeper_id == current_user_id:
+        return True
+
+    # 4. 被分配的运输人可以访问
+    if transport_user_id == current_user_id:
+        return True
+
+    # ...
+```
+
+---
+
+## 13.4 开发新跨部门流程的检查清单 / Checklist for New Cross-Department Workflows
+
+开发新的跨部门业务流时，必须确认以下设计要点：
+
+### 必确认项 / Must Confirm
+
+- [ ] 申请人的访问权限是否覆盖完整流程？
+- [ ] 业务流的传递是基于"部门"还是"角色"？
+- [ ] 是否需要自动分配到部门内的所有执行角色？
+- [ ] 如果需要自动分配，分配规则是什么？
+- [ ] 跨部门访问时的数据隔离如何保证？
+
+### 标准实现 / Standard Implementation
+
+| 场景 | 实现方式 |
+|------|---------|
+| 申请人查看自己创建的订单 | `initiator_id == current_user_id` |
+| 部门内角色自动分配 | `load_keeper_ids_for_org_ids()` + 通知 |
+| 跨部门角色确认 | `keeper_id == current_user_id` |
+| 申请人查看完整流程 | 始终允许（通过 SELF 或 initator_id 检查） |
+
+### 注意事项 / Notes
+
+> ⚠️ **重要**：开发新的跨部门业务流程时，必须先和需求方确认自动分配规则。不同的业务流程可能有不同的分配逻辑，不能简单复用工装出入库的自动分配逻辑。
+
+---
+
+## 13.5 数据库字段要求 / Database Field Requirements
+
+跨部门工作流需要以下关键字段：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| initiator_id | 用户ID | 申请人ID，用于申请人访问控制 |
+| keeper_id | 用户ID | 保管员ID，用于确认后访问控制 |
+| transport_assignee_id | 用户ID | 运输人ID，用于运输阶段访问控制 |
+| org_id | 组织ID | 订单所属部门，用于部门级访问控制 |
+
+---
+
+# 14. 实施阶段 / Implementation Phases
 
 ## 第一阶段 / Phase 1
 
@@ -505,7 +704,7 @@ ALL / 所有数据
 
 ---
 
-# 14. 与认证的关系 / Relationship with Authentication
+# 15. 与认证的关系 / Relationship with Authentication
 
 认证确定：/ Authentication determines:
 
@@ -525,7 +724,7 @@ Together they form the complete access control framework.
 
 ---
 
-# 15. 未来改进 / Future Improvements
+# 16. 未来改进 / Future Improvements
 
 未来改进可能包括：/ Future improvements may include:
 

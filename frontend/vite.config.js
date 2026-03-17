@@ -4,7 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiProxyTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:5000'
+  const flaskPort = env.VITE_FLASK_PORT || '8151'
 
   return {
     plugins: [vue()],
@@ -15,11 +15,22 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',
-      port: 5173,
+      port: 8150,
       proxy: {
         '/api': {
-          target: apiProxyTarget,
+          target: `http://127.0.0.1:${flaskPort}`,
           changeOrigin: true
+        }
+      }
+    },
+    build: {
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'element-plus': ['element-plus', '@element-plus/icons-vue'],
+            'vue-vendor': ['vue', 'vue-router']
+          }
         }
       }
     }

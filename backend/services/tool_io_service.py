@@ -8,10 +8,13 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional
 
+from backend.database.repositories.tool_repository import ToolRepository
+from backend.database.schema.column_names import ORDER_COLUMNS, ITEM_COLUMNS, TABLE_NAMES
 from database import (
     DatabaseManager,
     cancel_tool_io_order,
     create_tool_io_order,
+    ensure_schema_alignment,
     ensure_tool_io_tables,
     final_confirm_order,
     get_tool_io_orders,
@@ -58,6 +61,7 @@ from backend.services.tool_io_runtime import (
 )
 
 logger = logging.getLogger(__name__)
+ALLOWED_BATCH_TOOL_STATUSES = {"in_storage", "outbounded", "maintain", "scrapped"}
 
 
 def _build_actor_context(
@@ -123,6 +127,7 @@ def _emit_internal_notification(
 
 def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     ensure_tool_io_tables()
+    ensure_schema_alignment()
     current_org = (current_user or {}).get("current_org") or {}
     default_org = (current_user or {}).get("default_org") or {}
     current_org_id = str(current_org.get("org_id", "")).strip()
@@ -147,6 +152,54 @@ def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     return result
 
 
+def update_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    """Update order content when order is in draft status.
+
+    Allows updating order items and remark. After update, order remains in draft status
+    and can be resubmitted.
+
+    Args:
+        order_no: Order number
+        payload: Update payload with items and/or remark
+        current_user: Current authenticated user
+
+    Returns:
+        Result dictionary with success status
+    """
+    if not get_order_detail(order_no, current_user=current_user):
+        return _order_not_found_response()
+
+    # Check if order is in draft status
+    from backend.services.order_query_service import get_order_detail as get_order_detail_runtime
+    order = get_order_detail_runtime(order_no)
+    if not order:
+        return _order_not_found_response()
+
+    current_status = order.get("order_status", "")
+    if current_status != "draft":
+        return {"success": False, "error": f"只有草稿状态的订单可以编辑，当前状态：{current_status}"}
+
+    # Build actor context for audit
+    actor = _build_actor_context(payload)
+
+    # Delegate to repository layer
+    from backend.database.repositories.order_repository import OrderRepository
+    from backend.database.db_pool import get_db_connection
+
+    db = get_db_connection()
+    try:
+        repo = OrderRepository(db)
+        result = repo.update_order(order_no, payload, operator_id=actor["user_id"], operator_name=actor["user_name"], operator_role=actor["user_role"])
+    finally:
+        db.close()
+
+    if result.get("success"):
+        # Log the update
+        from backend.database.repositories.order_repository import ToolIOAction
+        logger.info(f"Order {order_no} updated by {actor['user_name']}")
+    return result
+
+
 def _resolve_scope_context(current_user: Optional[Dict]) -> Dict:
     if not current_user:
         return {
@@ -168,7 +221,14 @@ def _order_not_found_response() -> Dict:
 def _is_order_accessible(order: Dict, current_user: Optional[Dict]) -> bool:
     if not current_user:
         return True
-    return order_matches_scope(order, _resolve_scope_context(current_user))
+    scope_context = _resolve_scope_context(current_user)
+    if not order_matches_scope(order, scope_context):
+        return False
+
+    # Restrict "all-access" users (for example admins) from viewing draft orders.
+    if scope_context.get("all_access"):
+        return (order.get("order_status") or "").strip().lower() != "draft"
+    return True
 
 
 def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
@@ -180,7 +240,7 @@ def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
         keyword=filters.get("keyword"),
         date_from=filters.get("date_from"),
         date_to=filters.get("date_to"),
-        page=1,
+        page=filters.get("page_no", 1),
         page_size=5000,
     )
     if not raw_result.get("success", True):
@@ -252,6 +312,7 @@ def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         actor = _build_actor_context(payload)
         order = get_order_detail(order_no, current_user=current_user)
         if order:
+            # Notify initiator about submission
             _emit_internal_notification(
                 ORDER_SUBMITTED,
                 order=order,
@@ -261,15 +322,26 @@ def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
                 target_role="initiator",
                 metadata={"trigger": "submit_order"},
             )
-            _emit_internal_notification(
-                KEEPER_CONFIRM_REQUIRED,
-                order=order,
-                actor=actor,
-                target_user_id=order.get("keeper_id", ""),
-                target_user_name=order.get("keeper_name", ""),
-                target_role="keeper",
-                metadata={"required_action": "keeper_confirm"},
-            )
+
+            # Department auto-assignment: notify ALL keepers in the order's org
+            from backend.services.rbac_data_scope_service import load_keeper_ids_for_org_ids
+            order_org_id = order.get("org_id", "")
+            if order_org_id:
+                all_keepers = load_keeper_ids_for_org_ids([order_org_id])
+                for keeper_info in all_keepers:
+                    _emit_internal_notification(
+                        KEEPER_CONFIRM_REQUIRED,
+                        order=order,
+                        actor=actor,
+                        target_user_id=keeper_info.get("user_id", ""),
+                        target_user_name=keeper_info.get("display_name", ""),
+                        target_role="keeper",
+                        metadata={
+                            "required_action": "keeper_confirm",
+                            "auto_assigned": True,  # Mark as auto-assigned by department
+                            "org_id": order_org_id,
+                        },
+                    )
     return result
 
 
@@ -402,18 +474,20 @@ def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
 
     transport_assignee_id = payload.get("transport_assignee_id", "")
     transport_assignee_name = payload.get("transport_assignee_name", "")
+    transport_type = payload.get("transport_type", "")
     if not transport_assignee_id and not transport_assignee_name:
         return {"success": False, "error": "transport assignee is required"}
 
     DatabaseManager().execute_query(
-        """
-        UPDATE 工装出入库单_主表
-        SET 运输人ID = ?,
-            运输人姓名 = ?,
-            修改时间 = GETDATE()
-        WHERE 出入库单号 = ?
+        f"""
+        UPDATE tool_io_order
+        SET {ORDER_COLUMNS['transport_assignee_id']} = ?,
+            {ORDER_COLUMNS['transport_assignee_name']} = ?,
+            {ORDER_COLUMNS['transport_type']} = ?,
+            {ORDER_COLUMNS['updated_at']} = GETDATE()
+        WHERE {ORDER_COLUMNS['order_no']} = ?
         """,
-        (transport_assignee_id, transport_assignee_name, order_no),
+        (transport_assignee_id, transport_assignee_name, transport_type, order_no),
         fetch=False,
     )
     actor = _build_actor_context(payload)
@@ -452,13 +526,13 @@ def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] =
 
     actor = _build_actor_context(payload)
     DatabaseManager().execute_query(
-        """
-        UPDATE 工装出入库单_主表
-        SET 单据状态 = 'transport_in_progress',
-            运输人ID = COALESCE(NULLIF(?, ''), 运输人ID),
-            运输人姓名 = COALESCE(NULLIF(?, ''), 运输人姓名),
-            修改时间 = GETDATE()
-        WHERE 出入库单号 = ?
+        f"""
+        UPDATE tool_io_order
+        SET {ORDER_COLUMNS['order_status']} = 'transport_in_progress',
+            {ORDER_COLUMNS['transport_operator_id']} = COALESCE(NULLIF(?, ''), {ORDER_COLUMNS['transport_operator_id']}),
+            {ORDER_COLUMNS['transport_operator_name']} = COALESCE(NULLIF(?, ''), {ORDER_COLUMNS['transport_operator_name']}),
+            {ORDER_COLUMNS['updated_at']} = GETDATE()
+        WHERE {ORDER_COLUMNS['order_no']} = ?
         """,
         (payload.get("operator_id", ""), payload.get("operator_name", ""), order_no),
         fetch=False,
@@ -501,11 +575,11 @@ def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict
 
     actor = _build_actor_context(payload)
     DatabaseManager().execute_query(
-        """
-        UPDATE 工装出入库单_主表
-        SET 单据状态 = 'transport_completed',
-            修改时间 = GETDATE()
-        WHERE 出入库单号 = ?
+        f"""
+        UPDATE tool_io_order
+        SET {ORDER_COLUMNS['order_status']} = 'transport_completed',
+            {ORDER_COLUMNS['updated_at']} = GETDATE()
+        WHERE {ORDER_COLUMNS['order_no']} = ?
         """,
         (order_no,),
         fetch=False,
@@ -549,10 +623,10 @@ def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         return _order_not_found_response()
     result = reject_tool_io_order(
         order_no,
-        payload.get("reject_reason", ""),
         payload.get("operator_id", ""),
         payload.get("operator_name", ""),
         payload.get("operator_role", ""),
+        payload.get("reject_reason", ""),
     )
     if result.get("success"):
         actor = _build_actor_context(payload)
@@ -570,6 +644,31 @@ def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
     return result
 
 
+def reset_order_to_draft(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    if not get_order_detail(order_no, current_user=current_user):
+        return _order_not_found_response()
+    result = reset_order_to_draft_order(
+        order_no,
+        payload.get("operator_id", ""),
+        payload.get("operator_name", ""),
+        payload.get("operator_role", ""),
+    )
+    if result.get("success"):
+        actor = _build_actor_context(payload)
+        order = get_order_detail_runtime(order_no)
+        if order:
+            _emit_internal_notification(
+                ORDER_SUBMITTED,
+                order=order,
+                actor=actor,
+                target_user_id=order.get("initiator_id", ""),
+                target_user_name=order.get("initiator_name", ""),
+                target_role="initiator",
+                metadata={"trigger": "reset_order_to_draft"},
+            )
+    return result
+
+
 def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     if not get_order_detail(order_no, current_user=current_user):
         return _order_not_found_response()
@@ -578,6 +677,7 @@ def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         payload.get("operator_id", ""),
         payload.get("operator_name", ""),
         payload.get("operator_role", ""),
+        payload.get("cancel_reason", ""),
     )
     if result.get("success"):
         actor = _build_actor_context(payload)
@@ -595,6 +695,23 @@ def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
     return result
 
 
+def delete_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    """Delete an order through the admin cascade cleanup path."""
+    if not get_order_detail(order_no, current_user=current_user):
+        return _order_not_found_response()
+
+    from backend.database.repositories.order_repository import OrderRepository
+    repo = OrderRepository()
+
+    result = repo.delete_order(
+        order_no,
+        payload.get("operator_id", ""),
+        payload.get("operator_name", ""),
+        payload.get("operator_role", ""),
+    )
+    return result
+
+
 def get_order_logs(order_no: str, current_user: Optional[Dict] = None) -> Dict:
     if not get_order_detail(order_no, current_user=current_user):
         return _order_not_found_response()
@@ -606,11 +723,50 @@ def get_pending_keeper_list(keeper_id: str = None, current_user: Optional[Dict] 
     return [order for order in list_pending_keeper_orders(keeper_id) if order_matches_scope(order, scope_context)]
 
 
+def get_pre_transport_orders(current_user: Optional[Dict] = None) -> Dict:
+    """Get pre-transport visibility list for transport executors."""
+    if not current_user:
+        return {"success": False, "error": "authentication required", "orders": []}
+
+    from backend.database.repositories.order_repository import OrderRepository
+
+    scope_context = _resolve_scope_context(current_user)
+    org_ids = [str(org_id).strip() for org_id in (scope_context.get("org_ids") or []) if str(org_id).strip()]
+    if not org_ids and not scope_context.get("all_access"):
+        current_org = current_user.get("current_org") or {}
+        default_org = current_user.get("default_org") or {}
+        fallback_org_id = str(
+            current_org.get("org_id")
+            or default_org.get("org_id")
+            or current_user.get("default_org_id", "")
+        ).strip()
+        if fallback_org_id:
+            org_ids = [fallback_org_id]
+
+    rows = OrderRepository().get_pre_transport_orders(
+        user_id=str(current_user.get("user_id", "")).strip(),
+        org_ids=org_ids,
+        all_access=bool(scope_context.get("all_access")),
+    )
+    return {
+        "success": True,
+        "orders": [_format_pre_transport_order(row) for row in rows],
+    }
+
+
 def get_notification_records(order_no: str, current_user: Optional[Dict] = None) -> Dict:
-    order = get_order_detail(order_no, current_user=current_user)
-    if not order:
+    if not current_user:
+        return {"success": False, "error": "authentication required", "data": []}
+
+    order = _load_order_scope_projection(order_no)
+    if not order or not _is_order_accessible(order, current_user):
         return {"success": False, "error": "order not found", "data": []}
-    return list_notifications_by_order(order_no)
+
+    try:
+        return list_notifications_by_order(order_no)
+    except Exception as exc:
+        logger.error("failed to load notification records for %s: %s", order_no, exc)
+        return {"success": False, "error": str(exc), "data": []}
 
 
 def get_current_user_notifications(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
@@ -638,26 +794,96 @@ def _pick_value(record: Dict, keys: List[str], default: Optional[str] = ""):
     return default
 
 
+def _load_order_scope_projection(order_no: str) -> Dict:
+    rows = DatabaseManager().execute_query(
+        f"""
+        SELECT
+            [{ORDER_COLUMNS['order_no']}] AS [{ORDER_COLUMNS['order_no']}],
+            [{ORDER_COLUMNS['order_status']}] AS [{ORDER_COLUMNS['order_status']}],
+            [{ORDER_COLUMNS['org_id']}] AS [{ORDER_COLUMNS['org_id']}],
+            [{ORDER_COLUMNS['initiator_id']}] AS [{ORDER_COLUMNS['initiator_id']}],
+            [{ORDER_COLUMNS['keeper_id']}] AS [{ORDER_COLUMNS['keeper_id']}],
+            [{ORDER_COLUMNS['transport_assignee_id']}] AS [{ORDER_COLUMNS['transport_assignee_id']}]
+        FROM [{TABLE_NAMES['ORDER']}]
+        WHERE [{ORDER_COLUMNS['order_no']}] = ?
+          AND [{ORDER_COLUMNS['is_deleted']}] = 0
+        """,
+        (order_no,),
+    )
+    if not rows:
+        return {}
+    return rows[0]
+
+
+def _to_iso8601(value) -> Optional[str]:
+    if value in (None, ""):
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
+def _format_pre_transport_order(row: Dict) -> Dict:
+    status = str(row.get("status", "")).strip()
+    status_text = str(row.get("status_text", "")).strip()
+    if not status_text:
+        status_text = {
+            "submitted": "已提交",
+            "keeper_confirmed": "保管员已确认",
+            "transport_notified": "运输已通知",
+        }.get(status, status)
+
+    expected_tools_raw = row.get("expected_tools", 0)
+    try:
+        expected_tools = int(expected_tools_raw or 0)
+    except (TypeError, ValueError):
+        expected_tools = 0
+
+    return {
+        "order_no": str(row.get("order_no", "")).strip(),
+        "order_type": str(row.get("order_type", "")).strip(),
+        "destination": str(row.get("destination", "")).strip(),
+        "status": status,
+        "status_text": status_text,
+        "expected_tools": expected_tools,
+        "submit_time": _to_iso8601(row.get("submit_time")),
+        "submitter_name": str(row.get("submitter_name", "")).strip(),
+        "estimated_transport_time": _to_iso8601(row.get("estimated_transport_time")),
+        "keeper_confirmed_time": _to_iso8601(row.get("keeper_confirmed_time")),
+    }
+
+
 def _normalize_runtime_order(order: Dict) -> Dict:
     if not order:
         return {}
 
     normalized_items = []
+    approved_count_from_items = 0
     for item in order.get("items", []) or []:
+        item_status = _pick_value(item, ["item_status", "status"], "")
         normalized_items.append(
             {
                 **item,
-                "tool_code": _pick_value(item, ["tool_code", "序列号", "工装编码"], ""),
-                "tool_name": _pick_value(item, ["tool_name", "工装名称"], ""),
-                "drawing_no": _pick_value(item, ["drawing_no", "工装图号"], ""),
-                "spec_model": _pick_value(item, ["spec_model", "机型", "规格型号"], ""),
-                "location_text": _pick_value(item, ["location_text", "保管员确认位置文本", "工装快照位置文本"], ""),
-                "apply_qty": _pick_value(item, ["apply_qty", "申请数量"], 1),
-                "approved_qty": _pick_value(item, ["approved_qty", "确认数量"], 0),
-                "item_status": _pick_value(item, ["item_status", "status", "明细状态"], ""),
+                "tool_code": _pick_value(item, ["tool_code"], ""),
+                "tool_name": _pick_value(item, ["tool_name", "宸ヨ鍚嶇О"], ""),
+                "drawing_no": _pick_value(item, ["drawing_no", "宸ヨ鍥惧彿"], ""),
+                "spec_model": _pick_value(item, ["spec_model", "鏈哄瀷", "瑙勬牸鍨嬪彿"], ""),
+                "location_text": _pick_value(item, ["location_text"], ""),
+                "apply_qty": _pick_value(item, ["apply_qty", "鐢宠鏁伴噺"], 1),
+                "approved_qty": _pick_value(item, ["approved_qty", "纭鏁伴噺"], 0),
+                "item_status": item_status,
             }
         )
+        if item_status == "approved":
+            approved_count_from_items += 1
 
+    # Tool count is always derived from items.length (tools are identified by serial number, not quantity)
+    tool_count = len(normalized_items)
+    approved_count = _pick_value(order, ["approved_count"], approved_count_from_items)
+    try:
+        approved_count = int(approved_count or 0)
+    except (TypeError, ValueError):
+        approved_count = 0
     return {
         **order,
         "order_no": _pick_value(order, ["order_no", "出入库单号"], ""),
@@ -668,13 +894,15 @@ def _normalize_runtime_order(order: Dict) -> Dict:
         "keeper_id": _pick_value(order, ["keeper_id", "保管员ID"], ""),
         "keeper_name": _pick_value(order, ["keeper_name", "保管员姓名"], ""),
         "transport_type": _pick_value(order, ["transport_type", "运输类型"], ""),
-        "transport_assignee_id": _pick_value(order, ["transport_assignee_id", "运输人ID"], ""),
-        "transport_assignee_name": _pick_value(order, ["transport_assignee_name", "运输人姓名"], ""),
+        "transport_assignee_id": _pick_value(order, ["transport_assignee_id", "运输AssigneeID", "运输人ID"], ""),
+        "transport_assignee_name": _pick_value(order, ["transport_assignee_name", "运输AssigneeName", "运输人姓名"], ""),
         "department": _pick_value(order, ["department", "部门"], ""),
         "remark": _pick_value(order, ["remark", "备注"], ""),
         "target_location_text": _pick_value(order, ["target_location_text", "目标位置文本"], ""),
         "created_at": _pick_value(order, ["created_at", "创建时间"]),
         "submitted_at": _pick_value(order, ["submit_time", "submitted_at", "提交时间"]),
+        "tool_count": tool_count,
+        "approved_count": approved_count,
         "items": normalized_items,
         "notification_records": order.get("notification_records", []) or [],
     }
@@ -686,13 +914,13 @@ def _get_runtime_order_summary(order_no: str, current_user: Optional[Dict] = Non
         return None
 
     return {
-        "order_no": _pick_value(order, ["order_no", "é—å‘ŠåžµéŽ¼î‚¦å´£é¡æ¨»å„Ÿé–¹æƒ§å•¿ç»€å¬®æŸ›?"], order_no),
-        "order_type": _pick_value(order, ["order_type", "é—å‘Šîš†å¨²æ¨ºç•µæµ£è™¹å°µé å›ªå°™éˆ§?"]),
-        "order_status": _pick_value(order, ["order_status", "é—å‘Šîš†å¨²æ¨ºç•µæ¸šâ‚¬éŽ®â•…æ‡œçº°æ¨ºäº¾?"]),
-        "initiator_id": _pick_value(order, ["initiator_id", "é—å‘Šç‘¦é¨å¥¸å¹‘é”å—™î›²ç¼â„ƒå¢¬"]),
-        "keeper_id": _pick_value(order, ["keeper_id", "æ¿žï½…æ´¦ç»»å‹¯î”˜éŽ¼ä½¸å·æ¿¡ã‚‡æ‹"]),
-        "transport_assignee_id": _pick_value(order, ["transport_assignee_id", "杩愯緭浜篒D"]),
-        "approved_count": _pick_value(order, ["approved_count", "éŽè§„ç“•çæ¬“åž¾å¦¯å…¼åª¼é–µå æ£™å¨ˆå •æ¢º?"], 0),
+        "order_no": _pick_value(order, ["order_no"], order_no),
+        "order_type": _pick_value(order, ["order_type"]),
+        "order_status": _pick_value(order, ["order_status"]),
+        "initiator_id": _pick_value(order, ["initiator_id"]),
+        "keeper_id": _pick_value(order, ["keeper_id"]),
+        "transport_assignee_id": _pick_value(order, ["transport_assignee_id"]),
+        "approved_count": _pick_value(order, ["approved_count"], 0),
     }
 
 
@@ -786,13 +1014,84 @@ def _create_notification_record(
 
 
 def search_tool_inventory(filters: Dict) -> Dict:
-    return search_tools(
+    result = search_tools(
         keyword=filters.get("keyword"),
         status=filters.get("status"),
-        location_id=filters.get("location") or filters.get("location_id"),
-        page_no=filters.get("page_no", 1),
+        location=filters.get("location") or filters.get("location_id"),
+        page=filters.get("page_no", 1),
         page_size=filters.get("page_size", 20),
     )
+    if not result.get("success"):
+        return result
+
+    normalized_rows = []
+    for row in result.get("data") or []:
+        normalized = dict(row or {})
+        reason_raw = normalized.get("disabled_reason")
+        reason = str(reason_raw).strip() if reason_raw is not None else ""
+        normalized_reason = reason or None
+
+        disabled_raw = normalized.get("disabled")
+        if isinstance(disabled_raw, bool):
+            normalized_disabled = disabled_raw
+        elif isinstance(disabled_raw, (int, float)):
+            normalized_disabled = disabled_raw != 0
+        elif isinstance(disabled_raw, str):
+            normalized_disabled = disabled_raw.strip().lower() in {"1", "true", "yes", "y"}
+        else:
+            normalized_disabled = False
+
+        normalized["disabled"] = normalized_disabled or (normalized_reason is not None)
+        normalized["disabled_reason"] = normalized_reason if normalized["disabled"] else None
+        normalized_rows.append(normalized)
+
+    return {**result, "data": normalized_rows}
+
+
+def batch_update_tool_status(
+    tool_codes: List[str],
+    new_status: str,
+    remark: str,
+    operator: Dict,
+    client_ip: str = "",
+) -> Dict:
+    """Batch update tool status and write status change history."""
+    cleaned_codes: List[str] = []
+    seen_codes = set()
+    for code in tool_codes or []:
+        normalized_code = str(code).strip()
+        if not normalized_code or normalized_code in seen_codes:
+            continue
+        seen_codes.add(normalized_code)
+        cleaned_codes.append(normalized_code)
+
+    if not cleaned_codes:
+        return {"success": False, "error": "tool_codes must contain at least one code"}
+
+    normalized_status = str(new_status or "").strip().lower()
+    if normalized_status not in ALLOWED_BATCH_TOOL_STATUSES:
+        return {
+            "success": False,
+            "error": "new_status must be one of: in_storage, outbounded, maintain, scrapped",
+        }
+
+    repo = ToolRepository()
+    return repo.update_tool_status_batch(
+        tool_codes=cleaned_codes,
+        new_status=normalized_status,
+        operator=operator or {},
+        remark=str(remark or "").strip() or None,
+        client_ip=str(client_ip or "").strip() or None,
+    )
+
+
+def get_tool_status_history(tool_code: str, page_no: int = 1, page_size: int = 20) -> Dict:
+    """Get one tool status history with pagination."""
+    normalized_code = str(tool_code or "").strip()
+    if not normalized_code:
+        return {"success": False, "error": "tool_code is required"}
+    repo = ToolRepository()
+    return repo.get_tool_status_history(normalized_code, page_no=page_no, page_size=page_size)
 
 
 def batch_query_tools(tool_codes: List[str]) -> Dict:
@@ -800,31 +1099,7 @@ def batch_query_tools(tool_codes: List[str]) -> Dict:
     if not cleaned_codes:
         return {"success": False, "error": "tool_codes must contain at least one code", "data": []}
 
-    placeholders = ",".join(["?"] * len(cleaned_codes))
-    sql = f"""
-    SELECT
-        [æ´å¿“åžªé™ç©„] as tool_code,
-        [æ´å¿“åžªé™ç©„] as tool_id,
-        [å®¸ãƒ¨î—Šé¥æƒ§å½¿] as drawing_no,
-        [å®¸ãƒ¨î—Šéšå¶‡Ðž] as tool_name,
-        [éˆå“„ç€·] as spec_model,
-        [è¤°æ’³å¢ é—å Ÿî‚¼] as current_version,
-        [æ´æ’²ç¶…] as current_location_text,
-        [æ´æ—‚æ•¤é˜å——å½¶] as application_history,
-        [é™îˆœæ•¤é˜èˆµâ‚¬ä¹š] as available_status,
-        [å®¸ãƒ¨î—Šéˆå¤‹æ™¥é˜èˆµâ‚¬ä¹š] as valid_status,
-        [é‘å“„å†æ´æ’¶å§¸éŽ¬ä¹š] as io_status,
-        COALESCE(
-            [é‘å“„å†æ´æ’¶å§¸éŽ¬ä¹š],
-            [é™îˆœæ•¤é˜èˆµâ‚¬ä¹š],
-            [å®¸ãƒ¨î—Šéˆå¤‹æ™¥é˜èˆµâ‚¬ä¹š],
-            ''
-        ) as status_text
-    FROM [å®¸ãƒ¨î—ŠéŸ¬î‚¡å”¤é—î“¥æ¶“æ˜ã€ƒ]
-    WHERE [æ´å¿“åžªé™ç©„] IN ({placeholders})
-    ORDER BY [æ´å¿“åžªé™ç©„]
-    """
-    rows = DatabaseManager().execute_query(sql, tuple(cleaned_codes))
+    rows = list(ToolRepository().load_tool_master_map(cleaned_codes).values())
     return {"success": True, "data": rows}
 
 
@@ -838,34 +1113,33 @@ def _format_order_datetime(value) -> str:
 
 def _extract_order_values(record: Dict) -> Dict:
     return {
-        "order_no": _pick_value(record, ["order_no", "é‘å“„å†æ´æ’³å´Ÿé™?"], ""),
-        "order_type": _pick_value(record, ["order_type", "é—å‘Šîš†å¨²æ¨ºç•µæµ£è™¹å°µé å›ªå°™éˆ§?"], ""),
-        "order_status": _pick_value(record, ["order_status", "é—æ›Ÿåµé˜èˆµâ‚¬?"], ""),
-        "initiator_name": _pick_value(record, ["initiator_name", "é™æˆ£æ£æµœå“„î˜éš?"], ""),
-        "initiator_id": _pick_value(record, ["initiator_id", "é—å‘Šç‘¦é¨å¥¸å¹‘é”å—™î›²ç¼â„ƒå¢¬"], ""),
-        "department": _pick_value(record, ["department", "é–®ã„©æ£¬"], ""),
-        "required_by": _pick_value(record, ["required_by", "æ¤¤åœ­æ´°æµ ï½…å½¿"], ""),
-        "remark": _pick_value(record, ["remark", "é¢ã„©â‚¬?"], ""),
-        "created_at": _pick_value(record, ["created_at", "ç’â€³åžæµ£è·¨æ•¤éƒå •æ£¿"]),
-        "submitted_at": _pick_value(record, ["submit_time", "ç’â€³åžè¤°æŽ•ç¹•éƒå •æ£¿"]),
-        "transport_type": _pick_value(record, ["transport_type", "æ©æ„¯ç·­ç»«è¯²ç€·"], ""),
-        "transport_assignee_name": _pick_value(record, ["transport_assignee_name", "é©î†½çˆ£æµ£å¶‡ç–†é‚å›¨æ¹°"], ""),
-        "keeper_name": _pick_value(record, ["keeper_name", "æ·‡æ¿ˆî…¸é›æ¨ºî˜éš?"], ""),
-        "transport_receiver": _pick_value(record, ["receiver", "æ©æ„¯ç·­æµœå“„î˜éš?"], ""),
+        "order_no": _pick_value(record, ["order_no"], ""),
+        "order_type": _pick_value(record, ["order_type"], ""),
+        "order_status": _pick_value(record, ["order_status"], ""),
+        "initiator_name": _pick_value(record, ["initiator_name"], ""),
+        "initiator_id": _pick_value(record, ["initiator_id"], ""),
+        "department": _pick_value(record, ["department"], ""),
+        "required_by": _pick_value(record, ["required_by"], ""),
+        "remark": _pick_value(record, ["remark"], ""),
+        "created_at": _pick_value(record, ["created_at"]),
+        "submitted_at": _pick_value(record, ["submit_time", "submitted_at"]),
+        "transport_type": _pick_value(record, ["transport_type"], ""),
+        "transport_assignee_name": _pick_value(record, ["transport_assignee_name"], ""),
+        "keeper_name": _pick_value(record, ["keeper_name"], ""),
+        "transport_receiver": _pick_value(record, ["receiver"], ""),
     }
 
 
 def _extract_item_values(item: Dict) -> Dict:
     return {
-        "tool_code": _pick_value(item, ["tool_code", "å®¸ãƒ¨î—Šç¼‚æ «çˆœ"], ""),
-        "tool_name": _pick_value(item, ["tool_name", "å®¸ãƒ¨î—Šéšå¶‡Ðž"], ""),
-        "drawing_no": _pick_value(item, ["drawing_no", "å®¸ãƒ¨î—Šé¥æƒ§å½¿"], ""),
-        "location_text": _pick_value(item, ["location_text", "æ·‡æ¿ˆî…¸é›æ¨¼â€˜ç’ã‚„ç¶…ç¼ƒî†½æžƒéˆ?"], ""),
-        "apply_qty": _pick_value(item, ["apply_qty", "é¢å® î‡¬éä¼´å™º"], 1),
-        "approved_qty": _pick_value(item, ["approved_qty", "çº­î†¿î…»éä¼´å™º"], 0),
-        "item_status": _pick_value(item, ["item_status", "status", "é„åº£ç²é˜èˆµâ‚¬?"], ""),
+        "tool_code": _pick_value(item, ["tool_code"], ""),
+        "tool_name": _pick_value(item, ["tool_name"], ""),
+        "drawing_no": _pick_value(item, ["drawing_no"], ""),
+        "location_text": _pick_value(item, ["location_text"], ""),
+        "apply_qty": _pick_value(item, ["apply_qty"], 1),
+        "approved_qty": _pick_value(item, ["approved_qty"], 0),
+        "item_status": _pick_value(item, ["item_status", "status"], ""),
     }
-
 
 def generate_keeper_text(order_no: str, current_user: Optional[Dict] = None) -> Dict:
     order = get_order_detail(order_no, current_user=current_user)
@@ -894,16 +1168,6 @@ def generate_keeper_text(order_no: str, current_user: Optional[Dict] = None) -> 
         f"Requested Items:\n{items_text}\n\n"
         "Please review the order and complete keeper confirmation."
     )
-    DatabaseManager().execute_query(
-        """
-        UPDATE 工装出入库单_主表
-        SET 保管员需求文本 = ?,
-            修改时间 = GETDATE()
-        WHERE 出入库单号 = ?
-        """,
-        (text, order_no),
-        fetch=False,
-    )
     _create_notification_record(
         order_no=order_no,
         notify_type="keeper_request",
@@ -923,7 +1187,7 @@ def generate_transport_text(order_no: str, current_user: Optional[Dict] = None) 
     approved_items = [
         _extract_item_values(item)
         for item in order.get("items", [])
-        if _pick_value(item, ["item_status", "status", "é„åº£ç²é˜èˆµâ‚¬?"], "") == "approved"
+        if _pick_value(item, [ITEM_COLUMNS['item_status'], "item_status", "status"], "") == "approved"
     ]
     if not approved_items:
         return {"success": False, "error": "no approved items are available for transport preparation"}
@@ -954,17 +1218,6 @@ def generate_transport_text(order_no: str, current_user: Optional[Dict] = None) 
         + "\n".join([f"- {item['tool_code']} ({item['tool_name'] or '-'})" for item in approved_items])
         + f"\n\nRequested By: {summary['initiator_name'] or '-'} / {summary['keeper_name'] or '-'}"
     )
-    DatabaseManager().execute_query(
-        """
-        UPDATE 工装出入库单_主表
-        SET 运输通知文本 = ?,
-            微信复制文本 = ?,
-            修改时间 = GETDATE()
-        WHERE 出入库单号 = ?
-        """,
-        (text, wechat_text, order_no),
-        fetch=False,
-    )
     _create_notification_record(
         order_no=order_no,
         notify_type="transport_preview",
@@ -982,7 +1235,7 @@ def notify_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
     if not order:
         return {"success": False, "error": "order not found"}
 
-    current_status = _pick_value(order, ["order_status", "é—æ›Ÿåµé˜èˆµâ‚¬?"], "")
+    current_status = _pick_value(order, ["order_status", "茅聧鈥斆︹€号该ヂ德伱┞愃溍ㄋ喡得⑩€毬?"], "")
     if current_status not in {"keeper_confirmed", "partially_confirmed", "transport_notified"}:
         return {
             "success": False,
@@ -1040,16 +1293,13 @@ def notify_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
         }
 
     DatabaseManager().execute_query(
-        """
-        UPDATE å®¸ãƒ¨î—Šé‘å“„å†æ´æ’³å´Ÿ_æ¶“æ˜ã€ƒ
-        SET é—æ›Ÿåµé˜èˆµâ‚¬? = 'transport_notified',
-            æ©æ„¯ç·­é–«æ°±ç…¡éƒå •æ£¿ = GETDATE(),
-            æ©æ„¯ç·­é–«æ°±ç…¡é‚å›¨æ¹° = ?,
-            å¯°î†»ä¿Šæ¾¶å¶…åŸ—é‚å›¨æ¹° = ?,
-            æ·‡î†½æ•¼éƒå •æ£¿ = GETDATE()
-        WHERE é‘å“„å†æ´æ’³å´Ÿé™? = ?
+        f"""
+        UPDATE [{TABLE_NAMES['ORDER']}]
+        SET {ORDER_COLUMNS['order_status']} = 'transport_notified',
+            {ORDER_COLUMNS['updated_at']} = GETDATE()
+        WHERE {ORDER_COLUMNS['order_no']} = ?
         """,
-        (content, copy_text, order_no),
+        (order_no,),
         fetch=False,
     )
     write_order_audit_log(
@@ -1077,7 +1327,7 @@ def notify_keeper(order_no: str, payload: Dict, current_user: Optional[Dict] = N
     if not order:
         return {"success": False, "error": "order not found"}
 
-    current_status = _pick_value(order, ["order_status", "é æŸ ¬é ˜èˆ¢?"], "")
+    current_status = _pick_value(order, ["order_status", "茅 聧忙鸥 卢茅 聬藴猫藛垄?"], "")
     if current_status not in {"submitted", "keeper_confirmed"}:
         return {
             "success": False,
@@ -1131,3 +1381,4 @@ def notify_keeper(order_no: str, payload: Dict, current_user: Optional[Dict] = N
         "send_status": final_status,
         "send_result": send_result,
     }
+

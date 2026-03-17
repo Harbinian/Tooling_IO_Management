@@ -16,9 +16,9 @@ const stats = ref([
   { title: '今日出库', value: '0', description: '今日累计发起', icon: ArrowUpRight, debugId: DEBUG_IDS.DASHBOARD.PENDING_KEEPER_METRIC },
   { title: '今日入库', value: '0', description: '今日累计发起', icon: ArrowUpRight, debugId: DEBUG_IDS.DASHBOARD.PENDING_TRANSPORT_METRIC },
   { title: '待确认单据', value: '0', description: '等待保管员确认', icon: Clock, debugId: DEBUG_IDS.DASHBOARD.PENDING_CONFIRM_METRIC },
-  { title: '运输中', value: '0', description: '正在运输或待运输', icon: Truck },
-  { title: '待最终确认', value: '0', description: '等待流程结束', icon: CheckCircle2 },
-  { title: '活跃单据', value: '0', description: '进行中的总单数', icon: History }
+  { title: '运输中', value: '0', description: '正在运输或待运输', icon: Truck, debugId: DEBUG_IDS.DASHBOARD.IN_TRANSIT_METRIC },
+  { title: '待最终确认', value: '0', description: '等待流程结束', icon: CheckCircle2, debugId: DEBUG_IDS.DASHBOARD.PENDING_FINAL_CONFIRM_METRIC },
+  { title: '活跃单据', value: '0', description: '进行中的总单数', icon: History, debugId: DEBUG_IDS.DASHBOARD.ACTIVE_ORDERS_METRIC }
 ])
 
 
@@ -87,25 +87,25 @@ const availableQuickActions = computed(() =>
 
 <template>
   <div class="space-y-12">
-    <section v-debug-id="DEBUG_IDS.DASHBOARD.SUMMARY_CARD" class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-16 text-white shadow-2xl">
+    <section v-debug-id="DEBUG_IDS.DASHBOARD.SUMMARY_CARD" class="relative overflow-hidden rounded-3xl bg-primary px-8 py-16 text-primary-foreground shadow-2xl">
 
       <div class="relative z-10 max-w-2xl">
-        <Badge variant="outline" class="mb-4 border-slate-700 text-slate-400 bg-slate-800/50 backdrop-blur-sm">
+        <Badge variant="outline" class="mb-4 border-primary-foreground/20 text-primary-foreground bg-primary-foreground/10 backdrop-blur-sm">
           智能工装管理系统 v2.0
         </Badge>
-        <h1 class="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
+        <h1 class="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-primary-foreground">
           下午好，<span class="text-emerald-400">{{ session.userName || '测试用户' }}</span>
         </h1>
-        <p class="mt-6 text-lg text-slate-400 leading-relaxed">
+        <p class="mt-6 text-lg text-primary-foreground/80 leading-relaxed">
           高效管理工装库存。通过实时追踪、自动通知和结构化流程，让出入库过程更简单、更透明。
         </p>
         <div class="mt-10 flex flex-wrap gap-4">
-          <Button v-if="session.hasPermission('order:create')" size="lg" class="bg-white text-slate-900 hover:bg-slate-100 font-bold" asChild>
+          <Button v-debug-id="DEBUG_IDS.DASHBOARD.CREATE_OUTBOUND_BTN" v-if="session.hasPermission('order:create')" size="lg" class="bg-white text-slate-900 hover:bg-slate-100 font-bold border-none" asChild>
             <router-link to="/inventory/create">
               <PlusCircle class="mr-2 h-5 w-5" /> 发起申请
             </router-link>
           </Button>
-          <Button v-if="session.hasPermission('order:list')" size="lg" variant="outline" class="border-slate-700 text-white hover:bg-slate-800" asChild>
+          <Button v-debug-id="DEBUG_IDS.DASHBOARD.VIEW_HISTORY_BTN" v-if="session.hasPermission('order:list')" size="lg" variant="ghost" class="border border-primary-foreground/20 text-primary-foreground hover:bg-white/10 font-bold" asChild>
             <router-link to="/inventory">
               <History class="mr-2 h-5 w-5" /> 查看历史
             </router-link>
@@ -119,35 +119,35 @@ const availableQuickActions = computed(() =>
 
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">核心指标</h3>
+        <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">核心指标</h3>
       </div>
       <MistStats :stats="stats" />
     </div>
 
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">快捷操作</h3>
+        <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">快捷操作</h3>
       </div>
       <MistFeatures :features="availableQuickActions" />
     </div>
 
     <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Card class="p-8 border-dashed border-slate-200 bg-slate-50/50">
+      <Card class="p-8 border-dashed border-border bg-muted/50">
         <div class="flex flex-col items-center justify-center text-center py-4">
-          <div class="h-12 w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
-            <Clock class="h-6 w-6 text-slate-400" />
+          <div class="h-12 w-12 rounded-2xl bg-background shadow-sm flex items-center justify-center mb-4">
+            <Clock class="h-6 w-6 text-muted-foreground" />
           </div>
-          <h4 class="text-base font-bold text-slate-900">最近动态</h4>
-          <p class="text-sm text-slate-500 mt-2">实时追踪工装流转状态，更多模块持续完善中。</p>
+          <h4 class="text-base font-bold text-foreground">最近动态</h4>
+          <p class="text-sm text-muted-foreground mt-2">实时追踪工装流转状态，更多模块持续完善中。</p>
         </div>
       </Card>
-      <Card class="p-8 border-dashed border-slate-200 bg-slate-50/50">
+      <Card class="p-8 border-dashed border-border bg-muted/50">
         <div class="flex flex-col items-center justify-center text-center py-4">
-          <div class="h-12 w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
-            <Users class="h-6 w-6 text-slate-400" />
+          <div class="h-12 w-12 rounded-2xl bg-background shadow-sm flex items-center justify-center mb-4">
+            <Users class="h-6 w-6 text-muted-foreground" />
           </div>
-          <h4 class="text-base font-bold text-slate-900">团队协作</h4>
-          <p class="text-sm text-slate-500 mt-2">支持多角色协同确认，后续能力持续补齐。</p>
+          <h4 class="text-base font-bold text-foreground">团队协作</h4>
+          <p class="text-sm text-muted-foreground mt-2">支持多角色协同确认，后续能力持续补齐。</p>
         </div>
       </Card>
     </section>

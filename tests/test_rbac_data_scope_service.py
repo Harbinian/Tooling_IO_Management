@@ -94,6 +94,40 @@ class RBACDataScopeServiceTests(unittest.TestCase):
         self.assertTrue(order_matches_scope({"org_id": "ORG_FACTORY"}, scope))
         self.assertFalse(order_matches_scope({"transport_assignee_id": "U999", "org_id": "ORG_OTHER"}, scope))
 
+    def test_order_matches_scope_allows_keeper_to_see_submitted_same_org_without_keeper_id(self):
+        scope = {
+            "all_access": False,
+            "self_user_ids": [],
+            "assigned_user_ids": [],
+            "org_ids": ["ORG_DEPT_005"],
+            "user_roles": [{"role_code": "keeper"}],
+            "assignment_scopes": [{"role_code": "keeper", "org_id": "ORG_DEPT_005"}],
+        }
+
+        self.assertTrue(
+            order_matches_scope(
+                {"order_status": "submitted", "org_id": "ORG_DEPT_005", "keeper_id": ""},
+                scope,
+            )
+        )
+
+    def test_order_matches_scope_does_not_expand_team_leader_visibility_for_submitted(self):
+        scope = {
+            "all_access": False,
+            "self_user_ids": [],
+            "assigned_user_ids": [],
+            "org_ids": ["ORG_DEPT_005"],
+            "user_roles": [{"role_code": "team_leader"}],
+            "assignment_scopes": [{"role_code": "team_leader", "org_id": "ORG_DEPT_005"}],
+        }
+
+        self.assertFalse(
+            order_matches_scope(
+                {"order_status": "submitted", "org_id": "ORG_OTHER", "keeper_id": ""},
+                scope,
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

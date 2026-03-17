@@ -137,6 +137,24 @@ export async function cancelOrder(orderNo, payload) {
 }
 
 /**
+ * 重置单据为草稿（用于被驳回单据重新编辑）
+ * @param {string} orderNo
+ * @param {Object} payload { operator_id, operator_name, operator_role }
+ */
+export async function resetOrderToDraft(orderNo, payload) {
+  return unwrap(await client.post(`/tool-io-orders/${orderNo}/reset-to-draft`, payload))
+}
+
+/**
+ * 更新草稿订单内容
+ * @param {string} orderNo
+ * @param {Object} payload { items, remark }
+ */
+export async function updateOrder(orderNo, payload) {
+  return unwrap(await client.put(`/tool-io-orders/${orderNo}`, payload))
+}
+
+/**
  * 获取保管员待确认单据
  * @param {string} keeperId 
  */
@@ -182,8 +200,52 @@ export async function generateKeeperText(orderNo) {
 
 /**
  * 生成运输通知文本预览
- * @param {string} orderNo 
+ * @param {string} orderNo
  */
 export async function generateTransportText(orderNo) {
   return unwrap(await client.get(`/tool-io-orders/${orderNo}/generate-transport-text`))
+}
+
+/**
+ * 删除草稿订单
+ * @param {string} orderNo
+ * @param {Object} payload { operator_id, operator_name, operator_role }
+ */
+export async function deleteOrder(orderNo, payload) {
+  return unwrap(await client.delete(`/tool-io-orders/${orderNo}`, { data: payload }))
+}
+
+/**
+ * 上报运输异常
+ * @param {string} orderNo 
+ * @param {Object} payload 
+ */
+export async function reportTransportIssue(orderNo, payload) {
+  return unwrap(await client.post(`/tool-io-orders/${orderNo}/report-transport-issue`, payload))
+}
+
+/**
+ * 获取订单的运输异常列表
+ * @param {string} orderNo 
+ */
+export async function getTransportIssues(orderNo) {
+  return unwrap(await client.get(`/tool-io-orders/${orderNo}/transport-issues`))
+}
+
+/**
+ * 处理运输异常
+ * @param {string} orderNo 
+ * @param {number} issueId 
+ * @param {Object} payload 
+ */
+export async function resolveTransportIssue(orderNo, issueId, payload) {
+  return unwrap(await client.post(`/tool-io-orders/${orderNo}/resolve-transport-issue`, { issue_id: issueId, ...payload }))
+}
+
+/**
+ * 获取准备工预知运输列表
+ * @param {Object} params 
+ */
+export async function getPreTransportOrders(params) {
+  return unwrap(await client.get('/tool-io-orders/pre-transport', { params }))
 }

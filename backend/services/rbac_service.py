@@ -107,6 +107,17 @@ def ensure_rbac_tables() -> bool:
                 updated_at DATETIME2 NULL,
                 updated_by NVARCHAR(64) NULL
             )
+        """,
+        "sys_user_password_change_log": """
+            CREATE TABLE sys_user_password_change_log (
+                id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                user_id NVARCHAR(64) NOT NULL,
+                changed_by NVARCHAR(64) NOT NULL,
+                change_result NVARCHAR(20) NOT NULL,
+                remark NVARCHAR(500) NULL,
+                client_ip NVARCHAR(64) NULL,
+                changed_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+            )
         """
     }
 
@@ -129,7 +140,8 @@ def ensure_rbac_tables() -> bool:
         indexes = [
             "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_sys_user_user_id' AND object_id = OBJECT_ID(N'sys_user')) CREATE UNIQUE INDEX UX_sys_user_user_id ON sys_user(user_id)",
             "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_sys_user_login_name' AND object_id = OBJECT_ID(N'sys_user')) CREATE UNIQUE INDEX UX_sys_user_login_name ON sys_user(login_name)",
-            "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_sys_user_employee_no' AND object_id = OBJECT_ID(N'sys_user')) CREATE UNIQUE INDEX UX_sys_user_employee_no ON sys_user(employee_no) WHERE employee_no IS NOT NULL"
+            "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_sys_user_employee_no' AND object_id = OBJECT_ID(N'sys_user')) CREATE UNIQUE INDEX UX_sys_user_employee_no ON sys_user(employee_no) WHERE employee_no IS NOT NULL",
+            "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_sys_user_password_change_user_time' AND object_id = OBJECT_ID(N'sys_user_password_change_log')) CREATE INDEX IX_sys_user_password_change_user_time ON sys_user_password_change_log(user_id, changed_at DESC)"
         ]
         for idx_sql in indexes:
             db.execute_query(idx_sql, fetch=False)
@@ -137,6 +149,7 @@ def ensure_rbac_tables() -> bool:
         # Bootstrap data if empty
         _bootstrap_initial_data(db)
         _ensure_incremental_permission_defaults(db)
+        _ensure_incremental_data_scope_defaults(db)
             
         return True
     except Exception as exc:
@@ -178,6 +191,7 @@ def _bootstrap_initial_data(db: DatabaseManager):
             ('order:keeper_confirm', 'Keeper Confirm Order', 'order', 'keeper_confirm'),
             ('order:final_confirm', 'Final Confirm Order', 'order', 'final_confirm'),
             ('order:cancel', 'Cancel Order', 'order', 'cancel'),
+            ('order:delete', 'Delete Order', 'order', 'delete'),
             ('notification:view', 'View Notification', 'notification', 'view'),
             ('notification:create', 'Create Notification', 'notification', 'create'),
             ('notification:send_feishu', 'Send Feishu Notification', 'notification', 'send_feishu'),
@@ -202,11 +216,15 @@ def _bootstrap_initial_data(db: DatabaseManager):
             ('ROLE_TEAM_LEADER', 'dashboard:view'),
             ('ROLE_TEAM_LEADER', 'tool:search'),
             ('ROLE_TEAM_LEADER', 'order:create'),
+            ('ROLE_TEAM_LEADER', 'order:view'),
             ('ROLE_TEAM_LEADER', 'order:list'),
             ('ROLE_TEAM_LEADER', 'order:submit'),
             ('ROLE_KEEPER', 'dashboard:view'),
+            ('ROLE_KEEPER', 'order:view'),
             ('ROLE_KEEPER', 'order:list'),
-            ('ROLE_KEEPER', 'order:keeper_confirm')
+            ('ROLE_KEEPER', 'order:keeper_confirm'),
+            ('ROLE_KEEPER', 'notification:send_feishu'),
+            ('ROLE_KEEPER', 'notification:view'),
         """, fetch=False)
 
     # 4. Admin User
@@ -225,41 +243,271 @@ def _bootstrap_initial_data(db: DatabaseManager):
             VALUES ('U_ADMIN', 'ROLE_SYS_ADMIN', 1, 'active', SYSDATETIME(), 'bootstrap')
         """, fetch=False)
 
+    # 5. Default Organizations
+    org_count = db.execute_query("SELECT COUNT(*) as cnt FROM sys_org")[0]["cnt"]
+    if org_count == 0:
+        logger.info("Bootstrapping initial organizations...")
+        db.execute_query("""
+            INSERT INTO sys_org (org_id, org_code, org_name, org_type, parent_org_id, sort_no, status, created_at, created_by)
+            VALUES
+            ('ORG_ROOT', 'ROOT', '昌兴航空复材', 'company', NULL, 1, 'active', SYSDATETIME(), 'bootstrap'),
+            ('ORG_DEPT_001', 'DEPT_001', '物资保障部', 'department', 'ORG_ROOT', 10, 'active', SYSDATETIME(), 'bootstrap'),
+            ('ORG_DEPT_002', 'DEPT_002', '工程技术部', 'department', 'ORG_ROOT', 20, 'active', SYSDATETIME(), 'bootstrap'),
+            ('ORG_DEPT_003', 'DEPT_003', '质量管理部', 'department', 'ORG_ROOT', 30, 'active', SYSDATETIME(), 'bootstrap'),
+            ('ORG_DEPT_004', 'DEPT_004', '运维安环部', 'department', 'ORG_ROOT', 40, 'active', SYSDATETIME(), 'bootstrap'),
+            ('ORG_DEPT_005', 'DEPT_005', '复材车间', 'department', 'ORG_ROOT', 50, 'active', SYSDATETIME(), 'bootstrap')
+        """, fetch=False)
+        # Assign admin to company HQ
+        db.execute_query("""
+            INSERT INTO sys_user_org_rel (user_id, org_id, is_primary, status, created_at, created_by)
+            VALUES ('U_ADMIN', 'ORG_ROOT', 1, 'active', SYSDATETIME(), 'bootstrap')
+        """, fetch=False)
+    else:
+        # Update existing org names and insert missing ones
+        logger.info("Updating organization names...")
+        db.execute_query("""
+            UPDATE sys_org SET org_name = CASE org_id
+                WHEN 'ORG_ROOT' THEN '昌兴航空复材'
+                WHEN 'ORG_DEPT_001' THEN '物资保障部'
+                WHEN 'ORG_DEPT_002' THEN '工程技术部'
+                WHEN 'ORG_DEPT_003' THEN '质量管理部'
+                WHEN 'ORG_DEPT_004' THEN '运维安环部'
+                ELSE org_name
+            END WHERE org_id IN ('ORG_ROOT', 'ORG_DEPT_001', 'ORG_DEPT_002', 'ORG_DEPT_003', 'ORG_DEPT_004')
+        """, fetch=False)
+        # Insert missing ORG_DEPT_005 (复材车间)
+        existing = db.execute_query("SELECT COUNT(*) as cnt FROM sys_org WHERE org_id = 'ORG_DEPT_005'")[0]["cnt"]
+        if existing == 0:
+            db.execute_query("""
+                INSERT INTO sys_org (org_id, org_code, org_name, org_type, parent_org_id, sort_no, status, created_at, created_by)
+                VALUES ('ORG_DEPT_005', 'DEPT_005', '复材车间', 'department', 'ORG_ROOT', 50, 'active', SYSDATETIME(), 'bootstrap')
+            """, fetch=False)
+
 
 def _ensure_incremental_permission_defaults(db: DatabaseManager):
     """Ensure newly introduced permissions exist in upgraded environments."""
+    _ensure_permission_exists(
+        db,
+        permission_code="order:delete",
+        permission_name="Delete Order",
+        resource_name="order",
+        action_name="delete",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_SYS_ADMIN",
+        permission_code="order:delete",
+    )
     db.execute_query(
         """
-        IF NOT EXISTS (SELECT 1 FROM sys_permission WHERE permission_code = 'order:transport_execute')
+        IF NOT EXISTS (
+            SELECT 1 FROM sys_role_permission_rel
+            WHERE role_id = 'ROLE_TEAM_LEADER' AND permission_code = 'order:view'
+        )
+        BEGIN
+            INSERT INTO sys_role_permission_rel (role_id, permission_code)
+            VALUES ('ROLE_TEAM_LEADER', 'order:view')
+        END
+        """,
+        fetch=False,
+    )
+    db.execute_query(
+        """
+        IF NOT EXISTS (
+            SELECT 1 FROM sys_role_permission_rel
+            WHERE role_id = 'ROLE_KEEPER' AND permission_code = 'order:view'
+        )
+        BEGIN
+            INSERT INTO sys_role_permission_rel (role_id, permission_code)
+            VALUES ('ROLE_KEEPER', 'order:view')
+        END
+        """,
+        fetch=False,
+    )
+    _ensure_permission_exists(
+        db,
+        permission_code="order:transport_execute",
+        permission_name="Execute Transport Workflow",
+        resource_name="order",
+        action_name="transport_execute",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="order:transport_execute",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_SYS_ADMIN",
+        permission_code="order:transport_execute",
+    )
+    _ensure_permission_exists(
+        db,
+        permission_code="tool:status_update",
+        permission_name="Update Tool Status",
+        resource_name="tool",
+        action_name="status_update",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="tool:status_update",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="notification:send_feishu",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="notification:create",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="notification:view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="tool:search",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="tool:view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="tool:location_view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="order:final_confirm",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="log:view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="order:cancel",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_PRODUCTION_PREP",
+        permission_code="tool:location_view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_PRODUCTION_PREP",
+        permission_code="dashboard:view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_SYS_ADMIN",
+        permission_code="tool:status_update",
+    )
+
+
+def _ensure_incremental_data_scope_defaults(db: DatabaseManager) -> None:
+    """Ensure newly introduced role data scopes exist in upgraded environments.
+
+    TEAM_LEADER needs ORG data scope to view all orders in their organization
+    (not just their own orders or assigned orders).
+    """
+    _ensure_role_data_scope_rel(
+        db,
+        role_id="ROLE_TEAM_LEADER",
+        scope_type="ORG",
+    )
+    _ensure_role_data_scope_rel(
+        db,
+        role_id="ROLE_PLANNER",
+        scope_type="ORG",
+    )
+
+
+def _ensure_role_data_scope_rel(
+    db: DatabaseManager,
+    *,
+    role_id: str,
+    scope_type: str,
+    scope_value: str = None,
+) -> None:
+    """Insert a role-data-scope relation when it is missing in upgraded environments."""
+    if scope_value:
+        db.execute_query(
+            f"""
+            IF NOT EXISTS (
+                SELECT 1 FROM sys_role_data_scope_rel
+                WHERE role_id = '{role_id}' AND scope_type = '{scope_type}'
+            )
+            BEGIN
+                INSERT INTO sys_role_data_scope_rel (role_id, scope_type, scope_value, status, created_at, created_by)
+                VALUES ('{role_id}', '{scope_type}', '{scope_value}', 'active', SYSDATETIME(), 'bootstrap')
+            END
+            """,
+            fetch=False,
+        )
+    else:
+        db.execute_query(
+            f"""
+            IF NOT EXISTS (
+                SELECT 1 FROM sys_role_data_scope_rel
+                WHERE role_id = '{role_id}' AND scope_type = '{scope_type}'
+            )
+            BEGIN
+                INSERT INTO sys_role_data_scope_rel (role_id, scope_type, status, created_at, created_by)
+                VALUES ('{role_id}', '{scope_type}', 'active', SYSDATETIME(), 'bootstrap')
+            END
+            """,
+            fetch=False,
+        )
+
+
+def _ensure_permission_exists(
+    db: DatabaseManager,
+    *,
+    permission_code: str,
+    permission_name: str,
+    resource_name: str,
+    action_name: str,
+) -> None:
+    """Insert a permission row when older environments do not have it yet."""
+    db.execute_query(
+        f"""
+        IF NOT EXISTS (SELECT 1 FROM sys_permission WHERE permission_code = '{permission_code}')
         BEGIN
             INSERT INTO sys_permission (permission_code, permission_name, resource_name, action_name)
-            VALUES ('order:transport_execute', 'Execute Transport Workflow', 'order', 'transport_execute')
+            VALUES ('{permission_code}', '{permission_name}', '{resource_name}', '{action_name}')
         END
         """,
         fetch=False,
     )
+
+
+def _ensure_role_permission_rel(
+    db: DatabaseManager,
+    *,
+    role_id: str,
+    permission_code: str,
+) -> None:
+    """Insert a role-permission relation when it is missing in upgraded environments."""
     db.execute_query(
-        """
+        f"""
         IF NOT EXISTS (
             SELECT 1 FROM sys_role_permission_rel
-            WHERE role_id = 'ROLE_KEEPER' AND permission_code = 'order:transport_execute'
+            WHERE role_id = '{role_id}' AND permission_code = '{permission_code}'
         )
         BEGIN
             INSERT INTO sys_role_permission_rel (role_id, permission_code)
-            VALUES ('ROLE_KEEPER', 'order:transport_execute')
-        END
-        """,
-        fetch=False,
-    )
-    db.execute_query(
-        """
-        IF NOT EXISTS (
-            SELECT 1 FROM sys_role_permission_rel
-            WHERE role_id = 'ROLE_SYS_ADMIN' AND permission_code = 'order:transport_execute'
-        )
-        BEGIN
-            INSERT INTO sys_role_permission_rel (role_id, permission_code)
-            VALUES ('ROLE_SYS_ADMIN', 'order:transport_execute')
+            VALUES ('{role_id}', '{permission_code}')
         END
         """,
         fetch=False,
