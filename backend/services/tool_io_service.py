@@ -174,13 +174,13 @@ def _is_order_accessible(order: Dict, current_user: Optional[Dict]) -> bool:
 def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
     raw_result = get_tool_io_orders(
         order_type=filters.get("order_type"),
-        order_status=filters.get("order_status"),
-        initiator_id=filters.get("initiator_id"),
+        status=filters.get("order_status"),
+        applicant_id=filters.get("initiator_id"),
         keeper_id=filters.get("keeper_id"),
         keyword=filters.get("keyword"),
         date_from=filters.get("date_from"),
         date_to=filters.get("date_to"),
-        page_no=1,
+        page=1,
         page_size=5000,
     )
     if not raw_result.get("success", True):
@@ -204,7 +204,7 @@ def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
 
 def get_dashboard_stats(current_user: Optional[Dict] = None) -> Dict:
     """Return dashboard metrics without depending on a missing database export."""
-    all_orders_result = get_tool_io_orders(page_no=1, page_size=5000)
+    all_orders_result = get_tool_io_orders(page=1, page_size=5000)
     scoped_orders = [
         order for order in (all_orders_result.get("data") or []) if _is_order_accessible(order, current_user)
     ]
