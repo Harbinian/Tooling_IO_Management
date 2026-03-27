@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>工装出入库管理系统 - 帮助文档</title>
+    <style>
+        :root {
+            --primary: #409EFF;
+            --success: #67C23A;
+            --warning: #E6A23C;
+            --danger: #F56C6C;
+            --info: #909399;
+            --bg-light: #f5f7fa;
+            --text-primary: #303133;
+            --text-secondary: #606266;
+            --text-muted: #909399;
+            --border: #dcdfe6;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0 16px;
+        }
+
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #66b1ff 100%);
+            color: white;
+            padding: 24px 16px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 导航标签 */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tab {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-tab:not(.active):hover {
+            background: var(--bg-light);
+        }
+
+        /* 角色卡片 */
+        .role-card {
+            background: white;
+            border-radius: 12px;
+            margin: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .role-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .role-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .role-info h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .role-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .tag-primary { background: #ecf5ff; color: var(--primary); }
+        .tag-success { background: #f0f9eb; color: var(--success); }
+        .tag-warning { background: #fdf6ec; color: var(--warning); }
+        .tag-danger { background: #fef0f0; color: var(--danger); }
+        .tag-info { background: #f4f4f5; color: var(--info); }
+
+        /* 权限列表 */
+        .permission-list {
+            margin-top: 16px;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--bg-light);
+        }
+
+        .permission-item:last-child {
+            border-bottom: none;
+        }
+
+        .permission-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 12px;
+        }
+
+        .permission-icon.yes { background: #f0f9eb; color: var(--success); }
+        .permission-icon.no { background: #fef0f0; color: var(--danger); }
+
+        .permission-text {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .permission-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* 操作列表 */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .action-item {
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-item .icon {
+            font-size: 16px;
+        }
+
+        /* 流程图 */
+        .flow-diagram {
+            background: white;
+            border-radius: 12px;
+            margin: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .flow-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .step-node {
+            flex: 1;
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .step-node.active {
+            background: #ecf5ff;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .step-arrow {
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        /* 状态表 */
+        .status-table {
+            background: white;
+            border-radius: 12px;
+            margin: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .status-header {
+            padding: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status-row {
+            display: flex;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--bg-light);
+            font-size: 13px;
+        }
+
+        .status-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-code {
+            font-family: monospace;
+            background: var(--bg-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 12px;
+            font-size: 12px;
+        }
+
+        /* 表格 */
+        .compare-table {
+            background: white;
+            border-radius: 12px;
+            margin: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .compare-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .compare-table th,
+        .compare-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--bg-light);
+        }
+
+        .compare-table th {
+            background: var(--bg-light);
+            font-weight: 600;
+        }
+
+        .check { color: var(--success); }
+        .cross { color: var(--danger); }
+
+        /* 隐藏/显示 */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* 底部信息 */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* 角色专属颜色 */
+        .admin .role-icon { background: linear-gradient(135deg, #909399 0%, #b1b3b8 100%); }
+        .leader .role-icon { background: linear-gradient(135deg, var(--primary) 0%, #66b1ff 100%); }
+        .keeper .role-icon { background: linear-gradient(135deg, var(--success) 0%, #85ce61 100%); }
+        .planner .role-icon { background: linear-gradient(135deg, var(--warning) 0%, #ebb563 100%); }
+        .transport .role-icon { background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%); }
+        .auditor .role-icon { background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%); }
+
+        .admin .role-card { border-left: 4px solid #909399; }
+        .leader .role-card { border-left: 4px solid var(--primary); }
+        .keeper .role-card { border-left: 4px solid var(--success); }
+        .planner .role-card { border-left: 4px solid var(--warning); }
+        .transport .role-card { border-left: 4px solid #9c27b0; }
+        .auditor .role-card { border-left: 4px solid #607d8b; }
+    </style>
+</head>
+<body>
+
+<!-- 头部 -->
+<div class="header">
+    <div class="container">
+        <h1>🏭 工装出入库管理系统</h1>
+        <p>帮助文档 / 角色权限说明</p>
+    </div>
+</div>
+
+<!-- 导航标签 -->
+<div class="nav-tabs">
+    <div class="nav-tab active" onclick="showSection('admin')">👤 管理员</div>
+    <div class="nav-tab" onclick="showSection('leader')">👷 班组长</div>
+    <div class="nav-tab" onclick="showSection('keeper')">📦 保管员</div>
+    <div class="nav-tab" onclick="showSection('planner')">📝 计划员</div>
+    <div class="nav-tab" onclick="showSection('transport')">🚚 运输</div>
+    <div class="nav-tab" onclick="showSection('auditor')">🔍 审计员</div>
+    <div class="nav-tab" onclick="showSection('compare')">📊 对比表</div>
+</div>
+
+<!-- 管理员 -->
+<div id="admin" class="section active">
+    <div class="role-card admin">
+        <div class="role-header">
+            <div class="role-icon">👤</div>
+            <div class="role-info">
+                <h2>系统管理员</h2>
+                <p>System Administrator</p>
+            </div>
+        </div>
+        <span class="tag tag-info">拥有所有权限</span>
+        <span class="tag tag-primary">用户管理</span>
+        <span class="tag tag-success">角色管理</span>
+
+        <div class="action-grid">
+            <div class="action-item"><span class="icon">👥</span> 管理用户</div>
+            <div class="action-item"><span class="icon">🎭</span> 管理角色</div>
+            <div class="action-item"><span class="icon">📋</span> 查看所有订单</div>
+            <div class="action-item"><span class="icon">📜</span> 查看操作日志</div>
+            <div class="action-item"><span class="icon">🔔</span> 管理通知</div>
+            <div class="action-item"><span class="icon">⚙️</span> 系统配置</div>
+        </div>
+
+        <div class="permission-list">
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">所有功能权限</div>
+                    <div class="permission-desc">不受任何限制</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 班组长 -->
+<div id="leader" class="section">
+    <div class="role-card leader">
+        <div class="role-header">
+            <div class="role-icon">👷</div>
+            <div class="role-info">
+                <h2>班组长</h2>
+                <p>Team Leader · 数据范围: 本人 + 本组织</p>
+            </div>
+        </div>
+        <span class="tag tag-primary">创建订单</span>
+        <span class="tag tag-success">出库最终确认</span>
+
+        <div class="action-grid">
+            <div class="action-item"><span class="icon">📋</span> 创建出库单</div>
+            <div class="action-item"><span class="icon">📋</span> 创建入库单</div>
+            <div class="action-item"><span class="icon">🔍</span> 搜索工装</div>
+            <div class="action-item"><span class="icon">📄</span> 查看我的订单</div>
+            <div class="action-item"><span class="icon">✅</span> 确认出库完成</div>
+            <div class="action-item"><span class="icon">❌</span> 取消订单</div>
+        </div>
+
+        <div class="permission-list">
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:create</div>
+                    <div class="permission-desc">创建订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:submit</div>
+                    <div class="permission-desc">提交订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:final_confirm</div>
+                    <div class="permission-desc">出库最终确认</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:cancel</div>
+                    <div class="permission-desc">取消订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">tool:search</div>
+                    <div class="permission-desc">工装搜索</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon no">✗</div>
+                <div>
+                    <div class="permission-text">keeper/keeper_confirm</div>
+                    <div class="permission-desc">无保管员确认权限</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 保管员 -->
+<div id="keeper" class="section">
+    <div class="role-card keeper">
+        <div class="role-header">
+            <div class="role-icon">📦</div>
+            <div class="role-info">
+                <h2>保管员</h2>
+                <p>Keeper · 数据范围: 本组织 + 被分配的订单</p>
+            </div>
+        </div>
+        <span class="tag tag-success">确认工装</span>
+        <span class="tag tag-warning">拒绝/确认订单</span>
+        <span class="tag tag-primary">入库最终确认</span>
+
+        <div class="action-grid">
+            <div class="action-item"><span class="icon">📋</span> 查看待确认订单</div>
+            <div class="action-item"><span class="icon">✅</span> 确认工装状态</div>
+            <div class="action-item"><span class="icon">❌</span> 拒绝订单</div>
+            <div class="action-item"><span class="icon">📝</span> 生成运输通知</div>
+            <div class="action-item"><span class="icon">📤</span> 发送飞书通知</div>
+            <div class="action-item"><span class="icon">✅</span> 确认入库完成</div>
+        </div>
+
+        <div class="permission-list">
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:keeper_confirm</div>
+                    <div class="permission-desc">保管员确认</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:final_confirm</div>
+                    <div class="permission-desc">入库最终确认</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:cancel</div>
+                    <div class="permission-desc">拒绝订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">notification:send_feishu</div>
+                    <div class="permission-desc">发送飞书通知</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">tool:location_view</div>
+                    <div class="permission-desc">库位查看</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon no">✗</div>
+                <div>
+                    <div class="permission-text">order:create</div>
+                    <div class="permission-desc">无创建订单权限</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 计划员 -->
+<div id="planner" class="section">
+    <div class="role-card planner">
+        <div class="role-header">
+            <div class="role-icon">📝</div>
+            <div class="role-info">
+                <h2>计划员</h2>
+                <p>Planner · 数据范围: 本组织及子组织</p>
+            </div>
+        </div>
+        <span class="tag tag-primary">创建订单</span>
+        <span class="tag tag-warning">提交订单</span>
+
+        <div class="action-grid">
+            <div class="action-item"><span class="icon">📋</span> 创建订单</div>
+            <div class="action-item"><span class="icon">📤</span> 提交订单</div>
+            <div class="action-item"><span class="icon">🔍</span> 搜索工装</div>
+            <div class="action-item"><span class="icon">📄</span> 查看订单</div>
+        </div>
+
+        <div class="permission-list">
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:create</div>
+                    <div class="permission-desc">创建订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:submit</div>
+                    <div class="permission-desc">提交订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon no">✗</div>
+                <div>
+                    <div class="permission-text">keeper/final/transport</div>
+                    <div class="permission-desc">无确认/运输权限</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 运输操作员 -->
+<div id="transport" class="section">
+    <div class="role-card transport">
+        <div class="role-header">
+            <div class="role-icon">🚚</div>
+            <div class="role-info">
+                <h2>运输操作员</h2>
+                <p>Production Prep · 数据范围: 本人 + 本组织运输任务</p>
+            </div>
+        </div>
+        <span class="tag tag-info">执行运输</span>
+        <span class="tag tag-danger">上报异常</span>
+
+        <div class="action-grid">
+            <div class="action-item"><span class="icon">📋</span> 查看运输通知</div>
+            <div class="action-item"><span class="icon">🚚</span> 执行运输</div>
+            <div class="action-item"><span class="icon">⚠️</span> 上报运输异常</div>
+            <div class="action-item"><span class="icon">🔍</span> 搜索工装</div>
+        </div>
+
+        <div class="permission-list">
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:transport_execute</div>
+                    <div class="permission-desc">执行运输</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon no">✗</div>
+                <div>
+                    <div class="permission-text">create/submit/confirm</div>
+                    <div class="permission-desc">无创建/提交/确认权限</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 审计员 -->
+<div id="auditor" class="section">
+    <div class="role-card auditor">
+        <div class="role-header">
+            <div class="role-icon">🔍</div>
+            <div class="role-info">
+                <h2>审计员</h2>
+                <p>Auditor · 数据范围: 所有数据</p>
+            </div>
+        </div>
+        <span class="tag tag-info">审查活动</span>
+        <span class="tag tag-primary">查看日志</span>
+
+        <div class="action-grid">
+            <div class="action-item"><span class="icon">📊</span> 查看所有订单</div>
+            <div class="action-item"><span class="icon">📜</span> 查看操作日志</div>
+            <div class="action-item"><span class="icon">🔔</span> 查看通知记录</div>
+        </div>
+
+        <div class="permission-list">
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">order:view / order:list</div>
+                    <div class="permission-desc">查看/列表订单</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon yes">✓</div>
+                <div>
+                    <div class="permission-text">log:view</div>
+                    <div class="permission-desc">查看日志</div>
+                </div>
+            </div>
+            <div class="permission-item">
+                <div class="permission-icon no">✗</div>
+                <div>
+                    <div class="permission-text">写操作</div>
+                    <div class="permission-desc">仅有查看权限</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 权限对比表 -->
+<div id="compare" class="section">
+    <div class="compare-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>功能</th>
+                    <th>班组长</th>
+                    <th>保管员</th>
+                    <th>计划员</th>
+                    <th>运输</th>
+                    <th>审计</th>
+                    <th>管理</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>创建订单</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>提交订单</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>保管员确认</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>最终确认</td>
+                    <td class="check">✓*</td>
+                    <td class="check">✓*</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>发送飞书</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>执行运输</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>查看日志</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>用户管理</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="padding: 12px; font-size: 11px; color: #909399;">* 出库由班组长确认，入库由保管员确认</p>
+    </div>
+
+    <!-- 状态说明 -->
+    <div class="status-table">
+        <div class="status-header">📋 订单状态说明</div>
+        <div class="status-row"><span class="status-code">draft</span> 草稿 - 订单刚创建</div>
+        <div class="status-row"><span class="status-code">submitted</span> 已提交 - 等待保管员确认</div>
+        <div class="status-row"><span class="status-code">keeper_confirmed</span> 保管员已确认</div>
+        <div class="status-row"><span class="status-code">transport_notified</span> 运输已通知</div>
+        <div class="status-row"><span class="status-code">transport_in_progress</span> 运输中</div>
+        <div class="status-row"><span class="status-code">final_confirmation_pending</span> 待最终确认</div>
+        <div class="status-row"><span class="status-code">completed</span> 已完成</div>
+        <div class="status-row"><span class="status-code">rejected</span> 已拒绝</div>
+        <div class="status-row"><span class="status-code">cancelled</span> 已取消</div>
+    </div>
+
+    <!-- 流程 -->
+    <div class="flow-diagram">
+        <div class="flow-title">📶 出库流程</div>
+        <div class="flow-steps">
+            <div class="flow-step">
+                <div class="step-node">草稿<br><small>班组长创建</small></div>
+                <div class="step-arrow">→</div>
+                <div class="step-node">已提交<br><small>班组长提交</small></div>
+            </div>
+            <div class="flow-step">
+                <div class="step-node">保管员确认<br><small>确认工装</small></div>
+                <div class="step-arrow">→</div>
+                <div class="step-node">运输通知<br><small>发送飞书</small></div>
+            </div>
+            <div class="flow-step">
+                <div class="step-node active">班组长最终确认<br><small>确认收到</small></div>
+                <div class="step-arrow">→</div>
+                <div class="step-node">已完成 ✓</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-diagram">
+        <div class="flow-title">📶 入库流程</div>
+        <div class="flow-steps">
+            <div class="flow-step">
+                <div class="step-node">草稿<br><small>班组长创建</small></div>
+                <div class="step-arrow">→</div>
+                <div class="step-node">已提交<br><small>班组长提交</small></div>
+            </div>
+            <div class="flow-step">
+                <div class="step-node">保管员确认<br><small>确认工装</small></div>
+                <div class="step-arrow">→</div>
+                <div class="step-node">运输通知<br><small>发送飞书</small></div>
+            </div>
+            <div class="flow-step">
+                <div class="step-node active">保管员最终确认<br><small>确认入库</small></div>
+                <div class="step-arrow">→</div>
+                <div class="step-node">已完成 ✓</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <p>工装出入库管理系统 v1.0</p>
+    <p>前端: Vue 3 + Element Plus | 后端: Flask + SQL Server</p>
+    <p>如有问题请联系系统管理员</p>
+</div>
+
+<script>
+    function showSection(id) {
+        // 隐藏所有section
+        document.querySelectorAll('.section').forEach(function(el) {
+            el.classList.remove('active');
+        });
+        // 显示选中section
+        document.getElementById(id).classList.add('active');
+        // 更新tab状态
+        document.querySelectorAll('.nav-tab').forEach(function(el) {
+            el.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+</script>
+
+</body>
+</html>

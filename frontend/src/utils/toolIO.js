@@ -75,6 +75,8 @@ export function normalizeItem(record = {}) {
   const availableStatus = pickValue(record, ['available_status', '可用状态'])
   const validStatus = pickValue(record, ['valid_status', '有效状态'])
   const ioStatus = pickValue(record, ['io_status', '出入库状态'])
+  const splitQuantityRaw = pickValue(record, ['split_quantity', '分体数量'], null)
+  const splitQuantity = splitQuantityRaw === null ? null : Number(splitQuantityRaw)
 
   return {
     toolId: pickValue(record, ['tool_id', '工装ID']),
@@ -85,6 +87,7 @@ export function normalizeItem(record = {}) {
     currentVersion: pickValue(record, ['current_version', '当前版本']),
     applyQty: Number(pickValue(record, ['apply_qty', '申请数量'], 1)) || 1,
     approvedQty: Number(pickValue(record, ['approved_qty', '确认数量'], 0)) || 0,
+    split_quantity: Number.isNaN(splitQuantity) ? null : splitQuantity,
     itemStatus,
     availableStatus,
     validStatus,

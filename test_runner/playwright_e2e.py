@@ -98,17 +98,17 @@ BACKEND_URL = "http://localhost:8151"
 
 TEST_USERS = {
     "taidongxu": {
-        "password": "test123",
+        "password": "test1234",
         "role": "TEAM_LEADER",
         "role_name": "班组长"
     },
     "hutingting": {
-        "password": "test123",
+        "password": "test1234",
         "role": "KEEPER",
         "role_name": "保管员"
     },
     "fengliang": {
-        "password": "test123",
+        "password": "test1234",
         "role": "PRODUCTION_PREP",
         "role_name": "生产准备工"
     },
@@ -488,7 +488,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.snapshot_before(page_taidongxu)
 
         try:
-            page_taidongxu.click('[value="outbound"]', timeout=5000)
+            page_taidongxu.click('button:has-text("出库"), [value="outbound"]', timeout=5000)
             time.sleep(0.3)
 
             if orchestrator:
@@ -518,7 +518,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.snapshot_before(page_taidongxu)
 
         try:
-            page_taidongxu.click('button:has-text("搜索并添加工装")', timeout=5000)
+            page_taidongxu.click('.bg-white.font-bold.text-slate-900:has-text("搜索并添加工装"), button:has-text("搜索并添加工装")', timeout=5000)
             time.sleep(1)
 
             if orchestrator:
@@ -582,10 +582,10 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
 
         try:
             # 点击第一行工装结果
-            page_taidongxu.click('.el-table__row, [class*="tool-row"], tr:first-child', timeout=5000)
+            page_taidongxu.click('.el-table__body-wrapper .el-table__body tr:first-child, .el-table__row', timeout=5000)
             time.sleep(0.5)
             # 点击确认/添加按钮
-            page_taidongxu.click('button:has-text("确定"), button:has-text("添加"), button:has-text("确认")', timeout=5000)
+            page_taidongxu.click('button:has-text("添加到明细"), button:has-text("确定"), button:has-text("确认")', timeout=5000)
             time.sleep(0.5)
 
             if orchestrator:

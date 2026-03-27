@@ -367,7 +367,13 @@ def verify_all_consistency(
             ))
 
     # 4. 状态标签映射
-    if context and context.current_order_status:
+    should_verify_status = (
+        context is not None and
+        bool(context.current_order_status) and
+        snapshot.page_name in {"OrderDetail", "KeeperProcess"} and
+        bool(snapshot.raw_text.strip())
+    )
+    if should_verify_status:
         status_checks = verify_status_label_mapping(
             snapshot, context.current_order_status, context
         )

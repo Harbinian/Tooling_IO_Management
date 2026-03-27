@@ -71,7 +71,11 @@
 
               <div v-if="form.orderType === 'outbound'" class="space-y-2" v-debug-id="DEBUG_IDS.ORDER_CREATE.TARGET_LOCATION_FIELD">
                 <label class="text-sm font-semibold text-foreground">目标位置</label>
-                <Input v-model="form.targetLocationText" placeholder="输入目标位置" />
+                <el-select v-model="form.targetLocationText" placeholder="选择目标位置" class="!w-full">
+                  <el-option label="A06" value="A06" />
+                  <el-option label="A02" value="A02" />
+                  <el-option label="A08" value="A08" />
+                </el-select>
               </div>
 
               <div class="space-y-2" v-debug-id="DEBUG_IDS.ORDER_CREATE.RETURN_TIME_FIELD">

@@ -20,6 +20,16 @@ from .snapshot import (
 )
 
 
+NON_WORKFLOW_PAGES = {"Login", "Dashboard", "Settings", "Unknown"}
+
+
+def is_workflow_state(state: Optional[str], order_type: str) -> bool:
+    """判断状态是否属于订单工作流状态机。"""
+    if not state:
+        return False
+    return state in WORKFLOW_TRANSITIONS.get(order_type, {})
+
+
 def infer_workflow_state(snapshot: PageSnapshot) -> tuple[Optional[str], Optional[str]]:
     """
     根据页面快照推断工作流状态
@@ -33,8 +43,19 @@ def infer_workflow_state(snapshot: PageSnapshot) -> tuple[Optional[str], Optiona
     Returns:
         (状态值英文, 状态标签中文) 或 (None, None)
     """
+    if snapshot.page_name in NON_WORKFLOW_PAGES:
+        return None, None
+
+    url = snapshot.url.lower()
+    if "/login" in url or snapshot.page_name == "Login":
+        return None, None
+
+    page_text = snapshot.raw_text.strip()
+    if not page_text:
+        return None, None
+
     # 优先使用原始状态值
-    if snapshot.order_status_raw:
+    if snapshot.order_status_raw and snapshot.order_status_raw in STATUS_LABEL_MAP:
         label = STATUS_LABEL_MAP.get(snapshot.order_status_raw, snapshot.order_status_raw)
         return snapshot.order_status_raw, label
 
@@ -45,14 +66,12 @@ def infer_workflow_state(snapshot: PageSnapshot) -> tuple[Optional[str], Optiona
             return status_value, snapshot.order_status
 
     # 尝试从 URL 或其他上下文推断
-    url = snapshot.url.lower()
     if "draft" in url:
         return "draft", "草稿"
     if "completed" in url:
         return "completed", "已完成"
 
     # 尝试从页面内容匹配
-    page_text = snapshot.raw_text
     for status_value, label in STATUS_LABEL_MAP.items():
         if label in page_text:
             return status_value, label
@@ -261,6 +280,7 @@ def detect_workflow_anomalies(
         异常报告列表
     """
     anomalies = []
+    page_text = (snapshot.raw_text or "").strip()
 
     # 1. 按钮可见性不匹配
     if not position.actual_buttons_match and position.button_mismatches:
@@ -292,14 +312,28 @@ def detect_workflow_anomalies(
 
     # 2. 未知状态
     if position.current_state == "unknown":
-        anomalies.append(AnomalyReport(
-            anomaly_type="workflow_blocked",
-            severity="critical",
-            description="无法识别订单当前状态",
-            page_name=snapshot.page_name,
-            order_no=position.order_no,
-            evidence={"url": snapshot.url, "page_text": snapshot.raw_text[:500]},
-        ))
+        if snapshot.page_name in NON_WORKFLOW_PAGES or "/login" in snapshot.url.lower():
+            return anomalies
+
+        if not page_text:
+            anomalies.append(AnomalyReport(
+                anomaly_type="blank_page",
+                severity="medium",
+                description="页面内容为空，可能仍在加载或重定向中，暂不判定为工作流阻塞",
+                page_name=snapshot.page_name,
+                order_no=position.order_no,
+                evidence={"url": snapshot.url, "page_text": ""},
+                suspected_cause="页面渲染尚未完成，或页面跳转过程中抓取了快照",
+            ))
+        else:
+            anomalies.append(AnomalyReport(
+                anomaly_type="workflow_blocked",
+                severity="critical",
+                description="无法识别订单当前状态",
+                page_name=snapshot.page_name,
+                order_no=position.order_no,
+                evidence={"url": snapshot.url, "page_text": snapshot.raw_text[:500]},
+            ))
 
     # 3. 终态但仍有操作按钮
     if position.is_terminal() and position.actual_buttons_match is False:
@@ -333,6 +367,12 @@ def detect_illegal_transition(
     Returns:
         异常报告（如果有的话）
     """
+    if not is_workflow_state(before_state, order_type):
+        return None
+
+    if not is_workflow_state(after_state, order_type):
+        return None
+
     is_valid, error_msg = verify_state_transition(before_state, after_state, order_type)
 
     if not is_valid:

@@ -119,10 +119,12 @@ router.beforeEach(async (to) => {
   const roleCodes = new Set((session.roles || []).map((role) => role.role_code))
   const isKeeper = roleCodes.has('keeper')
   const isTeamLeader = roleCodes.has('team_leader') || roleCodes.has('planner') || roleCodes.has('sys_admin')
+  const isProductionPrep = roleCodes.has('production_prep')
 
   // /keeper route (keeper workspace) - only KEEPER role can access
+  // Short paths: /keeper, /inventory/keeper
   // DENY: TEAM_LEADER, PLANNER, PRODUCTION_PREP, AUDITOR
-  if (to.path === '/inventory/keeper' && !isKeeper) {
+  if ((to.path === '/inventory/keeper' || to.path === '/keeper') && !isKeeper) {
     if (session.hasPermission('dashboard:view')) {
       return { name: 'dashboard' }
     }
@@ -130,8 +132,19 @@ router.beforeEach(async (to) => {
   }
 
   // /create route (order creation) - only TEAM_LEADER, PLANNER, SYS_ADMIN can access
+  // Short paths: /create, /inventory/create
   // DENY: KEEPER, PRODUCTION_PREP, AUDITOR
-  if (to.path === '/inventory/create' && !isTeamLeader) {
+  if ((to.path === '/inventory/create' || to.path === '/create') && !isTeamLeader) {
+    if (session.hasPermission('dashboard:view')) {
+      return { name: 'dashboard' }
+    }
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  // /tool-io route (order list) - requires order:list permission
+  // Short paths: /tool-io, /inventory
+  // DENY: PRODUCTION_PREP (has transport_execute but not list permission)
+  if ((to.path === '/tool-io' || to.path === '/inventory') && isProductionPrep) {
     if (session.hasPermission('dashboard:view')) {
       return { name: 'dashboard' }
     }

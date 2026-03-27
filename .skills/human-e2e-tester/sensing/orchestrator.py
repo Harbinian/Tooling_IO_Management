@@ -49,6 +49,28 @@ class SensingOrchestrator:
     4. 测试结束 → generate_report() / finalize() 生成报告并写入数据库
     """
 
+    @staticmethod
+    def _infer_operation_type(operation: str) -> str:
+        """区分真实业务动作和测试/导航步骤。"""
+        op = (operation or "").lower()
+
+        user_action_keywords = (
+            "submit",
+            "confirm",
+            "notify",
+            "start",
+            "complete",
+            "final",
+            "resubmit",
+            "cancel",
+            "delete",
+            "report_issue",
+        )
+        if any(keyword in op for keyword in user_action_keywords):
+            return "user_action"
+
+        return "test_action"
+
     def __init__(
         self,
         db_path: Optional[str] = None,
@@ -243,7 +265,7 @@ class SensingOrchestrator:
         self.operation_count += 1
 
         # 记录操作和 API 响应
-        self.context.record_operation(operation)
+        self.context.record_operation(operation, self._infer_operation_type(operation))
         if api_response:
             self.context.record_api_call(api_response)
 

@@ -28,6 +28,75 @@ def register_anomaly_pattern(name: str):
     return decorator
 
 
+USER_ACTION_KEYWORDS = (
+    "submit",
+    "confirm",
+    "notify",
+    "start",
+    "complete",
+    "final",
+    "resubmit",
+    "cancel",
+    "delete",
+    "report_issue",
+)
+
+
+def is_user_action(operation: Optional[str], operation_type: str = "user_action") -> bool:
+    """判断操作是否代表真实业务动作，而不是测试导航/初始化步骤。"""
+    if not operation:
+        return False
+
+    if operation_type != "user_action":
+        return False
+
+    op = operation.lower()
+    return any(keyword in op for keyword in USER_ACTION_KEYWORDS)
+
+
+def response_indicates_failure(response: Any) -> bool:
+    """判断 API/操作响应是否体现了失败信号。"""
+    if response is None:
+        return False
+
+    if hasattr(response, "status_code"):
+        try:
+            return int(response.status_code) >= 400
+        except Exception:
+            pass
+
+    if isinstance(response, dict):
+        status_code = response.get("status_code")
+        if status_code is not None:
+            try:
+                if int(status_code) >= 400 or int(status_code) <= 0:
+                    return True
+            except Exception:
+                pass
+
+        if response.get("success") is False:
+            return True
+        if response.get("error"):
+            return True
+
+        body = response.get("body")
+        if isinstance(body, dict):
+            if body.get("success") is False:
+                return True
+            if body.get("error") or body.get("message") == "error":
+                return True
+
+    if hasattr(response, "json"):
+        try:
+            data = response.json()
+            if isinstance(data, dict) and data.get("success") is False:
+                return True
+        except Exception:
+            pass
+
+    return False
+
+
 @register_anomaly_pattern("api_500")
 def detect_api_500(response: Any, snapshot: PageSnapshot, context: TestContext) -> Optional[AnomalyReport]:
     """检测 API 500 错误"""
@@ -78,11 +147,20 @@ def detect_api_400(response: Any, snapshot: PageSnapshot, context: TestContext) 
 @register_anomaly_pattern("silent_fail")
 def detect_silent_fail(snapshot: PageSnapshot, context: TestContext) -> Optional[AnomalyReport]:
     """检测操作无反馈（静默失败）"""
+    if not is_user_action(context.last_operation, context.last_operation_type):
+        return None
+
+    if snapshot.page_name == "Login":
+        return None
+
     # 条件：执行了操作但页面无变化且无错误提示
     if context.last_operation and not context.last_api_called:
         return None  # API 没调用，不算静默失败
 
     if context.last_operation and context.last_api_called:
+        if not response_indicates_failure(context.last_api_response):
+            return None
+
         # API 被调用了，但页面没有错误提示，且没有成功提示
         if not snapshot.error_message and not snapshot.success_message:
             return AnomalyReport(
@@ -160,6 +238,9 @@ def detect_missing_error_display(snapshot: PageSnapshot, context: TestContext) -
 @register_anomaly_pattern("button_no_response")
 def detect_button_no_response(snapshot: PageSnapshot, context: TestContext) -> Optional[AnomalyReport]:
     """检测按钮点击后无响应"""
+    if not is_user_action(context.last_operation, context.last_operation_type):
+        return None
+
     if context.last_operation and not context.last_api_called:
         # 用户点击了某个按钮，但没有任何 API 调用
         operation_keywords = {

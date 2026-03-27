@@ -290,6 +290,7 @@ class TestContext:
 
     # 最近的操作
     last_operation: Optional[str] = None       # 上一步执行了什么操作
+    last_operation_type: str = "user_action"   # user_action / test_action
     last_api_response: Optional[Any] = None    # 上一次 API 响应
     last_api_called: bool = False              # 上一步是否调用了 API
 
@@ -310,9 +311,10 @@ class TestContext:
         """添加一致性检查"""
         self.consistency_checks.append(check)
 
-    def record_operation(self, operation: str):
+    def record_operation(self, operation: str, operation_type: str = "user_action"):
         """记录操作"""
         self.last_operation = operation
+        self.last_operation_type = operation_type
         self.operation_history.append(operation)
         self.last_api_called = False
         self.last_api_response = None

@@ -55,21 +55,21 @@ HEADERS = {
 
 TEST_USERS = {
     "taidongxu": {
-        "password": "test123",
+        "password": "test1234",
         "role": "TEAM_LEADER",
         "role_name": "班组长",
         "user_id": None,
         "token": None
     },
     "hutingting": {
-        "password": "test123",
+        "password": "test1234",
         "role": "KEEPER",
         "role_name": "保管员",
         "user_id": None,
         "token": None
     },
     "fengliang": {
-        "password": "test123",
+        "password": "test1234",
         "role": "PRODUCTION_PREP",
         "role_name": "生产准备工",
         "user_id": None,

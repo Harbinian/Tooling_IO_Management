@@ -2,6 +2,7 @@
 import { reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ShieldCheck, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-vue-next'
+import { ElMessageBox } from 'element-plus'
 import { useSessionStore } from '@/store/session'
 import { DEBUG_IDS } from '@/debug/debugIds'
 
@@ -20,6 +21,13 @@ const form = reactive({
 // Show error when redirected due to permission denial
 if (route.query.denied === '1') {
   errorMessage.value = '您没有权限访问该页面，请使用有权限的账号登录'
+}
+
+function handleForgotPassword() {
+  ElMessageBox.alert('请联系管理员重置密码', '提示', {
+    confirmButtonText: '确定',
+    type: 'info'
+  })
 }
 
 async function submitLogin() {
@@ -122,7 +130,7 @@ async function submitLogin() {
             <div class="space-y-2">
               <div class="flex items-center justify-between px-1">
                 <label class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">密码</label>
-                <a href="#" class="text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors">忘记密码？</a>
+                <a href="#" class="text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors" @click.prevent="handleForgotPassword">忘记密码？</a>
               </div>
               <div class="relative group">
                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-foreground transition-colors">
