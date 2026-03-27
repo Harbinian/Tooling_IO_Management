@@ -200,7 +200,7 @@
                             </Select>
                           </td>
                           <td class="px-4 py-4 text-center">
-                            <span class="text-sm">{{ item.split_quantity || '-' }}</span>
+                            <span class="text-sm">{{ item.split_quantity ?? '-' }}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -699,7 +699,7 @@ async function approveOrder() {
       location_text: item.locationText,
       check_result: item.status,
       check_remark: item.checkRemark || confirmForm.keeperRemark,
-      approved_qty: item.status === 'approved' ? item.split_quantity || item.applyQty || 1 : 0,
+      approved_qty: item.status === 'approved' ? (item.split_quantity ?? item.applyQty ?? 1) : 0,
       status: item.status
     })),
     operator_id: session.userId,
