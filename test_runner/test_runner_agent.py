@@ -52,6 +52,44 @@ class AgentState:
     FAILED = "FAILED"
 
 
+# =============================================================================
+# 稳定 JSON 报告模板
+# =============================================================================
+
+REPORT_TEMPLATE = {
+    "success": True,
+    "report": {
+        "metadata": {
+            "run_id": "",
+            "test_type": "",
+            "status": "",  # RUNNING/PAUSED/COMPLETED/FAILED
+            "started_at": "",
+            "ended_at": None,
+            "duration_seconds": None
+        },
+        "summary": {
+            "total_operations": 0,
+            "completed_operations": 0,
+            "failed_operations": 0,
+            "anomalies_count": 0,
+            "critical_count": 0,
+            "high_count": 0,
+            "medium_count": 0,
+            "low_count": 0
+        },
+        "operations": [],
+        "sensing": {
+            "snapshots_count": 0,
+            "workflow_positions_count": 0,
+            "consistency_checks_passed": 0,
+            "consistency_checks_failed": 0,
+            "anomalies": []
+        },
+        "workflow_positions": []
+    }
+}
+
+
 @dataclass
 class AgentStatus:
     """Agent 状态"""
@@ -270,6 +308,20 @@ def get_test_summary(run_id: str) -> dict:
     cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'high'", (run_id,))
     high = cursor.fetchone()[0]
 
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'medium'", (run_id,))
+    medium = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'low'", (run_id,))
+    low = cursor.fetchone()[0]
+
+    # 获取已完成操作数
+    cursor.execute("SELECT COUNT(*) FROM checkpoints WHERE run_id = ?", (run_id,))
+    completed_ops = cursor.fetchone()[0]
+
+    # 获取失败操作数（从anomalies推算）
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ?", (run_id,))
+    failed_ops = cursor.fetchone()[0]
+
     # 获取检查点
     cursor.execute("SELECT operation_index FROM checkpoints WHERE run_id = ? ORDER BY created_at DESC LIMIT 1", (run_id,))
     row = cursor.fetchone()
@@ -281,7 +333,208 @@ def get_test_summary(run_id: str) -> dict:
         "total_anomalies": total_anomalies,
         "critical": critical,
         "high": high,
+        "medium": medium,
+        "low": low,
+        "completed_operations": completed_ops,
+        "failed_operations": failed_ops,
         "last_checkpoint_operation": last_checkpoint_op,
+    }
+
+
+def get_run_metadata(cursor: sqlite3.Cursor, run_id: str) -> dict:
+    """获取运行元数据"""
+    cursor.execute(
+        "SELECT run_id, test_type, status, started_at, ended_at FROM test_runs WHERE run_id = ?",
+        (run_id,)
+    )
+    row = cursor.fetchone()
+
+    if not row:
+        return {
+            "run_id": None,
+            "test_type": None,
+            "status": "IDLE",
+            "started_at": None,
+            "ended_at": None,
+            "duration_seconds": None,
+        }
+
+    started_at = row[3]
+    ended_at = row[4]
+    duration_seconds = None
+
+    if started_at:
+        if ended_at:
+            from datetime import datetime
+            start_dt = datetime.fromisoformat(started_at)
+            end_dt = datetime.fromisoformat(ended_at)
+            duration_seconds = int((end_dt - start_dt).total_seconds())
+        else:
+            from datetime import datetime
+            start_dt = datetime.fromisoformat(started_at)
+            duration_seconds = int((datetime.now() - start_dt).total_seconds())
+
+    return {
+        "run_id": row[0],
+        "test_type": row[1],
+        "status": row[2].upper() if row[2] else "UNKNOWN",
+        "started_at": started_at,
+        "ended_at": ended_at,
+        "duration_seconds": duration_seconds,
+    }
+
+
+def get_run_summary(cursor: sqlite3.Cursor, run_id: str) -> dict:
+    """获取汇总数据"""
+    # 获取异常统计
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ?", (run_id,))
+    anomalies_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'critical'", (run_id,))
+    critical = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'high'", (run_id,))
+    high = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'medium'", (run_id,))
+    medium = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM anomalies WHERE run_id = ? AND severity = 'low'", (run_id,))
+    low = cursor.fetchone()[0]
+
+    # 获取已完成操作数
+    cursor.execute("SELECT COUNT(*) FROM checkpoints WHERE run_id = ?", (run_id,))
+    completed_ops = cursor.fetchone()[0]
+
+    # 获取总操作数（从剧本计算）
+    cursor.execute("SELECT test_type FROM test_runs WHERE run_id = ?", (run_id,))
+    row = cursor.fetchone()
+    test_type = row[0] if row else "quick_smoke"
+    script = TEST_SCRIPTS.get(test_type, TEST_SCRIPTS["quick_smoke"])
+    total_ops = len(script["steps"])
+
+    return {
+        "total_operations": total_ops,
+        "completed_operations": completed_ops,
+        "failed_operations": anomalies_count,
+        "anomalies_count": anomalies_count,
+        "critical_count": critical,
+        "high_count": high,
+        "medium_count": medium,
+        "low_count": low,
+    }
+
+
+def get_operations(cursor: sqlite3.Cursor, run_id: str) -> list:
+    """获取操作列表"""
+    cursor.execute(
+        "SELECT operation_index, next_expected_op, created_at FROM checkpoints WHERE run_id = ? ORDER BY created_at ASC",
+        (run_id,)
+    )
+    rows = cursor.fetchall()
+
+    operations = []
+    for i, row in enumerate(rows):
+        op_index = row[0]
+        op_name = row[1] or f"operation_{op_index}"
+        created_at = row[2]
+
+        # 获取该操作的异常数
+        cursor.execute(
+            "SELECT COUNT(*) FROM anomalies WHERE run_id = ?",
+            (run_id,)
+        )
+        anomalies = cursor.fetchone()[0]
+
+        # 计算持续时间（简化：使用下一个操作的创建时间差）
+        duration_ms = 0
+        if i < len(rows) - 1:
+            next_created_at = rows[i + 1][2]
+            from datetime import datetime
+            start_dt = datetime.fromisoformat(created_at)
+            end_dt = datetime.fromisoformat(next_created_at)
+            duration_ms = int((end_dt - start_dt).total_seconds() * 1000)
+
+        operations.append({
+            "index": op_index,
+            "name": op_name,
+            "status": "SUCCESS",
+            "started_at": created_at,
+            "duration_ms": duration_ms,
+            "anomalies": anomalies,
+            "critical": 0,
+        })
+
+    return operations
+
+
+def get_sensing_summary(cursor: sqlite3.Cursor, run_id: str) -> dict:
+    """获取感知数据汇总"""
+    # 获取快照数
+    cursor.execute(
+        "SELECT COUNT(*) FROM checkpoints WHERE run_id = ?",
+        (run_id,)
+    )
+    snapshots_count = cursor.fetchone()[0]
+
+    # 获取工作流位置数（与操作数相同）
+    workflow_positions_count = snapshots_count
+
+    # 获取一致性检查结果（暂无专门表，设为0）
+    consistency_checks_passed = 0
+    consistency_checks_failed = 0
+
+    # 获取异常列表
+    cursor.execute(
+        "SELECT anomaly_type, severity, description, order_no, anomaly_type FROM anomalies WHERE run_id = ? ORDER BY created_at DESC",
+        (run_id,)
+    )
+    anomaly_rows = cursor.fetchall()
+
+    anomalies = []
+    for row in anomaly_rows:
+        anomalies.append({
+            "type": row[0] or "unknown",
+            "severity": (row[1] or "low").upper(),
+            "description": row[2] or "",
+            "order_no": row[3],
+            "operation": row[4] or "",
+        })
+
+    return {
+        "snapshots_count": snapshots_count,
+        "workflow_positions_count": workflow_positions_count,
+        "consistency_checks_passed": consistency_checks_passed,
+        "consistency_checks_failed": consistency_checks_failed,
+        "anomalies": anomalies,
+    }
+
+
+def build_report(run_id: str) -> dict:
+    """从数据库构建完整报告"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 元数据
+    metadata = get_run_metadata(cursor, run_id)
+
+    # 汇总数据
+    summary = get_run_summary(cursor, run_id)
+
+    # 操作列表
+    operations = get_operations(cursor, run_id)
+
+    # 感知数据
+    sensing = get_sensing_summary(cursor, run_id)
+
+    conn.close()
+
+    return {
+        "metadata": metadata,
+        "summary": summary,
+        "operations": operations,
+        "sensing": sensing,
+        "workflow_positions": [],
     }
 
 
@@ -624,41 +877,21 @@ class TestRunnerAgent:
         }
 
     def _cmd_report(self, payload: dict) -> dict:
-        """获取测试报告"""
+        """获取测试报告 - 返回稳定的 JSON 结构"""
         state = get_agent_state()
 
         if not state["run_id"]:
             return {
-                "success": True,
-                "message": "No test run found",
-                "report": None,
+                "success": False,
+                "error": "No test run found",
             }
 
-        summary = get_test_summary(state["run_id"])
-
-        # 获取最近的测试运行信息
-        running = get_running_test_run()
-
-        # 获取剧本中的步骤信息
-        script = TEST_SCRIPTS.get(state["test_type"] or "quick_smoke", TEST_SCRIPTS["quick_smoke"])
-        total_steps = len(script["steps"])
+        # 使用 build_report 构建完整报告
+        report_data = build_report(state["run_id"])
 
         return {
             "success": True,
-            "run_id": state["run_id"],
-            "test_type": state["test_type"],
-            "state": state["state"],
-            "operation_index": state["operation_index"],
-            "total_operations": total_steps,
-            "current_operation": state["current_operation"],
-            "next_operation": state["next_operation"],
-            "summary": {
-                "total_anomalies": summary["total_anomalies"],
-                "critical": summary["critical"],
-                "high": summary["high"],
-                "last_checkpoint_operation": summary["last_checkpoint_operation"],
-            },
-            "message": f"Test report for run {state['run_id']}",
+            "report": report_data,
         }
 
 

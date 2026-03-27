@@ -34,13 +34,11 @@ if str(SENSING_PACKAGE_ROOT) not in sys.path:
 # 统一数据库路径
 E2E_SENSING_DB = REPO_ROOT / "test_reports" / "e2e_sensing.db"
 
-try:
-    from sensing.storage import SQLiteStorage, RbacResultRecord
-    from sensing.orchestrator import SensingOrchestrator
-    SENSING_AVAILABLE = True
-except ImportError:
-    SENSING_AVAILABLE = False
-    print("[WARN] Sensing module not available, running without sensing")
+# API E2E 测试不使用感知系统，因为没有浏览器页面可以观察
+# SensingOrchestrator 依赖 Playwright/Selenium driver 来获取页面状态
+# API 测试只有 HTTP 响应，没有页面状态可言
+SENSING_AVAILABLE = False
+print("[INFO] API E2E mode: sensing disabled (no browser available)")
 
 
 # =============================================================================
@@ -741,28 +739,68 @@ def step_submit_order(order_no: str, token: str, user_id: int,
 
 
 def step_keeper_confirm(order_no: str, token: str, user_id: int,
-                        transport_assignee_id: str, orchestrator=None) -> tuple:
+                        transport_assignee_id: str, orchestrator=None,
+                        order_items: list = None) -> tuple:
     """
     步骤: keeper_confirm - 保管员确认
+
+    Args:
+        order_no: 订单号
+        token: 认证令牌
+        user_id: 保管员用户ID
+        transport_assignee_id: 运输接收人ID
+        orchestrator: 感知编排器(可选)
+        order_items: 订单明细列表(可选)，如果提供则使用其中的item_id
 
     Returns:
         (status_code, body)
     """
     def action():
+        # If order_items is provided, extract item_id from it
+        items_payload = []
+        if order_items:
+            for item in order_items:
+                items_payload.append({
+                    "item_id": item.get("id"),  # Use the database item_id
+                    "tool_code": item.get("tool_code"),
+                    "location_id": item.get("location_id") or 1,
+                    "location_text": item.get("location_text") or item.get("keeper_confirm_location_text") or "仓库A-1",
+                    "check_result": "approved",
+                    "approved_qty": item.get("confirmed_qty") or item.get("apply_qty") or 1,
+                    "status": "approved"
+                })
+        else:
+            # Fallback: try to get order detail to extract item_ids
+            _, order_detail = api_get(f"/tool-io-orders/{order_no}", token=token)
+            if order_detail and order_detail.get("items"):
+                for item in order_detail.get("items", []):
+                    items_payload.append({
+                        "item_id": item.get("id"),
+                        "tool_code": item.get("tool_code"),
+                        "location_id": item.get("location_id") or 1,
+                        "location_text": item.get("location_text") or item.get("keeper_confirm_location_text") or "仓库A-1",
+                        "check_result": "approved",
+                        "approved_qty": item.get("confirmed_qty") or item.get("apply_qty") or 1,
+                        "status": "approved"
+                    })
+            else:
+                # Last resort fallback (should not reach here normally)
+                items_payload = [{
+                    "tool_code": TEST_TOOL["serial_no"],
+                    "location_id": 1,
+                    "location_text": "仓库A-1",
+                    "check_result": "approved",
+                    "approved_qty": 1,
+                    "status": "approved"
+                }]
+
         return api_post(f"/tool-io-orders/{order_no}/keeper-confirm", {
             "keeper_id": user_id,
             "keeper_name": "胡婷婷",
             "transport_type": "self",
             "transport_assignee_id": transport_assignee_id,
             "transport_assignee_name": "冯亮",
-            "items": [{
-                "tool_code": TEST_TOOL["serial_no"],
-                "location_id": 1,
-                "location_text": "仓库A-1",
-                "check_result": "approved",
-                "approved_qty": 1,
-                "status": "approved"
-            }],
+            "items": items_payload,
             "operator_id": user_id,
             "operator_name": "胡婷婷",
             "operator_role": "keeper"
@@ -1107,24 +1145,19 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
         orchestrator.set_order_context(order_no, "submitted", "outbound")
         orchestrator.snapshot_before(None)
 
-    status_code, body = api_post(f"/tool-io-orders/{order_no}/keeper-confirm", {
-        "keeper_id": user_id_ht,
-        "keeper_name": "胡婷婷",
-        "transport_type": "self",
-        "transport_assignee_id": TEST_USERS["fengliang"]["user_id"],
-        "transport_assignee_name": "冯亮",
-        "items": [{
-            "tool_code": TEST_TOOL["serial_no"],
-            "location_id": 1,
-            "location_text": "仓库A-1",
-            "check_result": "approved",
-            "approved_qty": 1,
-            "status": "approved"
-        }],
-        "operator_id": user_id_ht,
-        "operator_name": "胡婷婷",
-        "operator_role": "keeper"
-    }, token=token_ht)
+    # First get order detail to extract item_ids
+    _, order_detail = api_get(f"/tool-io-orders/{order_no}", token=token_ht)
+    order = order_detail.get("data", {}) if order_detail else {}
+    order_items = order.get("items", []) if order else []
+
+    status_code, body = step_keeper_confirm(
+        order_no,
+        token_ht,
+        user_id_ht,
+        TEST_USERS["fengliang"]["user_id"],
+        orchestrator=orchestrator,
+        order_items=order_items
+    )
 
     if status_code == 200 and body.get("success"):
         if orchestrator:

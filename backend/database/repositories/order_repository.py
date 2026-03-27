@@ -8,10 +8,19 @@ from typing import List, Dict, Optional, Any
 from datetime import datetime
 
 from backend.database.core.database_manager import DatabaseManager
-from backend.database.schema.column_names import ORDER_COLUMNS, ITEM_COLUMNS, LOG_COLUMNS, NOTIFY_COLUMNS, TABLE_NAMES
+from backend.database.schema.column_names import (
+    ORDER_COLUMNS,
+    ITEM_COLUMNS,
+    LOG_COLUMNS,
+    NOTIFY_COLUMNS,
+    TABLE_NAMES,
+    TOOL_MASTER_COLUMNS,
+)
 from backend.database.utils.sql_utils import safe_bigint
 
 logger = logging.getLogger(__name__)
+
+TOOL_MASTER_TABLE = "Tooling_ID_Main"
 
 
 # Tool action types
@@ -380,7 +389,16 @@ class OrderRepository:
             order = result[0]
 
             # Get items
-            items_sql = f"SELECT * FROM [{TABLE_NAMES['ORDER_ITEM']}] WHERE [{ITEM_COLUMNS['order_no']}] = ? ORDER BY [{ITEM_COLUMNS['sort_order']}]"
+            items_sql = f"""
+            SELECT
+                i.*,
+                m.[{TOOL_MASTER_COLUMNS['split_quantity']}] AS split_quantity
+            FROM [{TABLE_NAMES['ORDER_ITEM']}] i
+            LEFT JOIN [{TOOL_MASTER_TABLE}] m
+                ON i.[{ITEM_COLUMNS['tool_code']}] = m.[{TOOL_MASTER_COLUMNS['tool_code']}]
+            WHERE i.[{ITEM_COLUMNS['order_no']}] = ?
+            ORDER BY i.[{ITEM_COLUMNS['sort_order']}]
+            """
             items = self._db.execute_query(items_sql, (order_no,))
             order['items'] = items
 

@@ -178,7 +178,7 @@
                           <th class="px-4 py-3 font-bold">建议位置</th>
                           <th class="px-4 py-3 font-bold w-[180px]">确认位置</th>
                           <th class="px-4 py-3 font-bold w-[120px]">状态</th>
-                          <th class="px-4 py-3 font-bold w-[120px]">批准数量</th>
+                          <th class="px-4 py-3 font-bold w-[100px]">分体数量</th>
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-border">
@@ -199,16 +199,8 @@
                               <option value="rejected">拒绝</option>
                             </Select>
                           </td>
-                          <td class="px-4 py-4">
-                            <div class="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                v-model.number="item.approvedQty"
-                                class="h-8 w-16 text-center border-border text-xs"
-                                :max="item.applyQty"
-                              />
-                              <span class="text-[10px] text-muted-foreground">/ {{ item.applyQty }}</span>
-                            </div>
+                          <td class="px-4 py-4 text-center">
+                            <span class="text-sm">{{ item.split_quantity || '-' }}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -641,18 +633,10 @@ function resetPreview() {
 
 function buildEditableItems(order) {
   return (order.items || []).map((item) => {
-    const defaultApprovedQty =
-      item.itemStatus === 'approved'
-        ? item.approvedQty || item.applyQty || 1
-        : item.itemStatus === 'rejected'
-          ? 0
-          : item.applyQty || 1
-
     return {
       ...item,
       locationText: item.keeperConfirmLocationText || item.currentLocationText || '',
       status: item.itemStatus === 'rejected' ? 'rejected' : 'approved',
-      approvedQty: defaultApprovedQty,
       checkRemark: item.checkRemark || ''
     }
   })
@@ -715,7 +699,7 @@ async function approveOrder() {
       location_text: item.locationText,
       check_result: item.status,
       check_remark: item.checkRemark || confirmForm.keeperRemark,
-      approved_qty: item.status === 'approved' ? item.approvedQty || item.applyQty || 1 : 0,
+      approved_qty: item.status === 'approved' ? item.split_quantity || item.applyQty || 1 : 0,
       status: item.status
     })),
     operator_id: session.userId,

@@ -190,8 +190,8 @@
                 <p class="text-sm font-medium text-foreground/80">{{ item.applyQty ?? '-' }}</p>
               </div>
               <div class="space-y-1">
-                <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">确认数量</p>
-                <p class="text-sm font-medium text-foreground/80">{{ item.approvedQty ?? '-' }}</p>
+                <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">分体数量</p>
+                <p class="text-sm font-medium text-foreground/80">{{ item.split_quantity ?? '-' }}</p>
               </div>
               <div class="space-y-1">
                 <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">当前位置</p>

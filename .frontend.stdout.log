@@ -47,13 +47,15 @@ Port 8152 is in use, trying another one...
 [2m11:01:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:38[22m [36m[1m[vite][22m[39m server restarted.
-[22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
-[2m11:01:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
+[2m16:51:32[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m16:51:32[22m [36m[1m[vite][22m[39m server restarted.
+22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
 [2m11:01:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/page[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
-90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
-[2m11:22:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue[22m
+[2m16:51:32[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m16:51:32[22m [36m[1m[vite][22m[39m server restarted.
+0m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue[22m
 [2m11:22:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
 [2m11:23:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/layouts/MainLayout.vue, /src/assets/index.css[22m
 [2m11:25:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/components/tool-io/ToolSearchDialog.vue[22m
@@ -63,11 +65,15 @@ Port 8152 is in use, trying another one...
 [2m14:19:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
-9m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue[22m
+[2m16:51:32[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m16:51:32[22m [36m[1m[vite][22m[39m server restarted.
+ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue[22m
 [2m14:26:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
-src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue[22m
+[2m16:51:32[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m16:51:32[22m [36m[1m[vite][22m[39m server restarted.
+ueDialog.vue[22m
 [2m17:20:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue, /src/pages/tool-io/PreTransportList.vue, /src/pages/tool-io/OrderCreate.vue[22m
 [2m17:21:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
 [2m17:21:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/OrderDetail.vue, /src/assets/index.css[22m
@@ -78,3 +84,17 @@ src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/comp
 [2m09:00:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/LoginPage.vue, /src/assets/index.css[22m
 [2m09:01:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
 [2m09:02:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/auth/LoginPage.vue, /src/assets/index.css[22m
+[2m14:19:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/index.css, /src/pages/tool-io/OrderDetail.vue, /src/pages/tool-io/OrderList.vue, /src/pages/tool-io/KeeperProcess.vue, /src/components/tool-io/ResolveIssueDialog.vue, /src/components/tool-io/ReportTransportIssueDialog.vue, /src/pages/tool-io/PreTransportList.vue, /src/pages/tool-io/OrderCreate.vue, /src/components/tool-io/LogTimeline.vue, /src/components/tool-io/OrderStatusTag.vue, /src/components/tool-io/ToolSearchDialog.vue[22m
+[2m14:41:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mpackage.json[22m
+[2m14:41:20[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/auth/me[39m
+Error: connect ECONNREFUSED 127.0.0.1:8151
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
+[2m14:41:37[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m14:41:37[22m [36m[1m[vite][22m[39m server restarted.
+[2m15:43:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/KeeperProcess.vue, /src/assets/index.css[22m
+[2m15:43:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/KeeperProcess.vue, /src/assets/index.css[22m
+[2m15:44:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/KeeperProcess.vue, /src/assets/index.css[22m
+[2m15:44:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tool-io/KeeperProcess.vue, /src/assets/index.css[22m
+[2m16:51:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mpackage.json[22m
+[2m16:51:32[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
+[2m16:51:32[22m [36m[1m[vite][22m[39m server restarted.

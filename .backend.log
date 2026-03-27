@@ -1022,3 +1022,120 @@
 2026-03-27 13:45:22,605 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
 2026-03-27 13:45:22,637 - werkzeug - WARNING -  * Debugger is active!
 2026-03-27 13:45:22,660 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 13:55:34,502 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\rbac_data_scope_service.py', reloading
+2026-03-27 13:55:34,534 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 13:55:35,172 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 13:55:35,212 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 13:55:35,236 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:02:18,296 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:02:18,329 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:02:18,881 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:02:18,915 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:02:18,939 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:03:41,162 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:03:41,191 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:03:41,714 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:03:41,745 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:03:41,766 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:05:39,086 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:05:39,116 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:05:39,640 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:05:39,674 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:05:39,695 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:18:37,783 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\backend\\services\\tool_io_service.py', reloading
+2026-03-27 14:18:37,814 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:18:38,349 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:18:38,384 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:18:38,406 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:39:22,181 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:39:22,213 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:39:22,704 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:39:22,735 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:39:22,753 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:43:57,049 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:43:57,079 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:43:57,589 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:43:57,625 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:43:57,645 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:44:48,134 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:44:48,164 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:44:48,708 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:44:48,740 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:44:48,762 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:45:55,472 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:45:55,501 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:45:56,082 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:45:56,117 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:45:56,141 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:51:10,515 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:51:10,543 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:51:11,088 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:51:11,121 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:51:11,143 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:51:48,714 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:51:48,743 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:51:49,270 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:51:49,307 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:51:49,331 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:52:13,915 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:52:13,943 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:52:14,414 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:52:14,444 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:52:14,461 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:52:43,425 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:52:43,455 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:52:44,001 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:52:44,035 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:52:44,056 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 14:53:04,899 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\api_e2e.py', reloading
+2026-03-27 14:53:04,929 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 14:53:05,451 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 14:53:05,485 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 14:53:05,504 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 15:02:20,066 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-27 15:02:20,096 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 15:02:20,605 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 15:02:20,636 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 15:02:20,654 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+2026-03-27 15:02:36,090 - werkzeug - INFO -  * Detected change in 'E:\\CA001\\Tooling_IO_Management\\test_runner\\test_runner_agent.py', reloading
+2026-03-27 15:02:36,118 - werkzeug - INFO -  * Restarting with stat
+2026-03-27 15:02:36,672 - __main__ - INFO - starting tooling io management server 0.0.0.0:5000
+2026-03-27 15:02:36,705 - werkzeug - WARNING -  * Debugger is active!
+2026-03-27 15:02:36,727 - werkzeug - INFO -  * Debugger PIN: 119-855-334
+Traceback (most recent call last):
+  File "E:\CA001\Tooling_IO_Management\web_server.py", line 67, in <module>
+    app.run(
+    ~~~~~~~^
+        host=FLASK_HOST,
+        ^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        reloader_type=FLASK_RELOADER_TYPE,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\charl\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\flask\app.py", line 662, in run
+    run_simple(t.cast(str, host), port, self, **options)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\charl\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\werkzeug\serving.py", line 1115, in run_simple
+    run_with_reloader(
+    ~~~~~~~~~~~~~~~~~^
+        srv.serve_forever,
+        ^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        reloader_type=reloader_type,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\charl\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\werkzeug\_reloader.py", line 461, in run_with_reloader
+    reloader.run()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\charl\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\werkzeug\_reloader.py", line 257, in run
+    self.run_step()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\charl\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\werkzeug\_reloader.py", line 297, in run_step
+    for name in _find_stat_paths(self.extra_files, self.exclude_patterns):
+                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\charl\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\werkzeug\_reloader.py", line 104, in _find_stat_paths
+    paths.add(os.path.join(root, name))
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+MemoryError

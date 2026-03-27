@@ -1,6 +1,6 @@
 # RBAC 权限矩阵 / RBAC Permission Matrix
 
-> **最后更新**: 2026-03-25
+> **最后更新**: 2026-03-27
 > **维护者**: 每次新增 API 权限注解时必须同步更新此文档
 > **权威来源**: `docs/RBAC_INIT_DATA.md`
 
@@ -65,7 +65,7 @@
 | `order:final_confirm` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `order:cancel` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `order:delete` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `order:transport_execute` | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
+| `order:transport_execute` | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | `notification:view` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `notification:create` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `notification:send_feishu` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
@@ -115,7 +115,7 @@
 | `/api/tool-io-orders/<order_no>/logs` | GET | `order:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `/api/tool-io-orders/<order_no>/notification-records` | GET | `notification:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `/api/tool-io-orders/pending-keeper` | GET | `order:keeper_confirm` | ❌ | ✅ | ❌ | ❌ | ❌ |
-| `/api/tool-io-orders/pre-transport` | GET | `order:transport_execute` | ❌ | ✅ | ❌ | ✅ | ❌ |
+| `/api/tool-io-orders/pre-transport` | GET | `order:transport_execute` | ❌ | ❌ | ❌ | ✅ | ❌ |
 | `/api/tool-io-orders/<order_no>/generate-keeper-text` | GET | `notification:create` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/generate-transport-text` | GET | `notification:create` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/notify-transport` | POST | `notification:send_feishu` | ❌ | ✅ | ❌ | ❌ | ❌ |
@@ -184,6 +184,7 @@
 
 | 日期 | 变更内容 | 变更人 |
 |------|---------|--------|
+| 2026-03-27 | 移除 KEEPER 的 `order:transport_execute` 权限，修复保管员能看到预知运输菜单但无权限访问的问题 | Claude Code |
 | 2026-03-27 | 调整 `GET /api/tool-io-orders/<order_no>/transport-issues` 权限为 `order:view`，修复 OrderDetail 页面非保管员角色加载 403 | Codex |
 | 2026-03-27 | 添加 dashboard:view 权限给 PRODUCTION_PREP (修复 bug #10168 - fengliang 登录后无限重定向) | Claude Code |
 | 2026-03-25 | 新增准备工预知运输列表 API 权限映射 (`GET /api/tool-io-orders/pre-transport`) | Codex |

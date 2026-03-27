@@ -1,0 +1,14 @@
+{
+  "executor": "Claude Code",
+  "start_time": "2026-03-27T16:00:00Z",
+  "status": "partial",
+  "end_time": "2026-03-27T16:30:00Z",
+  "reason": "评分4/10未达标，需修复前端选择器和RBAC问题",
+  "test_rounds_executed": 1,
+  "average_score": "4/10",
+  "blocking_issues": [
+    "Playwright选择器过时 ([value=\"outbound\"], button:has-text(\"搜索并添加工装\"), .el-table__row)",
+    "RBAC路由守卫配置错误 (KEEPER可访问/create, TEAM_LEADER可访问/keeper)"
+  ],
+  "report": "logs/prompt_task_runs/run_20260327_1630_30110_human_e2e_step10_final_regression.md"
+}

@@ -333,7 +333,7 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
     )
     _ensure_role_permission_rel(
         db,
-        role_id="ROLE_KEEPER",
+        role_id="ROLE_PRODUCTION_PREP",
         permission_code="order:transport_execute",
     )
     _ensure_role_permission_rel(
