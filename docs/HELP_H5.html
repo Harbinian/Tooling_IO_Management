@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>工装出入库管理系统 - 帮助文档</title>
+    <title>工装出入库管理系统 - 操作指南</title>
     <style>
         :root {
             --primary: #409EFF;
@@ -11,404 +11,374 @@
             --warning: #E6A23C;
             --danger: #F56C6C;
             --info: #909399;
+            --purple: #9c27b0;
             --bg-light: #f5f7fa;
             --text-primary: #303133;
             --text-secondary: #606266;
             --text-muted: #909399;
             --border: #dcdfe6;
-            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
             background: var(--bg-light);
             color: var(--text-primary);
-            line-height: 1.6;
-            padding-bottom: 60px;
-        }
-
-        .container {
-            max-width: 100%;
-            padding: 0 16px;
+            line-height: 1.7;
+            padding-bottom: 40px;
         }
 
         /* 头部 */
         .header {
-            background: linear-gradient(135deg, var(--primary) 0%, #66b1ff 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
             padding: 24px 16px;
-            margin-bottom: 16px;
+        }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .header p { font-size: 13px; opacity: 0.8; }
+        .header .version {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-top: 8px;
         }
 
-        .header h1 {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        /* 导航标签 */
+        /* 导航 */
         .nav-tabs {
             display: flex;
-            gap: 8px;
-            padding: 12px 16px;
+            gap: 6px;
+            padding: 12px 12px;
             overflow-x: auto;
             background: white;
             border-bottom: 1px solid var(--border);
             -webkit-overflow-scrolling: touch;
         }
-
         .nav-tab {
             flex-shrink: 0;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             border: 1px solid transparent;
+            white-space: nowrap;
         }
+        .nav-tab.active { background: var(--primary); color: white; }
+        .nav-tab:not(.active) { background: var(--bg-light); color: var(--text-secondary); }
+        .nav-tab:not(.active):active { background: #e0e0e0; }
 
-        .nav-tab.active {
-            background: var(--primary);
-            color: white;
-        }
+        /* 页面容器 */
+        .container { padding: 16px; }
+        .section { display: none; }
+        .section.active { display: block; }
 
-        .nav-tab:not(.active):hover {
-            background: var(--bg-light);
-        }
-
-        /* 角色卡片 */
-        .role-card {
+        /* 卡片 */
+        .card {
             background: white;
             border-radius: 12px;
-            margin: 16px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-        }
-
-        .role-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
             margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
-
-        .role-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-        }
-
-        .role-info h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .role-info p {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        /* 标签 */
-        .tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-right: 8px;
-            margin-bottom: 8px;
-        }
-
-        .tag-primary { background: #ecf5ff; color: var(--primary); }
-        .tag-success { background: #f0f9eb; color: var(--success); }
-        .tag-warning { background: #fdf6ec; color: var(--warning); }
-        .tag-danger { background: #fef0f0; color: var(--danger); }
-        .tag-info { background: #f4f4f5; color: var(--info); }
-
-        /* 权限列表 */
-        .permission-list {
-            margin-top: 16px;
-        }
-
-        .permission-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 0;
+        .card-header {
+            padding: 16px;
             border-bottom: 1px solid var(--bg-light);
-        }
-
-        .permission-item:last-child {
-            border-bottom: none;
-        }
-
-        .permission-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-size: 12px;
-        }
-
-        .permission-icon.yes { background: #f0f9eb; color: var(--success); }
-        .permission-icon.no { background: #fef0f0; color: var(--danger); }
-
-        .permission-text {
-            flex: 1;
-            font-size: 14px;
-        }
-
-        .permission-desc {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* 操作列表 */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        .action-item {
-            background: var(--bg-light);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
+            font-weight: 600;
+            font-size: 15px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .action-item .icon {
-            font-size: 16px;
+        /* 角色卡片 */
+        .role-card {
+            background: white;
+            border-radius: 16px;
+            margin: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .role-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .role-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+        .role-info h2 { font-size: 18px; margin-bottom: 4px; }
+        .role-info p { font-size: 12px; color: var(--text-muted); }
+
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        .tag-blue { background: #ecf5ff; color: var(--primary); }
+        .tag-green { background: #f0f9eb; color: var(--success); }
+        .tag-orange { background: #fdf6ec; color: var(--warning); }
+        .tag-red { background: #fef0f0; color: var(--danger); }
+        .tag-gray { background: #f4f4f5; color: var(--info); }
+        .tag-purple { background: #f3e8ff; color: var(--purple); }
+
+        /* 操作步骤 */
+        .step-list { padding: 0 16px 16px; }
+        .step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .step-num.green { background: var(--success); }
+        .step-num.orange { background: var(--warning); }
+        .step-num.red { background: var(--danger); }
+        .step-num.purple { background: var(--purple); }
+        .step-num.gray { background: var(--info); }
+        .step-content { flex: 1; }
+        .step-content h4 { font-size: 14px; margin-bottom: 4px; }
+        .step-content p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .step-content .tip {
+            background: var(--bg-light);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--primary);
+        }
+        .step-content .tip.warning { border-left-color: var(--warning); background: #fdf6ec; }
+        .step-content .tip.success { border-left-color: var(--success); background: #f0f9eb; }
+        .step-content .tip.danger { border-left-color: var(--danger); background: #fef0f0; }
+
+        /* 页面截图区域 */
+        .page-mock {
+            background: linear-gradient(145deg, #1e1e1e 0%, #2d2d2d 100%);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .page-mock-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .page-mock-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .page-mock-dot.red { background: #ff5f57; }
+        .page-mock-dot.yellow { background: #febc2e; }
+        .page-mock-dot.green { background: #28c840; }
+        .page-mock-title {
+            background: #3a3a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 11px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .page-mock-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+        }
+        .mock-btn {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin: 3px;
+        }
+        .mock-btn.primary { background: var(--primary); color: white; }
+        .mock-btn.success { background: var(--success); color: white; }
+        .mock-btn.warning { background: var(--warning); color: white; }
+        .mock-btn.danger { background: var(--danger); color: white; }
+        .mock-btn.outline { border: 1px solid var(--border); background: white; }
+        .mock-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-top: 8px;
+        }
+        .mock-table th, .mock-table td {
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        .mock-table th { background: var(--bg-light); font-weight: 600; }
+        .mock-form-item {
+            margin-bottom: 10px;
+        }
+        .mock-form-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .mock-input {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            width: 100%;
         }
 
         /* 流程图 */
         .flow-diagram {
             background: white;
             border-radius: 12px;
-            margin: 16px;
-            padding: 20px;
-            box-shadow: var(--shadow);
+            padding: 16px;
+            margin: 16px 0;
         }
-
         .flow-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .flow-row {
             display: flex;
             align-items: center;
             gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
         }
-
-        .flow-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .flow-step {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .step-node {
-            flex: 1;
-            background: var(--bg-light);
-            padding: 12px;
+        .flow-node {
+            padding: 8px 14px;
             border-radius: 8px;
-            text-align: center;
-            font-size: 13px;
-        }
-
-        .step-node.active {
-            background: #ecf5ff;
-            color: var(--primary);
+            font-size: 11px;
             font-weight: 500;
         }
+        .flow-node.draft { background: #f4f4f5; color: #606266; }
+        .flow-node.submit { background: #ecf5ff; color: #409eff; }
+        .flow-node.confirm { background: #f0f9eb; color: #67c23a; }
+        .flow-node.transport { background: #f3e8ff; color: #9c27b0; }
+        .flow-node.done { background: #67c23a; color: white; }
+        .flow-node.reject { background: #fef0f0; color: #f56c6c; }
+        .flow-arrow { color: #c0c4cc; font-size: 14px; }
 
-        .step-arrow {
-            color: var(--text-muted);
-            font-size: 18px;
-        }
-
-        /* 状态表 */
-        .status-table {
-            background: white;
-            border-radius: 12px;
-            margin: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .status-header {
-            padding: 16px;
-            font-weight: 600;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .status-row {
-            display: flex;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--bg-light);
-            font-size: 13px;
-        }
-
-        .status-row:last-child {
-            border-bottom: none;
-        }
-
-        .status-code {
-            font-family: monospace;
-            background: var(--bg-light);
-            padding: 2px 8px;
+        /* 状态徽章 */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
             border-radius: 4px;
-            margin-right: 12px;
-            font-size: 12px;
+            font-size: 10px;
+            font-weight: 500;
         }
+        .status-badge.draft { background: #f4f4f5; color: #909399; }
+        .status-badge.submitted { background: #ecf5ff; color: #409eff; }
+        .status-badge.confirmed { background: #f0f9eb; color: #67c23a; }
+        .status-badge.transport { background: #f3e8ff; color: #9c27b0; }
+        .status-badge.completed { background: #67c23a; color: white; }
+        .status-badge.rejected { background: #fef0f0; color: #f56c6c; }
 
-        /* 表格 */
-        .compare-table {
-            background: white;
-            border-radius: 12px;
-            margin: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .compare-table table {
+        /* 权限表 */
+        .perm-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 11px;
+            margin: 12px 0;
         }
-
-        .compare-table th,
-        .compare-table td {
-            padding: 10px 8px;
+        .perm-table th, .perm-table td {
+            padding: 8px 6px;
             text-align: center;
             border-bottom: 1px solid var(--bg-light);
         }
-
-        .compare-table th {
-            background: var(--bg-light);
-            font-weight: 600;
-        }
-
-        .check { color: var(--success); }
+        .perm-table th { background: var(--bg-light); font-weight: 600; font-size: 10px; }
+        .check { color: var(--success); font-weight: bold; }
         .cross { color: var(--danger); }
 
-        /* 隐藏/显示 */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        /* 底部信息 */
+        /* 底部 */
         .footer {
             text-align: center;
-            padding: 20px;
+            padding: 24px 16px;
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 11px;
         }
 
-        /* 角色专属颜色 */
-        .admin .role-icon { background: linear-gradient(135deg, #909399 0%, #b1b3b8 100%); }
-        .leader .role-icon { background: linear-gradient(135deg, var(--primary) 0%, #66b1ff 100%); }
-        .keeper .role-icon { background: linear-gradient(135deg, var(--success) 0%, #85ce61 100%); }
-        .planner .role-icon { background: linear-gradient(135deg, var(--warning) 0%, #ebb563 100%); }
-        .transport .role-icon { background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%); }
-        .auditor .role-icon { background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%); }
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .role-header { flex-direction: column; text-align: center; }
+            .flow-row { justify-content: center; }
+        }
+
+        /* 角色颜色 */
+        .admin .role-icon { background: linear-gradient(135deg, #909399, #b1b3b8); }
+        .leader .role-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
+        .keeper .role-icon { background: linear-gradient(135deg, #67c23a, #85ce61); }
+        .planner .role-icon { background: linear-gradient(135deg, #e6a23c, #ebb563); }
+        .transport .role-icon { background: linear-gradient(135deg, #9c27b0, #ba68c8); }
+        .auditor .role-icon { background: linear-gradient(135deg, #607d8b, #90a4ae); }
 
         .admin .role-card { border-left: 4px solid #909399; }
-        .leader .role-card { border-left: 4px solid var(--primary); }
-        .keeper .role-card { border-left: 4px solid var(--success); }
-        .planner .role-card { border-left: 4px solid var(--warning); }
+        .leader .role-card { border-left: 4px solid #409eff; }
+        .keeper .role-card { border-left: 4px solid #67c23a; }
+        .planner .role-card { border-left: 4px solid #e6a23c; }
         .transport .role-card { border-left: 4px solid #9c27b0; }
         .auditor .role-card { border-left: 4px solid #607d8b; }
+
+        /* 高亮说明 */
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+        .highlight-box h3 { margin-bottom: 8px; font-size: 15px; }
     </style>
 </head>
 <body>
 
 <!-- 头部 -->
 <div class="header">
-    <div class="container">
-        <h1>🏭 工装出入库管理系统</h1>
-        <p>帮助文档 / 角色权限说明</p>
-    </div>
+    <h1>🏭 工装出入库管理系统</h1>
+    <p>移动端操作指南 - 角色权限与流程说明</p>
+    <span class="version">v1.0 · 2026-03</span>
 </div>
 
-<!-- 导航标签 -->
+<!-- 导航 -->
 <div class="nav-tabs">
-    <div class="nav-tab active" onclick="showSection('admin')">👤 管理员</div>
-    <div class="nav-tab" onclick="showSection('leader')">👷 班组长</div>
+    <div class="nav-tab active" onclick="showSection('leader')">👷 班组长</div>
     <div class="nav-tab" onclick="showSection('keeper')">📦 保管员</div>
     <div class="nav-tab" onclick="showSection('planner')">📝 计划员</div>
-    <div class="nav-tab" onclick="showSection('transport')">🚚 运输</div>
+    <div class="nav-tab" onclick="showSection('transport')">🚚 运输员</div>
     <div class="nav-tab" onclick="showSection('auditor')">🔍 审计员</div>
-    <div class="nav-tab" onclick="showSection('compare')">📊 对比表</div>
+    <div class="nav-tab" onclick="showSection('admin')">⚙️ 管理员</div>
 </div>
 
-<!-- 管理员 -->
-<div id="admin" class="section active">
-    <div class="role-card admin">
-        <div class="role-header">
-            <div class="role-icon">👤</div>
-            <div class="role-info">
-                <h2>系统管理员</h2>
-                <p>System Administrator</p>
-            </div>
-        </div>
-        <span class="tag tag-info">拥有所有权限</span>
-        <span class="tag tag-primary">用户管理</span>
-        <span class="tag tag-success">角色管理</span>
-
-        <div class="action-grid">
-            <div class="action-item"><span class="icon">👥</span> 管理用户</div>
-            <div class="action-item"><span class="icon">🎭</span> 管理角色</div>
-            <div class="action-item"><span class="icon">📋</span> 查看所有订单</div>
-            <div class="action-item"><span class="icon">📜</span> 查看操作日志</div>
-            <div class="action-item"><span class="icon">🔔</span> 管理通知</div>
-            <div class="action-item"><span class="icon">⚙️</span> 系统配置</div>
-        </div>
-
-        <div class="permission-list">
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">所有功能权限</div>
-                    <div class="permission-desc">不受任何限制</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 班组长 -->
-<div id="leader" class="section">
+<!-- ========== 班组长 ========== -->
+<div id="leader" class="section active">
     <div class="role-card leader">
         <div class="role-header">
             <div class="role-icon">👷</div>
@@ -417,66 +387,206 @@
                 <p>Team Leader · 数据范围: 本人 + 本组织</p>
             </div>
         </div>
-        <span class="tag tag-primary">创建订单</span>
-        <span class="tag tag-success">出库最终确认</span>
+        <span class="tag tag-blue">创建订单</span>
+        <span class="tag tag-green">出库最终确认</span>
+        <span class="tag tag-gray">取消订单</span>
+    </div>
 
-        <div class="action-grid">
-            <div class="action-item"><span class="icon">📋</span> 创建出库单</div>
-            <div class="action-item"><span class="icon">📋</span> 创建入库单</div>
-            <div class="action-item"><span class="icon">🔍</span> 搜索工装</div>
-            <div class="action-item"><span class="icon">📄</span> 查看我的订单</div>
-            <div class="action-item"><span class="icon">✅</span> 确认出库完成</div>
-            <div class="action-item"><span class="icon">❌</span> 取消订单</div>
-        </div>
+    <!-- 可执行操作 -->
+    <div class="card">
+        <div class="card-header">📋 班组长可执行操作</div>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>创建出库/入库订单</h4>
+                    <p>入口：工装出入库单据 → 创建订单按钮</p>
+                    <div class="page-mock">
+                        <div class="page-mock-header">
+                            <div class="page-mock-dot red"></div>
+                            <div class="page-mock-dot yellow"></div>
+                            <div class="page-mock-dot green"></div>
+                        </div>
+                        <div class="page-mock-title">工装出入库单据 - 创建订单</div>
+                        <div class="page-mock-content">
+                            <div class="mock-form-item">
+                                <div class="mock-form-label">单据类型</div>
+                                <span class="mock-btn primary">出库</span>
+                                <span class="mock-btn outline">入库</span>
+                            </div>
+                            <div class="mock-form-item">
+                                <div class="mock-form-label">用途</div>
+                                <select class="mock-input">
+                                    <option>请选择用途</option>
+                                    <option>生产使用</option>
+                                    <option>维修借用</option>
+                                </select>
+                            </div>
+                            <div class="mock-form-item">
+                                <div class="mock-form-label">目标位置</div>
+                                <select class="mock-input">
+                                    <option>A06</option>
+                                    <option>A02</option>
+                                    <option>A08</option>
+                                </select>
+                            </div>
+                            <div class="mock-form-item">
+                                <div class="mock-form-label">计划使用时间</div>
+                                <input class="mock-input" placeholder="请选择时间">
+                            </div>
+                            <div style="margin-top:10px">
+                                <span class="mock-btn primary">🔍 搜索并添加工装</span>
+                                <span class="mock-btn outline">重置表单</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip">提示：出库需要选择用途和目标位置，入库不需要</div>
+                </div>
+            </div>
 
-        <div class="permission-list">
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:create</div>
-                    <div class="permission-desc">创建订单</div>
+            <div class="step">
+                <div class="step-num green">2</div>
+                <div class="step-content">
+                    <h4>搜索并添加工装</h4>
+                    <p>点击"搜索并添加工装"按钮 → 弹出工装搜索对话框</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="text-align:center;font-weight:600;margin-bottom:10px">工装搜索</div>
+                            <input class="mock-input" placeholder="输入工装编码/名称/图号搜索" style="margin-bottom:10px">
+                            <table class="mock-table">
+                                <tr><th>工装编码</th><th>工装名称</th><th>库位</th><th>操作</th></tr>
+                                <tr><td>T001</td><td>焊接夹具</td><td>A01</td><td><span class="mock-btn primary" style="padding:3px 8px;font-size:10px">+添加</span></td></tr>
+                                <tr><td>T002</td><td>切割刀具</td><td>B03</td><td><span class="mock-btn primary" style="padding:3px 8px;font-size:10px">+添加</span></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tip">支持按工装编码、名称、图号、规格搜索</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:submit</div>
-                    <div class="permission-desc">提交订单</div>
+
+            <div class="step">
+                <div class="step-num green">3</div>
+                <div class="step-content">
+                    <h4>填写工装数量并提交</h4>
+                    <p>在已选工装列表中填写申请数量 → 点击"提交单据"</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="margin-bottom:8px;font-weight:600">已选工装明细</div>
+                            <table class="mock-table">
+                                <tr><th>工装信息</th><th>图号</th><th>库位</th><th>数量</th><th>操作</th></tr>
+                                <tr>
+                                    <td>焊接夹具</td><td>DH-001</td><td>A01</td>
+                                    <td><input class="mock-input" value="2" style="width:50px;text-align:center"></td>
+                                    <td><span class="mock-btn danger" style="padding:3px 8px;font-size:10px">删除</span></td>
+                                </tr>
+                            </table>
+                            <div style="margin-top:10px;text-align:right">
+                                <span class="mock-btn warning">提交单据</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip warning">⚠️ 提交后将进入保管员审核流程，请确认信息无误</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:final_confirm</div>
-                    <div class="permission-desc">出库最终确认</div>
+
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>查看订单列表</h4>
+                    <p>在"工装出入库单据"页面查看所有订单状态</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="margin-bottom:10px">
+                                <input class="mock-input" placeholder="搜索单号/项目代号" style="margin-bottom:8px">
+                                <div>
+                                    <span class="mock-btn outline" style="font-size:10px">全部类型</span>
+                                    <span class="mock-btn outline" style="font-size:10px">全部状态</span>
+                                    <span class="mock-btn primary" style="font-size:10px">🔄 刷新</span>
+                                </div>
+                            </div>
+                            <table class="mock-table">
+                                <tr><th>单号</th><th>类型</th><th>状态</th><th>操作</th></tr>
+                                <tr>
+                                    <td>IO2026033001</td>
+                                    <td><span class="mock-btn primary" style="padding:2px 6px;font-size:9px">出库</span></td>
+                                    <td><span class="status-badge submitted">已提交</span></td>
+                                    <td><span class="mock-btn outline" style="padding:2px 6px;font-size:9px">查看</span></td>
+                                </tr>
+                                <tr>
+                                    <td>IO2026033002</td>
+                                    <td><span class="mock-btn outline" style="padding:2px 6px;font-size:9px">入库</span></td>
+                                    <td><span class="status-badge confirmed">保管员已确认</span></td>
+                                    <td><span class="mock-btn outline" style="padding:2px 6px;font-size:9px">查看</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:cancel</div>
-                    <div class="permission-desc">取消订单</div>
+
+            <div class="step">
+                <div class="step-num green">5</div>
+                <div class="step-content">
+                    <h4>出库最终确认（确认收到）</h4>
+                    <p>当出库订单状态为"待最终确认"时，班组长点击"最终确认"按钮</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="text-align:center;padding:15px 0">
+                                <div style="margin-bottom:10px">订单 IO2026033001</div>
+                                <div style="margin-bottom:10px"><span class="status-badge transport">待最终确认</span></div>
+                                <div style="font-size:12px;color:#909399;margin-bottom:15px">保管员已确认，等待班组长确认收到</div>
+                                <span class="mock-btn success" style="padding:10px 30px;font-size:13px">✅ 最终确认（确认收到）</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip success">✓ 确认后订单状态变为"已完成"，出库流程结束</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">tool:search</div>
-                    <div class="permission-desc">工装搜索</div>
-                </div>
-            </div>
-            <div class="permission-item">
-                <div class="permission-icon no">✗</div>
-                <div>
-                    <div class="permission-text">keeper/keeper_confirm</div>
-                    <div class="permission-desc">无保管员确认权限</div>
+
+            <div class="step">
+                <div class="step-num gray">6</div>
+                <div class="step-content">
+                    <h4>取消订单</h4>
+                    <p>对于草稿或已拒绝的订单，可以点击"取消订单"</p>
+                    <div class="tip warning">⚠️ 只能取消草稿(draft)或已拒绝(rejected)状态的订单</div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 出库流程 -->
+    <div class="flow-diagram">
+        <div class="flow-title">📶 出库标准流程</div>
+        <div class="flow-row">
+            <span class="flow-node draft">①草稿</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node submit">②已提交</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node confirm">③保管员已确认</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-arrow">↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-node transport">④运输已通知</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node transport">⑤运输中</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node confirm">⑥待最终确认</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-arrow">↓</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-node done">✅ 已完成（班组长确认收到）</span>
+        </div>
+        <div style="font-size:11px;color:#909399;margin-top:12px">
+            角色说明：①班组长创建 → ②班组长提交 → ③保管员确认 → ④⑤保管员通知运输 → ⑥班组长最终确认
+        </div>
+    </div>
 </div>
 
-<!-- 保管员 -->
+<!-- ========== 保管员 ========== -->
 <div id="keeper" class="section">
     <div class="role-card keeper">
         <div class="role-header">
@@ -486,67 +596,192 @@
                 <p>Keeper · 数据范围: 本组织 + 被分配的订单</p>
             </div>
         </div>
-        <span class="tag tag-success">确认工装</span>
-        <span class="tag tag-warning">拒绝/确认订单</span>
-        <span class="tag tag-primary">入库最终确认</span>
+        <span class="tag tag-green">确认工装</span>
+        <span class="tag tag-orange">入库最终确认</span>
+        <span class="tag tag-blue">发送飞书</span>
+    </div>
 
-        <div class="action-grid">
-            <div class="action-item"><span class="icon">📋</span> 查看待确认订单</div>
-            <div class="action-item"><span class="icon">✅</span> 确认工装状态</div>
-            <div class="action-item"><span class="icon">❌</span> 拒绝订单</div>
-            <div class="action-item"><span class="icon">📝</span> 生成运输通知</div>
-            <div class="action-item"><span class="icon">📤</span> 发送飞书通知</div>
-            <div class="action-item"><span class="icon">✅</span> 确认入库完成</div>
-        </div>
+    <div class="card">
+        <div class="card-header">📋 保管员操作指南</div>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>进入保管员处理页面</h4>
+                    <p>入口：左侧菜单 → "订单处理" 或 "保管员处理"</p>
+                    <div class="page-mock">
+                        <div class="page-mock-header">
+                            <div class="page-mock-dot red"></div>
+                            <div class="page-mock-dot yellow"></div>
+                            <div class="page-mock-dot green"></div>
+                        </div>
+                        <div class="page-mock-title">保管员工作台</div>
+                        <div class="page-mock-content" style="display:flex;gap:10px">
+                            <div style="flex:1;background:#f5f7fa;padding:10px;border-radius:8px">
+                                <div style="font-size:10px;font-weight:600;margin-bottom:8px">📋 待处理队列</div>
+                                <div style="padding:8px;background:white;border-radius:6px;margin-bottom:6px;font-size:10px">
+                                    <div style="font-weight:600">IO2026033001</div>
+                                    <div style="color:#909399">申请人: 张三 · 3件</div>
+                                    <span class="status-badge submitted">已提交</span>
+                                </div>
+                                <div style="padding:8px;background:white;border-radius:6px;font-size:10px">
+                                    <div style="font-weight:600">IO2026033002</div>
+                                    <div style="color:#909399">申请人: 李四 · 5件</div>
+                                    <span class="status-badge confirmed">已确认</span>
+                                </div>
+                            </div>
+                            <div style="flex:1.5;padding:10px">
+                                <div style="font-size:10px;font-weight:600;margin-bottom:10px">⚙️ 处理工作台</div>
+                                <div style="font-size:10px;color:#909399;text-align:center;padding:20px">
+                                    点击左侧订单开始处理
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="permission-list">
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:keeper_confirm</div>
-                    <div class="permission-desc">保管员确认</div>
+            <div class="step">
+                <div class="step-num green">2</div>
+                <div class="step-content">
+                    <h4>查看并选择待处理订单</h4>
+                    <p>点击左侧待处理订单卡片 → 右侧显示订单详情</p>
+                    <div class="tip">显示所有已提交(submitted)状态的订单</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:final_confirm</div>
-                    <div class="permission-desc">入库最终确认</div>
+
+            <div class="step">
+                <div class="step-num green">3</div>
+                <div class="step-content">
+                    <h4>确认工装明细</h4>
+                    <p>在工装明细中核对每件工装的当前位置和数量</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="font-size:11px;font-weight:600;margin-bottom:8px">工装明细</div>
+                            <table class="mock-table">
+                                <tr><th>工装</th><th>申请数</th><th>当前位置</th><th>确认数</th></tr>
+                                <tr><td>焊接夹具</td><td>2</td><td>A01</td><td><input class="mock-input" value="2" style="width:40px"></td></tr>
+                                <tr><td>切割刀具</td><td>3</td><td>B03</td><td><input class="mock-input" value="3" style="width:40px"></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tip">确认数量必须与申请数量一致，如有差异请先沟通</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:cancel</div>
-                    <div class="permission-desc">拒绝订单</div>
+
+            <div class="step">
+                <div class="step-num orange">4</div>
+                <div class="step-content">
+                    <h4>确认通过 / 驳回订单</h4>
+                    <p>核对无误后点击"确认通过"，有问题点击"驳回"并填写原因</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="text-align:center;padding:10px">
+                                <span class="mock-btn danger" style="margin-right:10px">❌ 驳回</span>
+                                <span class="mock-btn success">✅ 确认通过</span>
+                            </div>
+                            <div style="margin-top:10px;font-size:10px">
+                                <div style="margin-bottom:6px">驳回原因：</div>
+                                <textarea class="mock-input" rows="2" placeholder="请输入驳回原因"></textarea>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">notification:send_feishu</div>
-                    <div class="permission-desc">发送飞书通知</div>
+
+            <div class="step">
+                <div class="step-num purple">5</div>
+                <div class="step-content">
+                    <h4>派遣运输</h4>
+                    <p>确认通过后，可点击"派遣运输"指定运输人员</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="text-align:center">
+                                <span class="mock-btn" style="background:#9c27b0;color:white">🚚 派遣运输</span>
+                                <span class="mock-btn outline">📄 预览通知</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">tool:location_view</div>
-                    <div class="permission-desc">库位查看</div>
+
+            <div class="step">
+                <div class="step-num purple">6</div>
+                <div class="step-content">
+                    <h4>发送飞书通知</h4>
+                    <p>点击"预览通知" → 查看通知内容 → 点击发送飞书消息</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="font-size:11px;font-weight:600;margin-bottom:8px">运输通知预览</div>
+                            <div style="background:#f5f7fa;padding:10px;border-radius:6px;font-size:10px">
+                                <div style="font-weight:600">📦 工装运输通知</div>
+                                <div style="margin-top:6px">单号：IO2026033001</div>
+                                <div>类型：出库</div>
+                                <div>工装：焊接夹具×2，切割刀具×3</div>
+                                <div>目的地：A06</div>
+                            </div>
+                            <div style="margin-top:10px;text-align:center">
+                                <span class="mock-btn" style="background:#409EFF;color:white">📤 发送飞书通知</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon no">✗</div>
-                <div>
-                    <div class="permission-text">order:create</div>
-                    <div class="permission-desc">无创建订单权限</div>
+
+            <div class="step">
+                <div class="step-num green">7</div>
+                <div class="step-content">
+                    <h4>入库最终确认</h4>
+                    <p>当入库订单运输完成后，保管员进行最终确认入库</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="text-align:center;padding:15px">
+                                <div style="margin-bottom:10px">订单 IO2026033003 (入库)</div>
+                                <div><span class="status-badge transport">待最终确认</span></div>
+                                <div style="font-size:12px;color:#909399;margin:10px 0">运输已完成，请确认已入库</div>
+                                <span class="mock-btn success">✅ 最终确认（确认入库）</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip success">✓ 确认后订单状态变为"已完成"，入库流程结束</div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 入库流程 -->
+    <div class="flow-diagram">
+        <div class="flow-title">📶 入库标准流程</div>
+        <div class="flow-row">
+            <span class="flow-node draft">①草稿</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node submit">②已提交</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node confirm">③保管员已确认</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-arrow">↓</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-node transport">④运输已通知</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node transport">⑤运输中</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node confirm">⑥待最终确认</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-arrow">↓</span>
+        </div>
+        <div class="flow-row">
+            <span class="flow-node done">✅ 已完成（保管员确认入库）</span>
+        </div>
+        <div style="font-size:11px;color:#909399;margin-top:12px">
+            与出库区别：最终确认由保管员执行，而非班组长
+        </div>
+    </div>
 </div>
 
-<!-- 计划员 -->
+<!-- ========== 计划员 ========== -->
 <div id="planner" class="section">
     <div class="role-card planner">
         <div class="role-header">
@@ -556,43 +791,53 @@
                 <p>Planner · 数据范围: 本组织及子组织</p>
             </div>
         </div>
-        <span class="tag tag-primary">创建订单</span>
-        <span class="tag tag-warning">提交订单</span>
+        <span class="tag tag-blue">创建订单</span>
+        <span class="tag tag-orange">提交订单</span>
+    </div>
 
-        <div class="action-grid">
-            <div class="action-item"><span class="icon">📋</span> 创建订单</div>
-            <div class="action-item"><span class="icon">📤</span> 提交订单</div>
-            <div class="action-item"><span class="icon">🔍</span> 搜索工装</div>
-            <div class="action-item"><span class="icon">📄</span> 查看订单</div>
-        </div>
-
-        <div class="permission-list">
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:create</div>
-                    <div class="permission-desc">创建订单</div>
+    <div class="card">
+        <div class="card-header">📋 计划员操作指南</div>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>创建工装订单</h4>
+                    <p>入口：工装出入库单据 → 创建订单</p>
+                    <div class="tip">流程与班组长相同，可以创建出库或入库订单</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:submit</div>
-                    <div class="permission-desc">提交订单</div>
+            <div class="step">
+                <div class="step-num green">2</div>
+                <div class="step-content">
+                    <h4>搜索并添加工装</h4>
+                    <p>使用工装搜索功能，选择需要的工装</p>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon no">✗</div>
-                <div>
-                    <div class="permission-text">keeper/final/transport</div>
-                    <div class="permission-desc">无确认/运输权限</div>
+            <div class="step">
+                <div class="step-num green">3</div>
+                <div class="step-content">
+                    <h4>提交订单</h4>
+                    <p>填写完毕后直接提交，订单进入保管员审核流程</p>
+                    <div class="tip warning">⚠️ 计划员无保管员确认权限，只能创建和提交</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num gray">4</div>
+                <div class="step-content">
+                    <h4>查看订单状态</h4>
+                    <p>提交后可在订单列表中查看订单流转状态</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="highlight-box">
+        <h3>📌 计划员 vs 班组长</h3>
+        <p>计划员可以创建和提交订单，但<strong>不能</strong>进行最终确认（出库/入库的完成确认都由其他角色执行）</p>
+    </div>
 </div>
 
-<!-- 运输操作员 -->
+<!-- ========== 运输操作员 ========== -->
 <div id="transport" class="section">
     <div class="role-card transport">
         <div class="role-header">
@@ -602,36 +847,85 @@
                 <p>Production Prep · 数据范围: 本人 + 本组织运输任务</p>
             </div>
         </div>
-        <span class="tag tag-info">执行运输</span>
-        <span class="tag tag-danger">上报异常</span>
+        <span class="tag tag-purple">执行运输</span>
+        <span class="tag tag-red">上报异常</span>
+    </div>
 
-        <div class="action-grid">
-            <div class="action-item"><span class="icon">📋</span> 查看运输通知</div>
-            <div class="action-item"><span class="icon">🚚</span> 执行运输</div>
-            <div class="action-item"><span class="icon">⚠️</span> 上报运输异常</div>
-            <div class="action-item"><span class="icon">🔍</span> 搜索工装</div>
-        </div>
-
-        <div class="permission-list">
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:transport_execute</div>
-                    <div class="permission-desc">执行运输</div>
+    <div class="card">
+        <div class="card-header">📋 运输操作员操作指南</div>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>查看预知运输任务</h4>
+                    <p>入口：左侧菜单 → "预知运输"</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="font-size:11px;font-weight:600;margin-bottom:10px">🚚 预知运输任务</div>
+                            <table class="mock-table">
+                                <tr><th>单号</th><th>类型</th><th>目的地</th><th>状态</th><th>操作</th></tr>
+                                <tr>
+                                    <td>IO2026033001</td>
+                                    <td><span class="mock-btn primary" style="padding:2px 6px;font-size:9px">出库</span></td>
+                                    <td>A06</td>
+                                    <td><span class="status-badge transport">待运输</span></td>
+                                    <td><span class="mock-btn outline" style="padding:2px 6px;font-size:9px">查看</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon no">✗</div>
-                <div>
-                    <div class="permission-text">create/submit/confirm</div>
-                    <div class="permission-desc">无创建/提交/确认权限</div>
+
+            <div class="step">
+                <div class="step-num purple">2</div>
+                <div class="step-content">
+                    <h4>查看订单详情</h4>
+                    <p>点击订单查看工装清单、目的地、运输要求等信息</p>
+                    <div class="tip">根据订单要求到指定库位领取工装</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num purple">3</div>
+                <div class="step-content">
+                    <h4>执行运输</h4>
+                    <p>根据订单要求完成工装运输后，在订单详情页更新运输状态</p>
+                    <div class="tip">运输操作由线下执行，系统主要记录运输状态</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num red">4</div>
+                <div class="step-content">
+                    <h4>上报运输异常</h4>
+                    <p>如运输过程中遇到问题，点击"上报异常"填写异常情况</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="font-size:11px;font-weight:600;margin-bottom:8px">⚠️ 上报运输异常</div>
+                            <div style="margin-bottom:8px">
+                                <select class="mock-input">
+                                    <option>请选择异常类型</option>
+                                    <option>工装损坏</option>
+                                    <option>数量不符</option>
+                                    <option>无法联系</option>
+                                    <option>其他</option>
+                                </select>
+                            </div>
+                            <textarea class="mock-input" rows="3" placeholder="请详细描述异常情况"></textarea>
+                            <div style="margin-top:10px">
+                                <span class="mock-btn danger">提交异常</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip danger">异常将通知保管员处理</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 审计员 -->
+<!-- ========== 审计员 ========== -->
 <div id="auditor" class="section">
     <div class="role-card auditor">
         <div class="role-header">
@@ -641,211 +935,155 @@
                 <p>Auditor · 数据范围: 所有数据</p>
             </div>
         </div>
-        <span class="tag tag-info">审查活动</span>
-        <span class="tag tag-primary">查看日志</span>
+        <span class="tag tag-gray">查看订单</span>
+        <span class="tag tag-gray">查看日志</span>
+    </div>
 
-        <div class="action-grid">
-            <div class="action-item"><span class="icon">📊</span> 查看所有订单</div>
-            <div class="action-item"><span class="icon">📜</span> 查看操作日志</div>
-            <div class="action-item"><span class="icon">🔔</span> 查看通知记录</div>
+    <div class="card">
+        <div class="card-header">📋 审计员操作指南</div>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>查看所有订单</h4>
+                    <p>在订单列表中可查看系统中所有订单（不受组织限制）</p>
+                    <div class="tip">可按单号、类型、状态、日期等条件筛选</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>查看订单详情</h4>
+                    <p>点击任意订单查看完整的流转记录和操作日志</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num gray">3</div>
+                <div class="step-content">
+                    <h4>查看操作日志</h4>
+                    <p>在订单详情页或单独的日志页面查看操作审计记录</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="font-size:11px;font-weight:600;margin-bottom:8px">📜 操作日志</div>
+                            <table class="mock-table">
+                                <tr><th>时间</th><th>操作人</th><th>操作</th><th>状态变更</th></tr>
+                                <tr><td>03-30 09:00</td><td>张三</td><td>创建订单</td><td>draft</td></tr>
+                                <tr><td>03-30 09:05</td><td>张三</td><td>提交</td><td>→ submitted</td></tr>
+                                <tr><td>03-30 10:00</td><td>李四</td><td>确认</td><td>→ confirmed</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num gray">4</div>
+                <div class="step-content">
+                    <h4>查看通知记录</h4>
+                    <p>查看每笔订单发送过的飞书通知记录</p>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="permission-list">
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">order:view / order:list</div>
-                    <div class="permission-desc">查看/列表订单</div>
+    <div class="highlight-box">
+        <h3>🔒 审计员权限说明</h3>
+        <p>审计员<strong>仅有查看权限</strong>，不能进行任何创建、修改、删除操作</p>
+    </div>
+</div>
+
+<!-- ========== 管理员 ========== -->
+<div id="admin" class="section">
+    <div class="role-card admin">
+        <div class="role-header">
+            <div class="role-icon">⚙️</div>
+            <div class="role-info">
+                <h2>系统管理员</h2>
+                <p>System Administrator · 数据范围: 所有数据</p>
+            </div>
+        </div>
+        <span class="tag tag-gray">所有权限</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">📋 管理员操作指南</div>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>用户管理</h4>
+                    <p>入口：系统管理 → 用户管理</p>
+                    <div class="page-mock">
+                        <div class="page-mock-content">
+                            <div style="font-size:11px;font-weight:600;margin-bottom:10px">👥 用户管理</div>
+                            <table class="mock-table">
+                                <tr><th>账号</th><th>姓名</th><th>角色</th><th>状态</th><th>操作</th></tr>
+                                <tr><td>admin</td><td>管理员</td><td>系统管理员</td><td><span class="status-badge completed">启用</span></td><td><span class="mock-btn outline" style="padding:2px 6px;font-size:9px">编辑</span></td></tr>
+                                <tr><td>zhangsan</td><td>张三</td><td>班组长</td><td><span class="status-badge completed">启用</span></td><td><span class="mock-btn outline" style="padding:2px 6px;font-size:9px">编辑</span></td></tr>
+                            </table>
+                            <div style="margin-top:10px">
+                                <span class="mock-btn primary">+ 新增用户</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon yes">✓</div>
-                <div>
-                    <div class="permission-text">log:view</div>
-                    <div class="permission-desc">查看日志</div>
+
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>角色管理</h4>
+                    <p>入口：系统管理 → 角色管理</p>
+                    <div class="tip">可以查看和分配系统角色权限</div>
                 </div>
             </div>
-            <div class="permission-item">
-                <div class="permission-icon no">✗</div>
-                <div>
-                    <div class="permission-text">写操作</div>
-                    <div class="permission-desc">仅有查看权限</div>
+
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>查看所有订单</h4>
+                    <p>与审计员类似，可以查看系统中所有订单</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>系统配置与诊断</h4>
+                    <p>入口：系统管理 → 系统诊断</p>
+                    <div class="tip">查看错误日志、通知失败记录，进行系统维护</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <h4>删除订单（仅管理员）</h4>
+                    <p>对于错误创建的订单，管理员可以执行删除</p>
+                    <div class="tip danger">⚠️ 删除操作不可恢复，请谨慎使用</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 权限对比表 -->
-<div id="compare" class="section">
-    <div class="compare-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>功能</th>
-                    <th>班组长</th>
-                    <th>保管员</th>
-                    <th>计划员</th>
-                    <th>运输</th>
-                    <th>审计</th>
-                    <th>管理</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>创建订单</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>提交订单</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>保管员确认</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>最终确认</td>
-                    <td class="check">✓*</td>
-                    <td class="check">✓*</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>发送飞书</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>执行运输</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>查看日志</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                    <td class="check">✓</td>
-                </tr>
-                <tr>
-                    <td>用户管理</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="cross">✗</td>
-                    <td class="check">✓</td>
-                </tr>
-            </tbody>
-        </table>
-        <p style="padding: 12px; font-size: 11px; color: #909399;">* 出库由班组长确认，入库由保管员确认</p>
-    </div>
-
-    <!-- 状态说明 -->
-    <div class="status-table">
-        <div class="status-header">📋 订单状态说明</div>
-        <div class="status-row"><span class="status-code">draft</span> 草稿 - 订单刚创建</div>
-        <div class="status-row"><span class="status-code">submitted</span> 已提交 - 等待保管员确认</div>
-        <div class="status-row"><span class="status-code">keeper_confirmed</span> 保管员已确认</div>
-        <div class="status-row"><span class="status-code">transport_notified</span> 运输已通知</div>
-        <div class="status-row"><span class="status-code">transport_in_progress</span> 运输中</div>
-        <div class="status-row"><span class="status-code">final_confirmation_pending</span> 待最终确认</div>
-        <div class="status-row"><span class="status-code">completed</span> 已完成</div>
-        <div class="status-row"><span class="status-code">rejected</span> 已拒绝</div>
-        <div class="status-row"><span class="status-code">cancelled</span> 已取消</div>
-    </div>
-
-    <!-- 流程 -->
-    <div class="flow-diagram">
-        <div class="flow-title">📶 出库流程</div>
-        <div class="flow-steps">
-            <div class="flow-step">
-                <div class="step-node">草稿<br><small>班组长创建</small></div>
-                <div class="step-arrow">→</div>
-                <div class="step-node">已提交<br><small>班组长提交</small></div>
-            </div>
-            <div class="flow-step">
-                <div class="step-node">保管员确认<br><small>确认工装</small></div>
-                <div class="step-arrow">→</div>
-                <div class="step-node">运输通知<br><small>发送飞书</small></div>
-            </div>
-            <div class="flow-step">
-                <div class="step-node active">班组长最终确认<br><small>确认收到</small></div>
-                <div class="step-arrow">→</div>
-                <div class="step-node">已完成 ✓</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="flow-diagram">
-        <div class="flow-title">📶 入库流程</div>
-        <div class="flow-steps">
-            <div class="flow-step">
-                <div class="step-node">草稿<br><small>班组长创建</small></div>
-                <div class="step-arrow">→</div>
-                <div class="step-node">已提交<br><small>班组长提交</small></div>
-            </div>
-            <div class="flow-step">
-                <div class="step-node">保管员确认<br><small>确认工装</small></div>
-                <div class="step-arrow">→</div>
-                <div class="step-node">运输通知<br><small>发送飞书</small></div>
-            </div>
-            <div class="flow-step">
-                <div class="step-node active">保管员最终确认<br><small>确认入库</small></div>
-                <div class="step-arrow">→</div>
-                <div class="step-node">已完成 ✓</div>
-            </div>
-        </div>
-    </div>
-</div>
-
+<!-- 底部 -->
 <div class="footer">
     <p>工装出入库管理系统 v1.0</p>
     <p>前端: Vue 3 + Element Plus | 后端: Flask + SQL Server</p>
-    <p>如有问题请联系系统管理员</p>
+    <p style="margin-top:8px">📍 访问地址: http://localhost:8150</p>
 </div>
 
 <script>
     function showSection(id) {
-        // 隐藏所有section
         document.querySelectorAll('.section').forEach(function(el) {
             el.classList.remove('active');
         });
-        // 显示选中section
         document.getElementById(id).classList.add('active');
-        // 更新tab状态
         document.querySelectorAll('.nav-tab').forEach(function(el) {
             el.classList.remove('active');
         });
         event.target.classList.add('active');
+        window.scrollTo(0, 0);
     }
 </script>
 
