@@ -119,7 +119,7 @@ Typical scenarios include:
 
 **验证方法**:
 1. 搜索相关页面中的 `ElMessageBox.confirm` 调用
-2. 确认消息格式与 `00_global.md` 中定义的模板一致
+2. 确认消息格式与 `00_core.md` 中定义的模板一致
 3. 确认按钮文本使用中文：`提交`、`取消`、`确认`、`删除`
 
 #### CSS 变量使用检查 / CSS Variable Usage Check
@@ -217,9 +217,9 @@ Prompt numbering is strictly defined.
 | Range   | Category              | Example                                  |
 |---------|-----------------------|------------------------------------------|
 | 00001–09999 | Feature Development   | `00017_order_list_ui_migration.md`        |
-| 10001–19999 | Bug Fix / Security Fix| `10101_bug_tool_search_request_routing.md` |
-| 20001–29999 | Refactoring / Tech Debt| `20101_refactor_split_tool_io_service.md` |
-| 30001–39999 | Testing / Quality     | `30101_workflow_state_machine_tests.md`    |
+| 10101–19999 | Bug Fix / Security Fix| `10101_bug_tool_search_request_routing.md` |
+| 20101–29999 | Refactoring / Tech Debt| `20101_refactor_split_tool_io_service.md` |
+| 30101–39999 | Testing / Quality     | `30101_workflow_state_machine_tests.md`    |
 
 ---
 

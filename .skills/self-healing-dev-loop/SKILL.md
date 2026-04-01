@@ -128,9 +128,9 @@ Prompt numbering:
 | 范围 / Range | 类别 / Category |
 |-------------|----------------|
 | 00001–09999 | 功能开发 / Feature Development |
-| 10001–19999 | Bug 修复 / Bug Fix |
-| 20001–29999 | 重构 / Refactoring |
-| 30001–39999 | 测试 / Testing |
+| 10101–19999 | Bug 修复 / Bug Fix |
+| 20101–29999 | 重构 / Refactoring |
+| 30101–39999 | 测试 / Testing |
 
 执行器规则：
 

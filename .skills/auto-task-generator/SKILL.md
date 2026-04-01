@@ -85,9 +85,9 @@ Prompt numbering range (must use 5 digits):
 | 范围 | 类别 |
 |------|------|
 | 00001–09999 | 功能开发 / Feature Development |
-| 10001–19999 | Bug 修复 / Bug Fix |
-| 20001–29999 | 重构 / Refactoring |
-| 30001–39999 | 测试 / Testing |
+| 10101–19999 | Bug 修复 / Bug Fix |
+| 20101–29999 | 重构 / Refactoring |
+| 30101–39999 | 测试 / Testing |
 
 执行器：
 
@@ -119,7 +119,7 @@ Prompt numbering range (must use 5 digits):
 
 | 范围 | 类别 |
 |------|------|
-| 10001–19999 | Bug 修复 / Bug Fix |
+| 10101–19999 | Bug 修复 / Bug Fix |
 
 执行器取决于问题位置：
 
@@ -150,7 +150,7 @@ Prompt numbering range (must use 5 digits):
 
 | 范围 | 类别 |
 |------|------|
-| 20001–29999 | 重构 / Refactoring |
+| 20101–29999 | 重构 / Refactoring |
 
 执行器：
 
@@ -179,7 +179,7 @@ Prompt numbering range (must use 5 digits):
 
 | 范围 | 类别 |
 |------|------|
-| 30001–39999 | 测试 / Testing |
+| 30101–39999 | 测试 / Testing |
 
 执行器：
 
@@ -198,9 +198,9 @@ Executor:
 | 任务类型 | 例外条件 | 执行者 |
 |---------|---------|--------|
 | 功能任务 (00001-09999) | 前端设计大改 | Claude Code |
-| Bug 修复 (10001-19999) | P0/P1 恶性bug、架构级bug | Claude Code |
-| 重构任务 (20001-29999) | 始终由 Claude Code 执行 | Claude Code |
-| 测试任务 (30001-39999) | 始终由 Claude Code 执行 | Claude Code |
+| Bug 修复 (10101-19999) | P0/P1 恶性bug、架构级bug | Claude Code |
+| 重构任务 (20101-29999) | 始终由 Claude Code 执行 | Claude Code |
+| 测试任务 (30101-39999) | 始终由 Claude Code 执行 | Claude Code |
 
 ### 简化任务判定标准 / Simple Task Criteria
 
@@ -238,9 +238,9 @@ The system must select the correct numbering range based on task type (must use 
 | 任务类型 / Task Type | 编号范围 / Number Range |
 |---------------------|----------------------|
 | 功能开发 / Feature Development | 00001–09999 |
-| Bug 修复 / Bug Fix | 10001–19999 |
-| 重构 / Refactoring | 20001–29999 |
-| 测试 / Testing | 30001–39999 |
+| Bug 修复 / Bug Fix | 10101–19999 |
+| 重构 / Refactoring | 20101–29999 |
+| 测试 / Testing | 30101–39999 |
 
 编号分配规则 / Number Assignment Rules:
 
@@ -367,9 +367,9 @@ The system must NOT:
 - 不经分析就生成提示词 / Generate prompts without analysis
 - 违反编号规则 / Break numbering rules:
   - 00001–09999 = Feature Development
-  - 10001–19999 = Bug Fix
-  - 20001–29999 = Refactoring
-  - 30001–39999 = Testing
+  - 10101–19999 = Bug Fix
+  - 20101–29999 = Refactoring
+  - 30101–39999 = Testing
 - 跳过必需的提示词章节 / Skip required prompt sections
 - 跳过优先级声明 (P0/P1/P2) / Skip priority declaration (P0/P1/P2)
 - 假设数据库架构 / Assume database schema
