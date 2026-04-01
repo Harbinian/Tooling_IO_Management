@@ -57,7 +57,7 @@ sql = "SELECT \u51fa\u5165\u5e93\u5355\u53f7 FROM 工装出入库单_主表"
 
 | 表名 | 用途 | 管理方 | 访问方式 |
 |------|------|--------|----------|
-| `工装身份卡_主表` | 工装主数据（序列号、图号、状态等） | **外部系统**，禁止修改 Schema | 只读查询 + 特定字段更新 |
+| `Tooling_ID_Main` | 工装主数据（序列号、图号、状态等）（原 `工装身份卡_主表`） | **外部系统**，禁止修改 Schema | 只读查询 + 特定字段更新 |
 
 ### 访问规则 / Access Rules
 
@@ -69,7 +69,7 @@ sql = "SELECT \u51fa\u5165\u5e93\u5355\u53f7 FROM 工装出入库单_主表"
 ### 正确用法:
 
 ```python
-from backend.database.schema.column_names import TOOL_MASTER_COLUMNS
+from backend.database.schema.column_names import TOOL_MASTER_COLUMNS, TOOL_MASTER_TABLE
 
 # 正确：通过常量引用外部表字段
 sql = f"UPDATE [{TOOL_MASTER_TABLE}] SET [{TOOL_MASTER_COLUMNS['io_status']}] = ? WHERE [{TOOL_MASTER_COLUMNS['tool_code']}] = ?"
@@ -82,7 +82,7 @@ sql = f"SELECT [{TOOL_MASTER_COLUMNS['tool_code']}] FROM [{TOOL_MASTER_TABLE}]"
 
 ```python
 # 禁止直接使用中文字段名字面量（即使能工作）
-sql = "UPDATE [工装身份卡_主表] SET [出入库状态] = ? WHERE [序列号] = ?"
+sql = "UPDATE [Tooling_ID_Main] SET [出入库状态] = ? WHERE [序列号] = ?"
 
 # 禁止硬编码字段名
 sql = f"UPDATE [{TOOL_MASTER_TABLE}] SET [库位] = ? WHERE [序列号] = ?"
@@ -96,7 +96,7 @@ sql = f"UPDATE [{TOOL_MASTER_TABLE}] SET [库位] = ? WHERE [序列号] = ?"
 
 ### 新增外部表时的处理:
 
-1. 在 `column_names.py` 中创建新的 `*_CHINESE_COLUMNS` 常量（键名和值都是中文字段名）
+1. 在 `column_names.py` 中创建新的 `*_CHINESE_COLUMNS` 常量（键名=英文字段名，值=中文字段名）
 2. 在 `TOOL_MASTER_TABLE` 等常量中定义表名
 3. 所有 SQL 必须通过常量引用字段和表名
 4. 在本规则文件的"已识别的外部系统表"章节中添加记录

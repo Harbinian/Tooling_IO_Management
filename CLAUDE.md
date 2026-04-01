@@ -71,7 +71,7 @@ cd frontend && npm run build
 
 RBAC 表: `sys_org`, `sys_user`, `sys_role`, `sys_permission`, `tool_io_order_no_sequence`
 
-> **注意**: `工装身份卡_主表` 是外部系统表，禁止修改其 Schema，必须通过 `column_names.py` 中的常量访问。
+> **注意**: `Tooling_ID_Main` 是外部系统表（原 `工装身份卡_主表`），禁止修改其 Schema，必须通过 `column_names.py` 中的常量访问。
 
 ## 工作流 / Workflow
 
@@ -84,6 +84,21 @@ RBAC 表: `sys_org`, `sys_user`, `sys_role`, `sys_permission`, `tool_io_order_no
 - `team_leader` (班组长): 创建订单、出库最终确认
 - `keeper` (保管员): 确认明细、拒绝订单、入库最终确认
 - `admin`: 完全访问权限
+
+## 后端路由结构 / Backend Route Structure
+
+```
+backend/routes/
+├── order_routes.py      # 工装出入库订单 API
+├── tool_routes.py       # 工装搜索 API
+├── auth_routes.py       # 认证 API
+├── feedback_routes.py   # 反馈 API
+├── admin_user_routes.py # 管理员用户 API
+├── dashboard_routes.py # 仪表盘 API
+├── org_routes.py        # 组织架构 API
+├── page_routes.py       # 页面渲染
+└── system_routes.py     # 系统配置 API
+```
 
 ## 编码约定 / Coding Conventions
 
@@ -98,11 +113,13 @@ RBAC 表: `sys_org`, `sys_user`, `sys_role`, `sys_permission`, `tool_io_order_no
 ```
 frontend/src/
 ├── pages/          # 页面组件 (OrderList.vue, OrderDetail.vue, OrderCreate.vue)
-├── components/     # 可复用 UI 组件
-├── api/            # API 包装器
+├── components/    # 可复用 UI 组件
+├── api/            # API 包装器 (统一封装所有 /api/* 调用)
 ├── store/          # 共享状态 (Pinia)
 └── router/         # 路由配置
 ```
+
+API 层 (`api/`) 是所有前端 HTTP 通信的单一入口，避免在组件内直接调用 `axios`。
 
 ## 服务层架构 / Service Layer Architecture
 
@@ -147,9 +164,12 @@ utils/feishu_api.py            → 飞书 Webhook 通知
 
 ## 提示任务工作流 / Prompt Task Workflow
 
-1. 待处理: `promptsRec/active/*.md`
-2. 运行中: `promptsRec/active/*.lock`
-3. 已完成: `promptsRec/archive/✅_<5位序列>_<原始名称>.md`
+```
+promptsRec/
+├── active/          # 待处理任务: <5位编号>_<描述>.md
+│   └── *.lock      # 运行中任务锁文件
+└── archive/         # 已完成: ✅_<执行顺序号>_<类型编号>_<描述>_done.md
+```
 
 完成后:
 - 归档提示: `✅_<序列>_<原始名称>.md`
@@ -185,6 +205,30 @@ python test_runner/playwright_e2e.py
 测试运行器在执行前会检查端口可用性，服务未启动时立即退出。
 
 感知模块位于 `.skills/human-e2e-tester/sensing/`，提供页面状态观察和工作流检测。
+
+## Dev Server Launcher / 开发服务器启动器
+
+如需 GUI 方式启动开发服务器，参考: `docs/DEV_SERVER_LAUNCHER_BUILD_RULES.md`
+
+## 日志目录 / Logs
+
+```
+logs/
+├── codex_rectification/     # Codex 纠正日志 (Bug 修复后记录)
+└── prompt_task_runs/        # 提示词任务执行报告
+```
+
+## 调试和问题解决 / Debugging & Problem Solving
+
+遇到问题时，按以下规则文件处理：
+
+| 问题类型 | 规则文件 |
+|---------|---------|
+| Bug/回归问题 | `.claude/rules/40_debug_8d.md` (8D 问题解决) |
+| 数据/Schema 问题 | `.claude/rules/60_ADP-Protocol.md` (ADP 四阶段) |
+| 热修复 | `.claude/rules/50_hotfix_sop.md` |
+| 后端实现 | `.claude/rules/20_codex_backend.md` |
+| 前端实现 | `.claude/rules/30_gemini_frontend.md` |
 
 ## 测试 / Testing
 

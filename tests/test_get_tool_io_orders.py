@@ -25,17 +25,6 @@ from backend.services.tool_io_service import (
 from database import get_tool_io_orders
 
 
-class FakeDatabaseManager:
-    def __init__(self):
-        self.calls = []
-
-    def execute_query(self, sql, params=None, fetch=True):
-        self.calls.append((sql, params, fetch))
-        if "COUNT(*)" in sql:
-            return [{"total": 2}]
-        return [{"order_no": "TO-OUT-20260312-001", "order_status": "draft"}]
-
-
 class FakeRow(dict):
     def __init__(self, mapping=None, fallback=None):
         super().__init__(mapping or {})
@@ -78,35 +67,37 @@ class FakeRuntimeDatabaseManager:
 
 class ToolIOOrderQueryTests(unittest.TestCase):
     def test_get_tool_io_orders_keeps_filtered_query_params_aligned(self):
-        fake_db = FakeDatabaseManager()
+        repo = patch("database.OrderRepository").start()()
+        self.addCleanup(patch.stopall)
+        repo.get_orders.return_value = {
+            "success": True,
+            "data": [{"order_no": "TO-OUT-20260312-001", "order_status": "draft"}],
+            "total": 2,
+            "page_no": 2,
+            "page_size": 20,
+        }
 
-        with patch("database.DatabaseManager", return_value=fake_db):
-            result = get_tool_io_orders(
-                order_status="submitted",
-                keyword="P-001",
-                page_no=2,
-                page_size=20,
-            )
+        result = get_tool_io_orders(status="submitted", keyword="P-001", page=2, page_size=20)
 
         self.assertTrue(result["success"])
-        self.assertEqual(result["total"], 2)
-        self.assertEqual(len(fake_db.calls), 2)
-
-        count_sql, count_params, _ = fake_db.calls[0]
-        list_sql, list_params, _ = fake_db.calls[1]
-
-        self.assertIn("鍗曟嵁鐘舵€?= ?", count_sql)
-        self.assertIn("LIKE ?", count_sql)
-        self.assertIn("鍗曟嵁鐘舵€?= ?", list_sql)
-        self.assertIn("LIKE ?", list_sql)
-        self.assertEqual(list_params, count_params)
-        self.assertIn("OFFSET 20 ROWS FETCH NEXT 20 ROWS ONLY", list_sql)
+        repo.get_orders.assert_called_once()
+        kwargs = repo.get_orders.call_args.kwargs
+        self.assertEqual(kwargs["order_status"], "submitted")
+        self.assertEqual(kwargs["keyword"], "P-001")
+        self.assertEqual(kwargs["page_no"], 2)
+        self.assertEqual(kwargs["page_size"], 20)
 
     def test_get_tool_io_orders_returns_rows_from_paginated_query(self):
-        fake_db = FakeDatabaseManager()
-
-        with patch("database.DatabaseManager", return_value=fake_db):
-            result = get_tool_io_orders(page_no=1, page_size=10)
+        repo = patch("database.OrderRepository").start()()
+        self.addCleanup(patch.stopall)
+        repo.get_orders.return_value = {
+            "success": True,
+            "data": [{"order_no": "TO-OUT-20260312-001", "order_status": "draft"}],
+            "total": 2,
+            "page_no": 1,
+            "page_size": 10,
+        }
+        result = get_tool_io_orders(page=1, page_size=10)
 
         self.assertEqual(
             result,
@@ -118,6 +109,10 @@ class ToolIOOrderQueryTests(unittest.TestCase):
                 "page_size": 10,
             },
         )
+        repo.get_orders.assert_called_once()
+        kwargs = repo.get_orders.call_args.kwargs
+        self.assertEqual(kwargs["page_no"], 1)
+        self.assertEqual(kwargs["page_size"], 10)
 
     def test_list_orders_applies_scope_sql_from_current_user(self):
         with patch(
@@ -133,18 +128,18 @@ class ToolIOOrderQueryTests(unittest.TestCase):
                 "page_size": 5000,
             },
         ) as get_orders, patch(
+            "backend.services.tool_io_service.resolve_order_data_scope",
+            return_value={"all_access": False, "self_user_ids": ["U001"], "assigned_user_ids": [], "org_user_ids": []},
+        ), patch(
             "backend.services.tool_io_service.order_matches_scope",
             side_effect=[True, False],
-        ), patch(
-            "backend.services.tool_io_service.build_order_scope_sql",
-            return_value=(" AND (鍙戣捣浜篒D IN (?))", ("U001",)),
         ):
             result = list_orders({"page_no": 1, "page_size": 20}, current_user={"user_id": "U001"})
 
         self.assertTrue(result["success"])
         self.assertEqual(result["total"], 1)
         self.assertEqual(result["data"], [{"order_no": "TO-001", "initiator_id": "U001"}])
-        self.assertEqual(get_orders.call_args.kwargs["page_no"], 1)
+        self.assertEqual(get_orders.call_args.kwargs["page"], 1)
         self.assertEqual(get_orders.call_args.kwargs["page_size"], 5000)
 
     def test_list_orders_filters_draft_for_all_access_user(self):
@@ -442,13 +437,12 @@ class ToolIONotificationUsageTests(unittest.TestCase):
             "items": [{"tool_code": "T-01", "tool_name": "Clamp", "drawing_no": "D-01", "apply_qty": 2}],
         }
 
-        with patch("backend.services.tool_io_service.get_order_detail_runtime", return_value=order), patch(
-            "backend.services.tool_io_service.DatabaseManager"
-        ) as db_mock, patch("backend.services.tool_io_service._create_notification_record") as create_record:
+        with patch("backend.services.tool_io_service.get_order_detail", return_value=order), patch(
+            "backend.services.tool_io_service._create_notification_record"
+        ) as create_record:
             result = generate_keeper_text("TO-006")
 
         self.assertTrue(result["success"])
-        db_mock.return_value.execute_query.assert_called_once()
         create_record.assert_called_once()
         self.assertEqual(create_record.call_args.kwargs["notify_type"], "keeper_request")
         self.assertEqual(create_record.call_args.kwargs["notify_channel"], "internal")
@@ -469,13 +463,12 @@ class ToolIONotificationUsageTests(unittest.TestCase):
             ],
         }
 
-        with patch("backend.services.tool_io_service.get_order_detail_runtime", return_value=order), patch(
-            "backend.services.tool_io_service.DatabaseManager"
-        ) as db_mock, patch("backend.services.tool_io_service._create_notification_record") as create_record:
+        with patch("backend.services.tool_io_service.get_order_detail", return_value=order), patch(
+            "backend.services.tool_io_service._create_notification_record"
+        ) as create_record:
             result = generate_transport_text("TO-007")
 
         self.assertTrue(result["success"])
-        db_mock.return_value.execute_query.assert_called_once()
         create_record.assert_called_once()
         self.assertEqual(create_record.call_args.kwargs["notify_type"], "transport_preview")
         self.assertEqual(create_record.call_args.kwargs["copy_text"], result["wechat_text"])

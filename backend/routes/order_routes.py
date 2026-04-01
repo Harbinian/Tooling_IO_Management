@@ -210,7 +210,7 @@ def api_tool_io_order_assign_transport(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/transport-start", methods=["POST"])
-@require_permission("order:transport_execute")  # KEEPER
+@require_permission("order:transport_execute")  # PRODUCTION_PREP, SYS_ADMIN
 def api_tool_io_order_transport_start(order_no):
     try:
         from backend.services.tool_io_service import start_transport
@@ -233,7 +233,7 @@ def api_tool_io_order_transport_start(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/transport-complete", methods=["POST"])
-@require_permission("order:transport_execute")  # KEEPER
+@require_permission("order:transport_execute")  # PRODUCTION_PREP, SYS_ADMIN
 def api_tool_io_order_transport_complete(order_no):
     try:
         from backend.services.tool_io_service import complete_transport
@@ -256,7 +256,7 @@ def api_tool_io_order_transport_complete(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>/report-transport-issue", methods=["POST"])
-@require_permission("order:transport_execute")  # PRODUCTION_PREP/KEEPER
+@require_permission("order:transport_execute")  # PRODUCTION_PREP, KEEPER, SYS_ADMIN
 def api_tool_io_order_report_transport_issue(order_no):
     try:
         from backend.services.transport_issue_service import report_transport_issue
@@ -496,7 +496,7 @@ def api_tool_io_orders_pending_keeper():
 
 
 @order_bp.route("/api/tool-io-orders/pre-transport", methods=["GET"])
-@require_permission("order:transport_execute")  # PRODUCTION_PREP/KEEPER
+@require_permission("order:transport_execute")  # PRODUCTION_PREP, KEEPER, SYS_ADMIN
 def api_tool_io_orders_pre_transport():
     try:
         from backend.services.tool_io_service import get_pre_transport_orders

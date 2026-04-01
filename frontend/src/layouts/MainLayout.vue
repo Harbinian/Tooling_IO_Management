@@ -199,15 +199,15 @@ initDebugMode()
   <!-- Settings Dialog -->
   <el-dialog v-model="showSettingsDialog" title="系统设置" width="400px">
     <div class="space-y-4">
-      <div v-if="isAdmin" class="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+      <div v-if="isAdmin" class="flex items-center justify-between rounded-lg border border-border p-4">
         <div>
-          <p class="font-semibold text-slate-900">Debug 模式</p>
-          <p class="text-sm text-slate-500">显示调试信息和内部 ID</p>
+          <p class="font-semibold text-foreground">Debug 模式</p>
+          <p class="text-sm text-muted-foreground">显示调试信息和内部 ID</p>
         </div>
         <el-switch v-model="debugModeEnabled" @change="toggleDebugMode" />
       </div>
-      <div v-else class="rounded-lg border border-slate-200 p-4">
-        <p class="text-sm text-slate-500">仅管理员可修改系统设置</p>
+      <div v-else class="rounded-lg border border-border p-4">
+        <p class="text-sm text-muted-foreground">仅管理员可修改系统设置</p>
       </div>
     </div>
     <template #footer>

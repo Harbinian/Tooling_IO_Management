@@ -889,12 +889,12 @@ def _normalize_runtime_order(order: Dict) -> Dict:
             {
                 **item,
                 "tool_code": _pick_value(item, ["tool_code"], ""),
-                "tool_name": _pick_value(item, ["tool_name", "宸ヨ鍚嶇О"], ""),
-                "drawing_no": _pick_value(item, ["drawing_no", "宸ヨ鍥惧彿"], ""),
-                "spec_model": _pick_value(item, ["spec_model", "鏈哄瀷", "瑙勬牸鍨嬪彿"], ""),
+                "tool_name": _pick_value(item, ["tool_name", "工装名称"], ""),
+                "drawing_no": _pick_value(item, ["drawing_no", "工装图号"], ""),
+                "spec_model": _pick_value(item, ["spec_model", "机型", "规格型号"], ""),
                 "location_text": _pick_value(item, ["location_text"], ""),
-                "apply_qty": _pick_value(item, ["apply_qty", "鐢宠鏁伴噺"], 1),
-                "approved_qty": _pick_value(item, ["approved_qty", "纭鏁伴噺"], 0),
+                "apply_qty": _pick_value(item, ["apply_qty", "申请数量"], 1),
+                "approved_qty": _pick_value(item, ["approved_qty", "确认数量"], 0),
                 "item_status": item_status,
             }
         )
@@ -1259,7 +1259,7 @@ def notify_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
     if not order:
         return {"success": False, "error": "order not found"}
 
-    current_status = _pick_value(order, ["order_status", "茅聧鈥斆︹€号该ヂ德伱┞愃溍ㄋ喡得⑩€毬?"], "")
+    current_status = _pick_value(order, ["order_status", "单据状态"], "")
     if current_status not in {"keeper_confirmed", "partially_confirmed", "transport_notified"}:
         return {
             "success": False,
@@ -1351,7 +1351,7 @@ def notify_keeper(order_no: str, payload: Dict, current_user: Optional[Dict] = N
     if not order:
         return {"success": False, "error": "order not found"}
 
-    current_status = _pick_value(order, ["order_status", "茅 聧忙鸥 卢茅 聬藴猫藛垄?"], "")
+    current_status = _pick_value(order, ["order_status", "单据状态"], "")
     if current_status not in {"submitted", "keeper_confirmed"}:
         return {
             "success": False,

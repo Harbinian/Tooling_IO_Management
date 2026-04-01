@@ -477,7 +477,7 @@ onMounted(async () => {
 }
 
 .settings-tabs :deep(.el-tabs__item.is-active) {
-  color: hsl(var(--primary));
+  color: hsl(var(--foreground));
 }
 
 .settings-tabs :deep(.el-tabs__item:hover) {

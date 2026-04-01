@@ -3,14 +3,14 @@
     <!-- Step Header -->
     <div v-if="showHeader" class="flex items-center justify-between mb-6">
       <div>
-        <p v-if="currentStepNumber" class="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">
+        <p v-if="currentStepNumber" class="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
           步骤 {{ currentStepNumber }} / {{ totalSteps }}
         </p>
-        <p class="text-sm font-semibold text-slate-900">{{ stepTitle }}</p>
+        <p class="text-sm font-semibold text-foreground">{{ stepTitle }}</p>
       </div>
       <div v-if="nextRole" class="flex items-center gap-2">
-        <span class="text-xs text-slate-500">下一步:</span>
-        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+        <span class="text-xs text-muted-foreground">下一步:</span>
+        <span class="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
           {{ nextRole }}
         </span>
       </div>
@@ -36,20 +36,20 @@
         <!-- Step Content -->
         <div class="flex-1 space-y-1">
           <div class="flex items-center gap-2">
-            <p class="text-sm font-semibold text-slate-900">{{ step.label }}</p>
+            <p class="text-sm font-semibold text-foreground">{{ step.label }}</p>
             <span
               v-if="step.state === 'current'"
-              class="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-700"
+              class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary"
             >
               当前
             </span>
           </div>
-          <p class="text-sm leading-6 text-slate-500">{{ step.description }}</p>
+          <p class="text-sm leading-6 text-muted-foreground">{{ step.description }}</p>
         </div>
 
         <!-- Step Role Badge -->
         <div v-if="step.role" class="shrink-0">
-          <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-500">
+          <span class="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
             {{ step.role }}
           </span>
         </div>
@@ -57,10 +57,10 @@
     </div>
 
     <!-- Navigation (Optional) -->
-    <div v-if="showNavigation" class="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+    <div v-if="showNavigation" class="mt-6 flex items-center justify-between border-t border-border pt-4">
       <button
         v-if="previousLabel"
-        class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+        class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         @click="$emit('previous')"
       >
         <ChevronLeft class="h-4 w-4" />
@@ -69,7 +69,7 @@
       <div v-else></div>
       <button
         v-if="nextLabel"
-        class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+        class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         @click="$emit('next')"
       >
         {{ nextLabel }}
@@ -295,16 +295,16 @@ function getStepState(index, activeIndex, activeStatus) {
 }
 
 function stepClass(state) {
-  if (state === 'complete') return 'border-emerald-200 bg-emerald-50/60'
-  if (state === 'current') return 'border-sky-200 bg-sky-50/70'
-  if (state === 'blocked') return 'border-rose-200 bg-rose-50/70'
-  return 'border-slate-200 bg-slate-50/80'
+  if (state === 'complete') return 'border-emerald-500/30 bg-emerald-500/10'
+  if (state === 'current') return 'border-sky-500/40 bg-sky-500/10'
+  if (state === 'blocked') return 'border-rose-500/30 bg-rose-500/10'
+  return 'border-border bg-muted/20'
 }
 
 function stepDotClass(state) {
-  if (state === 'complete') return 'bg-emerald-600 text-white'
-  if (state === 'current') return 'bg-sky-600 text-white'
-  if (state === 'blocked') return 'bg-rose-600 text-white'
-  return 'bg-slate-200 text-slate-600'
+  if (state === 'complete') return 'bg-emerald-500 text-white'
+  if (state === 'current') return 'bg-sky-500 text-white'
+  if (state === 'blocked') return 'bg-rose-500 text-white'
+  return 'bg-muted text-muted-foreground'
 }
 </script>

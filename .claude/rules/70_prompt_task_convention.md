@@ -167,107 +167,107 @@ Bug任务按发现顺序自增分配（101开头）：
 | 00025 | 00025 | feishu_integration |
 | 00026 | 00026 | pipeline_dashboard_upgrade |
 | 00027 | 00027 | create_architecture_index |
-| 00028 | 00028 | 028 | user_authentication_system |
-| 00029 | 00029 | 029 | organization_structure_module |
-| 00030 | 00030 | 030 | rbac_permission_enforcement |
-| 00031 | 00031 | 031 | frontend_permission_visibility |
-| 00032 | 00032 | 032 | org_scoped_order_data_access |
-| 00033 | 00033 | 033 | login_page_auth_flow_ui |
-| 00034 | 00034 | 034 | end_to_end_rbac_workflow_validation |
-| 00035 | 00035 | 035 | review_reports_and_fix_tasks |
-| 00036 | 00036 | 036 | refactor_backend_core_files |
-| 00037 | 00037 | 046 | trae_ignore_token_optimization |
-| 00038 | 00038 | 037 | api_contract_snapshot_and_regression_baseline |
-| 00039 | 00039 | 038 | operation_audit_log_system |
-| 00040 | 00040 | 044 | release_preparation_and_go_live_checklist |
-| 00041 | 00041 | 039 | notification_service_framework |
-| 00042 | 00042 | 045 | system_observability_and_runtime_monitoring |
-| 00043 | 00043 | 040 | feishu_notification_adapter |
-| 00044 | 00044 | 047 | bug_sweep_and_stability_pass |
-| 00045 | 00045 | 041 | transport_workflow_state |
-| 00046 | 00046 | 048 | repo_weight_analysis_script |
-| 00047 | 00047 | 042 | tool_location_management |
-| 00048 | 00048 | 043 | dashboard_real_time_metrics |
-| 00049 | 00049 | 049 | safe_repo_context_slimming |
-| 00050 | 00050 | 050 | frontend_debug_id_overlay_admin_only_enhanced |
-| 00051 | 00051 | 051 | order_create_dynamic_fields |
-| 00052 | 00052 | 052 | rbac_role_assignment_and_account_admin_page |
-| 00053 | 00053 | 055 | unify_frontend_api_layer |
-| 00054 | 00054 | 053 | tool_locking_mechanism |
-| 00055 | 00055 | 054 | generate_ai_auditable_codebase_documentation |
-| 00056 | 00056 | 056 | backend_admin_order_delete_cascade |
-| 00057 | 00057 | 057 | frontend_order_detail_delete_button |
-| 00058 | 00058 | 058 | password_change_backend |
-| 00059 | 00059 | 059 | feedback_persistence_backend |
-| 00060 | 00060 | 060 | dark_mode_css_support |
-| 00061 | 00061 | 063 | admin_feedback_management_backend |
-| 00062 | 00062 | 064 | admin_feedback_management_frontend |
-| 00063 | 00063 | 082 | keeper_batch_tool_status_backend |
-| 00064 | 00064 | 083 | keeper_batch_tool_status_frontend |
-| 00065 | 00065 | 110 | bug_keeper_cannot_see_submitted_orders |
-| 00066 | 00066 | 111 | bug_login_500_on_first_attempt |
-| 00067 | 00067 | 131 | dev_server_launcher_gui |
+| 00028 | 00028 | user_authentication_system |
+| 00029 | 00029 | organization_structure_module |
+| 00030 | 00030 | rbac_permission_enforcement |
+| 00031 | 00031 | frontend_permission_visibility |
+| 00032 | 00032 | org_scoped_order_data_access |
+| 00033 | 00033 | login_page_auth_flow_ui |
+| 00034 | 00034 | end_to_end_rbac_workflow_validation |
+| 00035 | 00035 | review_reports_and_fix_tasks |
+| 00036 | 00036 | refactor_backend_core_files |
+| 00037 | 00037 | trae_ignore_token_optimization |
+| 00038 | 00038 | api_contract_snapshot_and_regression_baseline |
+| 00039 | 00039 | operation_audit_log_system |
+| 00040 | 00040 | release_preparation_and_go_live_checklist |
+| 00041 | 00041 | notification_service_framework |
+| 00042 | 00042 | system_observability_and_runtime_monitoring |
+| 00043 | 00043 | feishu_notification_adapter |
+| 00044 | 00044 | bug_sweep_and_stability_pass |
+| 00045 | 00045 | transport_workflow_state |
+| 00046 | 00046 | repo_weight_analysis_script |
+| 00047 | 00047 | tool_location_management |
+| 00048 | 00048 | dashboard_real_time_metrics |
+| 00049 | 00049 | safe_repo_context_slimming |
+| 00050 | 00050 | frontend_debug_id_overlay_admin_only_enhanced |
+| 00051 | 00051 | order_create_dynamic_fields |
+| 00052 | 00052 | rbac_role_assignment_and_account_admin_page |
+| 00053 | 00053 | unify_frontend_api_layer |
+| 00054 | 00054 | tool_locking_mechanism |
+| 00055 | 00055 | generate_ai_auditable_codebase_documentation |
+| 00056 | 00056 | backend_admin_order_delete_cascade |
+| 00057 | 00057 | frontend_order_detail_delete_button |
+| 00058 | 00058 | password_change_backend |
+| 00059 | 00059 | feedback_persistence_backend |
+| 00060 | 00060 | dark_mode_css_support |
+| 00061 | 00061 | admin_feedback_management_backend |
+| 00062 | 00062 | admin_feedback_management_frontend |
+| 00063 | 00063 | keeper_batch_tool_status_backend |
+| 00064 | 00064 | keeper_batch_tool_status_frontend |
+| 00065 | 00065 | bug_keeper_cannot_see_submitted_orders |
+| 00066 | 00066 | bug_login_500_on_first_attempt |
+| 00067 | 00067 | dev_server_launcher_gui |
 
 ### Bug修复任务
 
 | 执行顺序号 | 类型编号 | 描述 |
-|-----------|----------|---------|------|
-| 00015 | 10101 | 101 | bug_tool_search_routing |
-| 00016 | 10102 | 102 | bug_vite_entry_compile |
-| 00017 | 10103 | 103 | bug_order_list_api_500 |
-| 00018 | 10104 | 104 | bug_workflow_followup |
-| 00029 | 10105 | 105 | bug_transport_notification |
-| 00032 | 10106 | 106 | bug_duplicate_sidebar_layout |
-| 00043 | 10107 | 107 | bug_rbac_data_scope_violation |
-| 00044 | 10108 | 108 | bug_order_missing_org_ownership |
-| 00045 | 10109 | 109 | bug_archive_sequence_collision |
-| 00058 | 10110 | 110 | bug_blank_main_pages_after_auth_layout_integration |
-| 00062 | 10111 | 111 | bug_tool_search_spec_field_mapping |
-| 00063 | 10112 | 112 | bug_debug_id_overlay_missing_on_dialog_inner_elements |
-| 00068 | 10113 | 113 | bug_frontend_english_locale |
-| 00070 | 10114 | 114 | bug_transport_role_permission_gap |
-| 00071 | 10115 | 115 | fix_order_detail_missing_fields |
-| 00076 | 10116 | 116 | bug_database_refactor_regression_cleanup |
-| 00077 | 10117 | 117 | bug_order_api_parameter_mismatch |
-| 00078 | 10118 | 118 | bug_rbac_team_leader_order_view_permission |
-| 00081 | 10119 | 119 | bug_admin_delete_order_403 |
-| 00082 | 10120 | 120 | bug_notification_records_api_500 |
-| 00083 | 10121 | 121 | fix_transport_preview_400_error |
-| 00084 | 10122 | 122 | fix_org_id_schema_missing |
-| 00088 | 10123 | 123 | bug_settings_chinese_encoding |
-| 00090 | 10124 | 124 | bug_textarea_rows_prop |
-| 00091 | 10125 | 125 | bug_hardcoded_role_checks_order_detail |
-| 00094 | 10126 | 127 | bug_scrollbar_hardcoded_colors |
-| 00095 | 10127 | 128 | fix_order_list_multiple_ui_issues |
-| 00096 | 10128 | 129 | bug_theme_toggle_system_sync |
-| 00098 | 10129 | 126 | bug_keeper_notification_permission_gap |
-| 00099 | 10130 | 131 | bug_submit_confirmation_dialog_order_detail |
-| 00100 | 10131 | 132 | bug_keeper_batch_status_payload_mismatch |
-| 00102 | 10132 | 130 | bug_order_api_missing_tool_count_fields |
-| 00103 | 10133 | 133 | bug_password_validation_policy_mismatch |
-| 00107 | 10134 | 131 | bug_ordercreate_vue_encoding_corruption |
-| 00109 | 10135 | 110 | bug_keeper_cannot_see_submitted_orders |
-| 00110 | 10136 | 111 | bug_login_500_on_first_attempt |
-| 00111 | 10137 | 131 | bug_order_create_400_encoding_corruption |
-| 00112 | 10138 | 131 | bug_sql_field_name_mismatch |
+|-----------|----------|---------|
+| 00015 | 10101 | bug_tool_search_routing |
+| 00016 | 10102 | bug_vite_entry_compile |
+| 00017 | 10103 | bug_order_list_api_500 |
+| 00018 | 10104 | bug_workflow_followup |
+| 00029 | 10105 | bug_transport_notification |
+| 00032 | 10106 | bug_duplicate_sidebar_layout |
+| 00043 | 10107 | bug_rbac_data_scope_violation |
+| 00044 | 10108 | bug_order_missing_org_ownership |
+| 00045 | 10109 | bug_archive_sequence_collision |
+| 00058 | 10110 | bug_blank_main_pages_after_auth_layout_integration |
+| 00062 | 10111 | bug_tool_search_spec_field_mapping |
+| 00063 | 10112 | bug_debug_id_overlay_missing_on_dialog_inner_elements |
+| 00068 | 10113 | bug_frontend_english_locale |
+| 00070 | 10114 | bug_transport_role_permission_gap |
+| 00071 | 10115 | fix_order_detail_missing_fields |
+| 00076 | 10116 | bug_database_refactor_regression_cleanup |
+| 00077 | 10117 | bug_order_api_parameter_mismatch |
+| 00078 | 10118 | bug_rbac_team_leader_order_view_permission |
+| 00081 | 10119 | bug_admin_delete_order_403 |
+| 00082 | 10120 | bug_notification_records_api_500 |
+| 00083 | 10121 | fix_transport_preview_400_error |
+| 00084 | 10122 | fix_org_id_schema_missing |
+| 00088 | 10123 | bug_settings_chinese_encoding |
+| 00090 | 10124 | bug_textarea_rows_prop |
+| 00091 | 10125 | bug_hardcoded_role_checks_order_detail |
+| 00094 | 10126 | bug_scrollbar_hardcoded_colors |
+| 00095 | 10127 | fix_order_list_multiple_ui_issues |
+| 00096 | 10128 | bug_theme_toggle_system_sync |
+| 00098 | 10129 | bug_keeper_notification_permission_gap |
+| 00099 | 10130 | bug_submit_confirmation_dialog_order_detail |
+| 00100 | 10131 | bug_keeper_batch_status_payload_mismatch |
+| 00102 | 10132 | bug_order_api_missing_tool_count_fields |
+| 00103 | 10133 | bug_password_validation_policy_mismatch |
+| 00107 | 10134 | bug_ordercreate_vue_encoding_corruption |
+| 00109 | 10135 | bug_keeper_cannot_see_submitted_orders |
+| 00110 | 10136 | bug_login_500_on_first_attempt |
+| 00111 | 10137 | bug_order_create_400_encoding_corruption |
+| 00112 | 10138 | bug_sql_field_name_mismatch |
 
 ### 重构任务
 
 | 执行顺序号 | 类型编号 | 描述 |
-|-----------|----------|---------|------|
-| 00067 | 20101 | 202 | refactor_resolve_ui_library_conflict |
-| 00072 | 20102 | 201 | refactor_split_tool_io_service |
-| 00075 | 20103 | 201 | refactor_database_module_split |
-| 00089 | 20104 | 203 | refactor_repo_chinese_copy_encoding_normalization |
-| 00101 | 20105 | 204 | refactor_inline_workflow_stepper |
-| 00097 | 20106 | 205 | fix_outdated_docs_framework_and_states |
+|-----------|----------|------|
+| 00067 | 20101 | refactor_resolve_ui_library_conflict |
+| 00072 | 20102 | refactor_split_tool_io_service |
+| 00075 | 20103 | refactor_database_module_split |
+| 00089 | 20104 | refactor_repo_chinese_copy_encoding_normalization |
+| 00101 | 20105 | refactor_inline_workflow_stepper |
+| 00097 | 20106 | fix_outdated_docs_framework_and_states |
 
 ### 测试任务
 
 | 执行顺序号 | 类型编号 | 描述 |
-|-----------|----------|---------|------|
-| 00073 | 30101 | 301 | workflow_state_machine_tests |
-| 00074 | 30102 | 302 | rbac_permission_enforcement_tests |
+|-----------|----------|------|
+| 00073 | 30101 | workflow_state_machine_tests |
+| 00074 | 30102 | rbac_permission_enforcement_tests |
 
 ---
 

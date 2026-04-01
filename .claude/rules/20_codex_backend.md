@@ -117,7 +117,7 @@ Codex 必须防止： / Codex must prevent:
 - 记录失败 / record failure
 - 允许重试 / allow retry
 
-数据表：tool_notify_record / Table: tool_notify_record
+数据表：tool_io_notification / Table: tool_io_notification
 
 ---
 

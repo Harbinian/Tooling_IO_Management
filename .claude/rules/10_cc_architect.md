@@ -39,7 +39,6 @@ Claude Code 必须维护以下文档： / Claude Code must maintain these docume
 - docs/ARCHITECTURE.md - 架构文档
 - docs/DB_SCHEMA.md - 数据库 Schema
 - docs/API_SPEC.md - API 规范
-- docs/TASKS.md - 任务清单
 - backend/database/schema/column_names.py - 统一字段名常量 (权威来源)
 
 ---
@@ -82,8 +81,6 @@ Claude Code 必须维护以下文档： / Claude Code must maintain these docume
 | 表名 | 用途 |
 |------|------|
 | `工装身份卡_主表` | 工装主数据（含序列号、图号、状态等） |
-| `工装位置表` | 工装位置 |
-| `工装品种表` | 工装品种分类 |
 
 ### Feedback 表
 

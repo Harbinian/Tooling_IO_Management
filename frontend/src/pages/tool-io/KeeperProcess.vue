@@ -836,14 +836,14 @@ loadPendingOrders()
 :deep(.custom-tabs .el-tabs__item) {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: hsl(var(--muted-foreground));
   height: 3rem;
   line-height: 3rem;
   transition: all 0.2s;
 }
 
 :deep(.custom-tabs .el-tabs__item.is-active) {
-  color: #fff;
+  color: hsl(var(--foreground));
 }
 
 :deep(.custom-tabs .el-tabs__active-bar) {

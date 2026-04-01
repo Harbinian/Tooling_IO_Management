@@ -285,6 +285,8 @@ LOCATION_CHINESE_COLUMNS = {
 # This table belongs to an external system and is read-only.
 # The Chinese column names MUST be used when querying this table.
 # =============================================================================
+TOOL_MASTER_TABLE = 'Tooling_ID_Main'
+
 TOOL_MASTER_COLUMNS = {
     'tool_name': '工装名称',
     'drawing_no': '工装图号',

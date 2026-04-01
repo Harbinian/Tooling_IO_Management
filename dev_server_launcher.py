@@ -34,8 +34,9 @@ except ImportError:
 
 BACKEND_PORT = 8151
 FRONTEND_PORT = 8150
-BACKEND_BASE_URL = f"http://localhost:{BACKEND_PORT}"
-FRONTEND_BASE_URL = f"http://localhost:{FRONTEND_PORT}"
+ACCESS_HOST = "192.168.19.199"
+BACKEND_BASE_URL = f"http://{ACCESS_HOST}:{BACKEND_PORT}"
+FRONTEND_BASE_URL = f"http://{ACCESS_HOST}:{FRONTEND_PORT}"
 BACKEND_HEALTH_URL = f"{BACKEND_BASE_URL}/api/health"
 
 STARTUP_INFO_FILE = ".devserver.startup"
@@ -482,7 +483,7 @@ class DevServerLauncher:
             self.backend_process = self._run_command(
                 [PYTHON_CMD, str(BACKEND_SCRIPT)],
                 cwd=BASE_DIR,
-                env={"FLASK_PORT": str(BACKEND_PORT)},
+                env={"FLASK_HOST": "0.0.0.0", "FLASK_PORT": str(BACKEND_PORT)},
                 log_file=log_path,
                 drop_http_200=True,
             )

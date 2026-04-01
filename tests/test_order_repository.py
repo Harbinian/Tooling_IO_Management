@@ -51,7 +51,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS tool_code" in sql_text and "宸ヨ韬唤鍗涓昏〃" in sql_text:
+            if "AS tool_code" in sql_text and "Tooling_ID_Main" in sql_text:
                 return [
                     {
                         "tool_code": "T000001",
@@ -64,7 +64,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
                 ]
             if "= 'draft'" in sql_text:
                 return [{"tool_code": "T000001", "order_no": "TO-OUT-20260322-009"}]
-            if "IN (" in sql_text and "main.[鍗曟嵁鐘舵€乚 IN" in sql_text:
+            if "IN (" in sql_text and "main.[单据状态] IN" in sql_text:
                 return []
             return []
 
@@ -97,7 +97,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS tool_code" in sql_text and "宸ヨ韬唤鍗涓昏〃" in sql_text:
+            if "AS tool_code" in sql_text and "Tooling_ID_Main" in sql_text:
                 return [
                     {
                         "tool_code": "T000001",
@@ -110,7 +110,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
                 ]
             if "= 'draft'" in sql_text:
                 return []
-            if "IN (" in sql_text and "main.[鍗曟嵁鐘舵€乚 IN" in sql_text:
+            if "IN (" in sql_text and "main.[单据状态] IN" in sql_text:
                 return []
             return []
 

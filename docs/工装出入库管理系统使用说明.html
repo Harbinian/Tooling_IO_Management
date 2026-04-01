@@ -45,6 +45,27 @@
             font-size: 11px;
             margin-top: 8px;
         }
+        .header .login-info {
+            margin-top: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 14px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header .login-label {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        .header .login-url {
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.95);
+            color: #1a1a2e;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
 
         /* 导航 */
         .nav-tabs {
@@ -324,6 +345,23 @@
             color: var(--text-muted);
             font-size: 11px;
         }
+        .footer .footer-url {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+        .footer .footer-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+        .footer .footer-link {
+            color: #67c23a;
+            font-weight: 600;
+            font-size: 14px;
+        }
 
         /* 响应式 */
         @media (max-width: 480px) {
@@ -364,6 +402,18 @@
 <div class="header">
     <h1>🏭 工装出入库管理系统</h1>
     <p>移动端操作指南 - 角色权限与流程说明</p>
+    <div class="login-info">
+        <span class="login-label">登录地址</span>
+        <span class="login-url">http://192.168.19.199:8150</span>
+    </div>
+    <div class="login-info" style="margin-top:8px">
+        <span class="login-label">用户名</span>
+        <span class="login-url">姓名拼音全拼小写（如 zhangsan）</span>
+    </div>
+    <div class="login-info" style="margin-top:8px">
+        <span class="login-label">密码</span>
+        <span class="login-url">test1234</span>
+    </div>
     <span class="version">v1.0 · 2026-03</span>
 </div>
 
@@ -1068,9 +1118,12 @@
 
 <!-- 底部 -->
 <div class="footer">
-    <p>工装出入库管理系统 v1.0</p>
+    <div class="footer-url">
+        <span class="footer-label">🌐 登录地址</span>
+        <span class="footer-link">http://192.168.19.199:8150</span>
+    </div>
+    <p style="margin-top:12px">工装出入库管理系统 v1.0</p>
     <p>前端: Vue 3 + Element Plus | 后端: Flask + SQL Server</p>
-    <p style="margin-top:8px">📍 访问地址: http://localhost:8150</p>
 </div>
 
 <script>

@@ -104,9 +104,9 @@
 | `/api/tool-io-orders/<order_no>/final-confirm` | POST | `order:final_confirm` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/final-confirm-availability` | GET | `order:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `/api/tool-io-orders/<order_no>/assign-transport` | POST | `order:keeper_confirm` | ❌ | ✅ | ❌ | ❌ | ❌ |
-| `/api/tool-io-orders/<order_no>/transport-start` | POST | `order:transport_execute` | ❌ | ✅ | ❌ | ✅ | ❌ |
-| `/api/tool-io-orders/<order_no>/transport-complete` | POST | `order:transport_execute` | ❌ | ✅ | ❌ | ✅ | ❌ |
-| `/api/tool-io-orders/<order_no>/report-transport-issue` | POST | `order:transport_execute` | ❌ | ✅ | ❌ | ✅ | ❌ |
+| `/api/tool-io-orders/<order_no>/transport-start` | POST | `order:transport_execute` | ❌ | ❌ | ❌ | ✅ | ❌ |
+| `/api/tool-io-orders/<order_no>/transport-complete` | POST | `order:transport_execute` | ❌ | ❌ | ❌ | ✅ | ❌ |
+| `/api/tool-io-orders/<order_no>/report-transport-issue` | POST | `order:transport_execute` | ❌ | ❌ | ❌ | ✅ | ❌ |
 | `/api/tool-io-orders/<order_no>/transport-issues` | GET | `order:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `/api/tool-io-orders/<order_no>/resolve-transport-issue` | POST | `order:keeper_confirm` | ❌ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/reject` | POST | `order:cancel` | ✅ | ✅ | ❌ | ❌ | ❌ |
