@@ -389,15 +389,31 @@ def api_tool_io_order_cancel(order_no):
 
 
 @order_bp.route("/api/tool-io-orders/<order_no>", methods=["DELETE"])
-@require_permission("order:delete")  # ADMIN only
 def api_tool_io_order_delete(order_no):
+    # Custom permission check: SYS_ADMIN (order:delete) OR TEAM_LEADER (delete own draft)
+    user = get_authenticated_user()
+    user_permissions = set(user.get("permissions") or [])
+    user_role_codes = set(user.get("role_codes") or [])
+
+    is_admin = "order:delete" in user_permissions or "admin:user_manage" in user_permissions
+    is_team_leader = "team_leader" in user_role_codes
+
+    if not (is_admin or is_team_leader):
+        return jsonify({"success": False, "error": "无权删除单据"}), 403
+
     try:
         from backend.services.tool_io_service import delete_order
 
+        # For team_leader, pass role so repository can do ownership check
+        payload = build_actor_payload(get_json_dict(required=True))
+        if is_team_leader and not is_admin:
+            # Override operator_role to team_leader for business rule check in repository
+            payload["operator_role"] = "team_leader"
+
         result = delete_order(
             order_no,
-            build_actor_payload(get_json_dict(required=True)),
-            current_user=get_authenticated_user(),
+            payload,
+            current_user=user,
         )
         if result.get("success"):
             return jsonify(result)

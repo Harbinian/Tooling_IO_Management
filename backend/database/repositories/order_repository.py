@@ -950,12 +950,20 @@ class OrderRepository:
             Result dictionary
         """
         try:
-            check_sql = f"SELECT [{ORDER_COLUMNS['order_status']}] FROM [{TABLE_NAMES['ORDER']}] WHERE [{ORDER_COLUMNS['order_no']}] = ? AND [{ORDER_COLUMNS['is_deleted']}] = 0"
+            check_sql = f"SELECT [{ORDER_COLUMNS['order_status']}], [{ORDER_COLUMNS['initiator_id']}] FROM [{TABLE_NAMES['ORDER']}] WHERE [{ORDER_COLUMNS['order_no']}] = ? AND [{ORDER_COLUMNS['is_deleted']}] = 0"
             result = self._db.execute_query(check_sql, (order_no,))
             if not result:
                 return {'success': False, 'error': '单据不存在'}
 
             current_status = result[0].get('order_status')
+            initiator_id = result[0].get('initiator_id')
+
+            # Business rule: team_leader can only delete their own draft orders
+            if operator_role == 'team_leader':
+                if current_status != 'draft':
+                    return {'success': False, 'error': '只有草稿状态的单据可以被删除'}
+                if initiator_id != operator_id:
+                    return {'success': False, 'error': '只能删除自己创建的单据'}
 
             self._db.execute_query(
                 f"""
@@ -998,6 +1006,7 @@ class OrderRepository:
             )
 
             # Log
+            log_content = '管理员执行单据删除并完成级联清理' if operator_role == 'sys_admin' else '班组长删除自己创建的草稿单据'
             self.add_tool_io_log({
                 'order_no': order_no,
                 'action_type': ToolIOAction.DELETE,
@@ -1006,7 +1015,7 @@ class OrderRepository:
                 'operator_role': operator_role,
                 'before_status': current_status,
                 'after_status': 'deleted',
-                'content': '管理员执行单据删除并完成级联清理'
+                'content': log_content
             })
 
             return {'success': True}

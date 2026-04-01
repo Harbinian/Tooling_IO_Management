@@ -193,6 +193,21 @@ class ToolRepository:
         OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
         """
         rows = self._db.execute_query(list_sql, tuple(params))
+
+        # Check for draft order conflicts and mark tools as disabled
+        tool_codes = [str(row.get("tool_code", "")).strip() for row in rows if str(row.get("tool_code", "")).strip()]
+        if tool_codes:
+            draft_result = self.check_tools_in_draft_orders(tool_codes)
+            draft_conflict_map = {str(t["tool_code"]).strip(): t for t in draft_result.get("draft_tools", [])}
+            for row in rows:
+                tool_code = str(row.get("tool_code", "")).strip()
+                if tool_code in draft_conflict_map:
+                    draft_info = draft_conflict_map[tool_code]
+                    if not row.get("disabled"):
+                        row["disabled"] = True
+                        row["disabled_reason"] = f"工装已在草稿单据 {draft_info['order_no']} 中"
+                        row["status_text"] = "已被其他单据占用"
+
         return {
             'success': True,
             'data': rows,
