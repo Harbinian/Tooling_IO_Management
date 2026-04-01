@@ -887,7 +887,9 @@ class OrderRepository:
                 return {'success': False, 'error': '单据不存在'}
 
             current_status = result[0].get('order_status')
-            if current_status in ['completed', 'rejected', 'cancelled']:
+            if current_status in ['keeper_confirmed', 'partially_confirmed', 'transport_notified',
+                                   'transport_in_progress', 'transport_completed',
+                                   'final_confirmation_pending', 'completed', 'rejected', 'cancelled']:
                 return {'success': False, 'error': f'当前状态不允许取消，当前状态：{current_status}'}
 
             normalized_reason = str(cancel_reason or "").strip()

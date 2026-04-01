@@ -184,6 +184,7 @@
 
 | 日期 | 变更内容 | 变更人 |
 |------|---------|--------|
+| 2026-04-01 | 修正 `cancel_order` 取消订单业务规则：只允许 `draft` 和 `submitted` 状态取消，`keeper_confirmed` 及之后状态不允许取消 | Claude Code |
 | 2026-03-27 | 移除 KEEPER 的 `order:transport_execute` 权限，修复保管员能看到预知运输菜单但无权限访问的问题 | Claude Code |
 | 2026-03-27 | 调整 `GET /api/tool-io-orders/<order_no>/transport-issues` 权限为 `order:view`，修复 OrderDetail 页面非保管员角色加载 403 | Codex |
 | 2026-03-27 | 添加 dashboard:view 权限给 PRODUCTION_PREP (修复 bug #10168 - fengliang 登录后无限重定向) | Claude Code |

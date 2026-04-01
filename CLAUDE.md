@@ -141,7 +141,7 @@ utils/feishu_api.py            → 飞书 Webhook 通知
 
 **所有 SQL 查询中的中文字段名必须使用 `backend/database/schema/column_names.py` 中定义的常量。**
 
-禁止在 SQL 字符串中直接使用中文字段名字面量。详见 `.claude/rules/00_global.md`。
+禁止在 SQL 字符串中直接使用中文字段名字面量。详见 `.claude/rules/00_core.md`。
 
 ## 开发规则 / Development Rules
 
@@ -149,14 +149,13 @@ utils/feishu_api.py            → 飞书 Webhook 通知
 
 | 规则文件 | 用途 |
 |---------|------|
-| `00_global.md` | 全局编码规范（UTF-8、字段名常量、外部表访问） |
-| `10_cc_architect.md` | 架构师协议（架构设计、Schema 变更） |
-| `20_codex_backend.md` | Codex 后端实现规则 |
-| `30_gemini_frontend.md` | Gemini 前端设计协议 |
-| `40_debug_8d.md` | 8D 问题解决协议 |
-| `50_hotfix_sop.md` | 热修复 SOP |
-| `60_ADP-Protocol.md` | ADP 开发协议（四阶段流程） |
-| `70_prompt_task_convention.md` | 提示词任务编号约定 |
+| `00_core.md` | 核心规则（编码、字段名常量、命名、Git、数据库表范围） |
+| `01_workflow.md` | ADP 四阶段开发流程 |
+| `02_debug.md` | 8D 问题解决协议 |
+| `03_hotfix.md` | 热修复 SOP |
+| `04_frontend.md` | 前端开发规范 |
+| `05_task_convention.md` | 提示词任务编号约定 |
+| `README.md` | 规则索引 |
 
 ## 文档真相来源 / Documentation Source of Truth
 
@@ -224,11 +223,11 @@ logs/
 
 | 问题类型 | 规则文件 |
 |---------|---------|
-| Bug/回归问题 | `.claude/rules/40_debug_8d.md` (8D 问题解决) |
-| 数据/Schema 问题 | `.claude/rules/60_ADP-Protocol.md` (ADP 四阶段) |
-| 热修复 | `.claude/rules/50_hotfix_sop.md` |
-| 后端实现 | `.claude/rules/20_codex_backend.md` |
-| 前端实现 | `.claude/rules/30_gemini_frontend.md` |
+| Bug/回归问题 | `.claude/rules/02_debug.md` (8D 问题解决) |
+| 数据/Schema 问题 | `.claude/rules/01_workflow.md` (ADP 四阶段) |
+| 热修复 | `.claude/rules/03_hotfix.md` |
+| 后端实现 | `.claude/rules/00_core.md` |
+| 前端实现 | `.claude/rules/04_frontend.md` |
 
 ## 测试 / Testing
 
