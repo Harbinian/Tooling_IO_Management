@@ -592,3 +592,25 @@
 
 - 当历史订单缺少 `org_id` 时，优先填入发起人的主组织 `org_id`
 - 如果发起人主组织为空，则回退到发起人的 `default_org_id`
+
+---
+
+## Inspection Schema Addendum
+
+### tool_io_inspection_plan
+- Stores monthly inspection plans with `plan_no`, `plan_year`, `plan_month`, publish metadata, and audit fields.
+- Primary number format: `DJP-{YYYYMMDD}-{SEQ}`.
+
+### tool_io_inspection_task
+- Stores execution tasks generated from plans.
+- Tracks state machine, outbound/inbound order linkage, assignee, report linkage, deadline, and completion time.
+- Primary number format: `DJT-{YYYYMMDD}-{SEQ}`.
+
+### tool_io_inspection_report
+- Stores inspection reports with JSON measurement data and Base64 attachment payloads.
+- Base64 attachment size is limited to 2MB.
+- Primary number format: `RPT-{YYYYMMDD}-{SEQ}`.
+
+### tool_io_tool_inspection_status
+- Stores system-managed inspection status snapshots for tools.
+- This table is maintained independently from the external `Tooling_ID_Main` table.

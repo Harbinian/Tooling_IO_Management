@@ -12,8 +12,36 @@ from urllib import error, request
 from config.settings import settings
 from database import DatabaseManager, update_notification_status
 from backend.services.notification_service import create_notification_record
+from backend.services.feature_flag_service import get_feature_flag_service
 
 logger = logging.getLogger(__name__)
+
+FEISHU_NOTIFICATION_FLAG_KEY = "feishu_notification_enabled"
+FEISHU_WEBHOOK_KEYS = {
+    "ORDER_SUBMITTED_TO_SUPPLY_TEAM": "feishu_webhook_supply_team",
+    "TRANSPORT_REQUIRED": "feishu_webhook_transport",
+}
+
+
+def _is_feishu_notification_enabled() -> bool:
+    """Check if Feishu notification is enabled via feature flag or settings fallback."""
+    flag_service = get_feature_flag_service()
+    db_value = flag_service.get_flag_value(FEISHU_NOTIFICATION_FLAG_KEY)
+    if db_value is not None:
+        return db_value.lower() in ("true", "1", "yes")
+    return settings.FEISHU_NOTIFICATION_ENABLED
+
+
+def _get_db_webhook_url(config_key: str) -> Optional[str]:
+    """从数据库读取 Webhook URL，失败返回 None."""
+    try:
+        flag_service = get_feature_flag_service()
+        value = flag_service.get_flag_value(config_key)
+        if value and value.strip():
+            return value.strip()
+    except Exception as exc:
+        logger.warning("failed to read webhook from db (%s): %s", config_key, exc)
+    return None
 
 
 SUPPORTED_EVENT_TYPES = {
@@ -22,12 +50,24 @@ SUPPORTED_EVENT_TYPES = {
     "TRANSPORT_STARTED",
     "TRANSPORT_COMPLETED",
     "ORDER_COMPLETED",
+    "ORDER_SUBMITTED_TO_SUPPLY_TEAM",
 }
 
 
 def _resolve_webhook_url(notification_type: str) -> str:
+    """Resolve webhook URL for notification type. Priority: database > environment variable."""
+    # Try database config first
+    config_key = FEISHU_WEBHOOK_KEYS.get(notification_type)
+    if config_key:
+        db_url = _get_db_webhook_url(config_key)
+        if db_url:
+            return db_url
+
+    # Fallback to environment variable
     if notification_type == "TRANSPORT_REQUIRED":
         return settings.FEISHU_WEBHOOK_TRANSPORT or settings.FEISHU_WEBHOOK_URL
+    if notification_type == "ORDER_SUBMITTED_TO_SUPPLY_TEAM":
+        return settings.FEISHU_WEBHOOK_SUPPLY_TEAM or settings.FEISHU_WEBHOOK_URL
     return settings.FEISHU_WEBHOOK_URL
 
 
@@ -50,15 +90,82 @@ def _build_message_text(notification_payload: Dict) -> str:
     return "\n".join(lines)
 
 
+def _build_tool_list_markdown(notification_payload: Dict) -> str:
+    """构建工装需求 Markdown 卡片消息（发送给物资保障部群）"""
+    order = notification_payload.get("order", {})
+
+    order_no = str(order.get("order_no") or "").strip()
+    order_type = str(order.get("order_type") or "").strip()
+    order_type_text = "出库" if order_type == "outbound" else "入库" if order_type == "inbound" else order_type
+    initiator_name = str(order.get("initiator_name") or "").strip()
+    department = str(order.get("department") or "").strip()
+    usage_purpose = str(order.get("usage_purpose") or "").strip()
+    target_location = str(order.get("target_location_text") or "").strip()
+    planned_time = str(order.get("planned_use_time") or order.get("planned_return_time") or "").strip()
+    remark = str(order.get("remark") or "").strip()
+    created_at = str(order.get("created_at") or "").strip()
+
+    # 构建表头
+    lines = [
+        "## 工装需求通知",
+        "",
+        f"**单号**: {order_no}",
+        f"**类型**: {order_type_text}",
+        f"**申请人**: {initiator_name}",
+        f"**部门**: {department}",
+        "",
+    ]
+
+    # 出库时显示用途和目标位置
+    if order_type == "outbound":
+        if usage_purpose:
+            lines.append(f"**用途**: {usage_purpose}")
+        if target_location:
+            lines.append(f"**目标位置**: {target_location}")
+    if planned_time:
+        time_label = "计划使用时间" if order_type == "outbound" else "计划归还时间"
+        lines.append(f"**{time_label}**: {planned_time}")
+
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("**工装明细**:")
+    lines.append("")
+    lines.append("| 序号 | 序列号 | 名称 | 图号/机型 | 分体数量 |")
+    lines.append("|------|--------|------|-----------|----------|")
+
+    items = order.get("items") or []
+    for idx, item in enumerate(items, start=1):
+        serial_no = str(item.get("serial_no") or item.get("tool_code") or "-").strip()
+        tool_name = str(item.get("tool_name") or "-").strip()
+        drawing_no = str(item.get("drawing_no") or "-").strip()
+        spec_model = str(item.get("spec_model") or "-").strip()
+        split_qty = str(item.get("split_quantity") or item.get("split_qty") or "-").strip()
+        lines.append(f"| {idx} | {serial_no} | {tool_name} | {drawing_no} / {spec_model} | {split_qty} |")
+
+    lines.append("")
+    lines.append("---")
+
+    if remark:
+        lines.append("")
+        lines.append(f"**备注**: {remark}")
+
+    if created_at:
+        lines.append(f"**时间**: {created_at}")
+
+    return "\n".join(lines)
+
+
 def send_feishu_message(notification_payload: Dict) -> Dict:
-    if not settings.FEISHU_NOTIFICATION_ENABLED:
+    if not _is_feishu_notification_enabled():
         return {
             "success": False,
             "status": "disabled",
             "response_summary": "Feishu notification delivery is disabled by configuration",
         }
 
-    webhook_url = _resolve_webhook_url(str(notification_payload.get("notification_type") or ""))
+    notification_type = str(notification_payload.get("notification_type") or "")
+    webhook_url = _resolve_webhook_url(notification_type)
     if not webhook_url:
         return {
             "success": False,
@@ -66,12 +173,22 @@ def send_feishu_message(notification_payload: Dict) -> Dict:
             "response_summary": "Feishu webhook URL is not configured",
         }
 
-    payload = {
-        "msg_type": "text",
-        "content": {
-            "text": _build_message_text(notification_payload),
-        },
-    }
+    # ORDER_SUBMITTED_TO_SUPPLY_TEAM 使用 Markdown 卡片格式
+    if notification_type == "ORDER_SUBMITTED_TO_SUPPLY_TEAM":
+        markdown_content = _build_tool_list_markdown(notification_payload)
+        payload = {
+            "msg_type": "text",
+            "content": {
+                "text": markdown_content,
+            },
+        }
+    else:
+        payload = {
+            "msg_type": "text",
+            "content": {
+                "text": _build_message_text(notification_payload),
+            },
+        }
     try:
         req = request.Request(
             webhook_url,

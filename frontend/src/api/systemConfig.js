@@ -15,3 +15,12 @@ export async function getSystemConfig(configKey) {
 export async function updateSystemConfig(configKey, payload) {
   return unwrap(await client.put(`/admin/system-config/${encodeURIComponent(configKey)}`, payload))
 }
+
+// Feature flag endpoints
+export async function getFeatureFlags() {
+  return unwrap(await client.get('/admin/feature-flags'))
+}
+
+export async function updateFeatureFlag(flagKey, value) {
+  return unwrap(await client.put(`/admin/feature-flags/${encodeURIComponent(flagKey)}`, { value }))
+}

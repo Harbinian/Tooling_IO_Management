@@ -14,7 +14,8 @@
 | `02_debug.md` | 8D 问题解决协议（调试/回归问题） |
 | `03_hotfix.md` | 热修复 SOP |
 | `04_frontend.md` | 前端开发规范（页面、搜索、主题、RBAC） |
-| `05_task_convention.md` | 提示词任务编号约定 |
+| `05_task_convention.md` | 提示词任务编号约定 + 归档前置条件 |
+| `06_testing.md` | 测试任务规范（30101-39999） |
 
 ---
 

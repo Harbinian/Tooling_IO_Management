@@ -396,7 +396,8 @@ def api_tool_io_order_delete(order_no):
     user_role_codes = set(user.get("role_codes") or [])
 
     is_admin = "order:delete" in user_permissions or "admin:user_manage" in user_permissions
-    is_team_leader = "team_leader" in user_role_codes
+    # NOTE: All role_code comparisons must be case-insensitive.
+    is_team_leader = any(str(role_code).strip().lower() == "team_leader" for role_code in user_role_codes)
 
     if not (is_admin or is_team_leader):
         return jsonify({"success": False, "error": "无权删除单据"}), 403
@@ -538,6 +539,22 @@ def api_generate_keeper_text(order_no):
         return jsonify(result), 404 if result.get("error") == "order not found" else 400
     except Exception as exc:
         logger.error("failed to generate keeper text %s: %s", order_no, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@order_bp.route("/api/tool-io-orders/preview-keeper-text", methods=["POST"])
+@require_permission("notification:create")  # KEEPER
+def api_preview_keeper_text():
+    try:
+        from backend.services.tool_io_service import preview_keeper_text
+
+        data = build_initiator_payload(get_json_dict(required=True))
+        result = preview_keeper_text(data, current_user=get_authenticated_user())
+        return jsonify(result) if result.get("success") else (jsonify(result), 400)
+    except ValueError as exc:
+        return validation_error(str(exc))
+    except Exception as exc:
+        logger.error("failed to preview keeper text: %s", exc)
         return jsonify({"success": False, "error": str(exc)}), 500
 
 

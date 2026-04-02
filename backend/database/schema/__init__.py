@@ -7,6 +7,10 @@ from backend.database.schema.schema_manager import (
     ensure_feedback_table,
     ensure_feedback_reply_table,
     ensure_tool_status_change_history_table,
+    ensure_inspection_plan_table,
+    ensure_inspection_task_table,
+    ensure_inspection_report_table,
+    ensure_tool_inspection_status_table,
     SCHEMA_ALIGNMENT_INDEXES,
 )
 from backend.database.schema.column_names import (
@@ -23,6 +27,10 @@ from backend.database.schema.column_names import (
     USER_ORG_REL_COLUMNS,
     SYS_USER_COLUMNS,
     PASSWORD_CHANGE_LOG_COLUMNS,
+    INSPECTION_PLAN_COLUMNS,
+    INSPECTION_TASK_COLUMNS,
+    INSPECTION_REPORT_COLUMNS,
+    TOOL_INSPECTION_STATUS_COLUMNS,
 )
 
 __all__ = [
@@ -32,6 +40,10 @@ __all__ = [
     "ensure_feedback_table",
     "ensure_feedback_reply_table",
     "ensure_tool_status_change_history_table",
+    "ensure_inspection_plan_table",
+    "ensure_inspection_task_table",
+    "ensure_inspection_report_table",
+    "ensure_tool_inspection_status_table",
     "SCHEMA_ALIGNMENT_INDEXES",
     # Column name constants
     "ORDER_COLUMNS",
@@ -47,4 +59,8 @@ __all__ = [
     "USER_ORG_REL_COLUMNS",
     "SYS_USER_COLUMNS",
     "PASSWORD_CHANGE_LOG_COLUMNS",
+    "INSPECTION_PLAN_COLUMNS",
+    "INSPECTION_TASK_COLUMNS",
+    "INSPECTION_REPORT_COLUMNS",
+    "TOOL_INSPECTION_STATUS_COLUMNS",
 ]

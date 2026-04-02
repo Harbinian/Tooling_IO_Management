@@ -20,6 +20,7 @@ STATUS_PROCESSED = "processed"
 
 ORDER_CREATED = "ORDER_CREATED"
 ORDER_SUBMITTED = "ORDER_SUBMITTED"
+ORDER_SUBMITTED_TO_SUPPLY_TEAM = "ORDER_SUBMITTED_TO_SUPPLY_TEAM"
 KEEPER_CONFIRM_REQUIRED = "KEEPER_CONFIRM_REQUIRED"
 TRANSPORT_REQUIRED = "TRANSPORT_REQUIRED"
 TRANSPORT_STARTED = "TRANSPORT_STARTED"
@@ -30,27 +31,27 @@ ORDER_REJECTED = "ORDER_REJECTED"
 
 
 _TITLE_TEMPLATES = {
-    ORDER_CREATED: "Order {order_no} created",
-    ORDER_SUBMITTED: "Order {order_no} submitted",
-    KEEPER_CONFIRM_REQUIRED: "Keeper confirmation required for {order_no}",
-    TRANSPORT_REQUIRED: "Transport action required for {order_no}",
-    TRANSPORT_STARTED: "Transport started for {order_no}",
-    TRANSPORT_COMPLETED: "Transport completed for {order_no}",
-    ORDER_COMPLETED: "Order {order_no} completed",
-    ORDER_CANCELLED: "Order {order_no} cancelled",
-    ORDER_REJECTED: "Order {order_no} rejected",
+    ORDER_CREATED: "出入库单 {order_no} 已创建",
+    ORDER_SUBMITTED: "出入库单 {order_no} 已提交",
+    KEEPER_CONFIRM_REQUIRED: "出入库单 {order_no} 需要保管员确认",
+    TRANSPORT_REQUIRED: "出入库单 {order_no} 需要运输处理",
+    TRANSPORT_STARTED: "出入库单 {order_no} 运输已开始",
+    TRANSPORT_COMPLETED: "出入库单 {order_no} 运输已完成",
+    ORDER_COMPLETED: "出入库单 {order_no} 已完成",
+    ORDER_CANCELLED: "出入库单 {order_no} 已取消",
+    ORDER_REJECTED: "出入库单 {order_no} 已驳回",
 }
 
 _BODY_TEMPLATES = {
-    ORDER_CREATED: "Order {order_no} has been created as a draft by {actor_name}.",
-    ORDER_SUBMITTED: "Order {order_no} has been submitted by {actor_name}.",
-    KEEPER_CONFIRM_REQUIRED: "Order {order_no} has been submitted and requires keeper confirmation.",
-    TRANSPORT_REQUIRED: "Order {order_no} has passed keeper confirmation and requires transport handling.",
-    TRANSPORT_STARTED: "Transport for order {order_no} has started and the tool is currently being moved.",
-    TRANSPORT_COMPLETED: "Transport for order {order_no} has been completed and the order is ready for final confirmation.",
-    ORDER_COMPLETED: "Order {order_no} has been completed by {actor_name}.",
-    ORDER_CANCELLED: "Order {order_no} has been cancelled by {actor_name}.",
-    ORDER_REJECTED: "Order {order_no} has been rejected by {actor_name}.",
+    ORDER_CREATED: "出入库单 {order_no} 已由 {actor_name} 创建为草稿。",
+    ORDER_SUBMITTED: "出入库单 {order_no} 已由 {actor_name} 提交。",
+    KEEPER_CONFIRM_REQUIRED: "出入库单 {order_no} 已提交，需要保管员确认。",
+    TRANSPORT_REQUIRED: "出入库单 {order_no} 已通过保管员确认，需要运输处理。",
+    TRANSPORT_STARTED: "出入库单 {order_no} 的运输已开始，工装正在搬运中。",
+    TRANSPORT_COMPLETED: "出入库单 {order_no} 的运输已完成，订单可以进行最终确认。",
+    ORDER_COMPLETED: "出入库单 {order_no} 已由 {actor_name} 完成。",
+    ORDER_CANCELLED: "出入库单 {order_no} 已由 {actor_name} 取消。",
+    ORDER_REJECTED: "出入库单 {order_no} 已由 {actor_name} 驳回。",
 }
 
 
@@ -129,8 +130,8 @@ def build_notification_message(
     }
     context.update(metadata or {})
 
-    title_template = _TITLE_TEMPLATES.get(notification_type, "Order {order_no} notification")
-    body_template = _BODY_TEMPLATES.get(notification_type, "Order {order_no} generated a new notification.")
+    title_template = _TITLE_TEMPLATES.get(notification_type, "出入库单 {order_no} 通知")
+    body_template = _BODY_TEMPLATES.get(notification_type, "出入库单 {order_no} 产生了一条新通知。")
     return {
         "title": title_template.format(**context),
         "body": body_template.format(**context),

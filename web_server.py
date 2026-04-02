@@ -14,6 +14,7 @@ from backend.routes.auth_routes import auth_bp
 from backend.routes.common import register_request_identity_hook
 from backend.routes.dashboard_routes import dashboard_bp
 from backend.routes.feedback_routes import feedback_bp
+from backend.routes.inspection_routes import inspection_bp
 from backend.routes.mpl_routes import mpl_bp
 from backend.routes.order_routes import order_bp
 from backend.routes.org_routes import org_bp
@@ -52,6 +53,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(org_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(feedback_bp)
+app.register_blueprint(inspection_bp)
 app.register_blueprint(mpl_bp)
 app.register_blueprint(order_bp)
 app.register_blueprint(tool_bp)

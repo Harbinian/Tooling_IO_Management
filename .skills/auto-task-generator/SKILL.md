@@ -304,16 +304,156 @@ Goal: Migrate order list page UI to Element Plus
 Dependencies: None
 Execution: RUNPROMPT
 
-必需章节：
+### 类型特定章节要求 / Type-Specific Section Requirements
 
-Required Sections:
+**警告**: 以下章节要求是强制性的，跳过任何章节将导致提示词被拒绝归档。
 
-Context / 上下文
-Required References / 必需参考
-Core Task / 核心任务
-Required Work / 必需工作
-Constraints / 约束条件
-Completion Criteria / 完成标准
+#### Bug 修复 (10101-19999) — 必须使用 8D 章节
+
+| 章节 | 内容 | 审核 |
+|------|------|------|
+| D1 | 团队分工 (Reviewer, Coder, Architect) | - |
+| D2 | 问题描述 (5W2H) | - |
+| D3 | 临时遏制措施 (Containment) | **→ 评分审核** |
+| D4 | 根因分析 (5 Whys) | - |
+| D5 | 永久对策 + 防退化宣誓 | **→ 评分审核** |
+| D6 | 实施验证 (Implementation) | **→ 评分审核** |
+| D7 | 预防复发 (Prevention) | - |
+| D8 | 归档复盘 (Documentation) | - |
+
+> **D3/D5/D6 必须由 reviewer 评分审核，收到全部维度达标后才能继续下一步。**
+> 各维度门槛：root_cause_depth≥0.24, solution_completeness≥0.24, code_quality≥0.16, test_coverage=0.20(满分)
+> 评分模板见 `.claude/rules/02_debug.md`。
+
+**8D 章节模板占位符**：
+
+```markdown
+### D1 - 团队分工
+- **Reviewer**: [姓名]
+- **Coder**: [姓名]
+- **Architect**: [姓名]
+
+### D2 - 问题描述 (5W2H)
+| 要素 | 内容 |
+|------|------|
+| What | |
+| Where | |
+| When | |
+| Who | |
+| Why | |
+| How | |
+| How Many | |
+
+### D3 - 临时遏制措施 (Containment)
+**→ REVIEWER 评分审核占位符（需全部维度达标）←**
+
+### D4 - 根因分析 (5 Whys)
+#### 直接原因
+#### 深层原因
+#### 全部问题点
+
+### D5 - 永久对策 + 防退化宣誓
+**→ REVIEWER 评分审核占位符（需全部维度达标）←**
+
+### D6 - 实施验证 (Implementation)
+**→ REVIEWER 评分审核占位符（需全部维度达标）←**
+
+### D7 - 预防复发
+#### 短期（立即生效）
+#### 长期（机制保证）
+
+### D8 - 归档复盘
+#### 经验教训
+#### 后续行动
+```
+
+#### 功能开发 (00001-09999) / 重构 (20101-29999) — 必须使用 ADP 章节
+
+| 阶段 | 内容 | 审核 |
+|------|------|------|
+| Phase 1 | PRD 业务需求分析 | - |
+| Phase 2 | Data 数据流转审视 | - |
+| Phase 3 | Architecture 架构设计 | - |
+| Phase 4 | Execution 精确执行 + tester E2E 验证 | **→ tester 验证** |
+
+> **Phase 4 完成后必须通知 `tester` 执行 E2E 验证。**
+
+**ADP 章节模板占位符**：
+
+```markdown
+## Phase 1: PRD - 业务需求分析
+### 业务场景
+### 目标用户
+### 核心痛点
+### 业务目标
+
+## Phase 2: Data - 数据流转审视
+### 数据来源
+### 主键校验
+### 生命周期防御
+### 强制前置语法检查
+
+## Phase 3: Architecture - 架构设计
+### 交互链路
+### 风险识别
+### 熔断策略
+
+## Phase 4: Execution - 精确执行
+### 4.1 后端核心数据处理逻辑
+### 4.2 前端 Vue 代码
+### 4.3 Headless TDD（如适用）
+### 4.4 E2E 验证
+**→ TESTER E2E 验证占位符 ←**
+```
+
+#### 测试任务 (30101-39999) — 必须使用测试章节
+
+| 章节 | 内容 |
+|------|------|
+| Test Scope | 测试范围和目标 |
+| Test Strategy | 测试策略（单元/集成/E2E） |
+| Test Cases | 测试用例列表 |
+| Pass Criteria | 通过标准 |
+| Test Artifacts | 测试产物（报告、覆盖率） |
+
+**测试章节模板占位符**：
+
+```markdown
+## Test Scope - 测试范围
+### 测试目标
+### 测试环境
+### 依赖项
+
+## Test Strategy - 测试策略
+### 测试类型
+### 测试数据
+### Mock/Stub 策略
+
+## Test Cases - 测试用例
+| ID | 场景 | 前置条件 | 操作 | 期望结果 | 优先级 |
+
+## Pass Criteria - 通过标准
+- [ ] 最低覆盖率要求
+- [ ] 所有 P0 测试用例通过
+- [ ] 无回归
+
+## Test Artifacts - 测试产物
+- 测试报告路径
+- 覆盖率报告路径
+```
+
+---
+
+### 通用章节（所有类型必须包含）
+
+| 章节 | 内容 |
+|------|------|
+| Context / 上下文 | 任务背景和动机 |
+| Required References / 必需参考 | 代码文件、文档、API 契约 |
+| Constraints / 约束条件 | 限制和边界条件 |
+| Completion Criteria / 完成标准 | 可验收的完成标准 |
+
+---
 
 优先级定义 / Priority Definitions:
 

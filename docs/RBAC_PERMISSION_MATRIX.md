@@ -1,6 +1,6 @@
 # RBAC 权限矩阵 / RBAC Permission Matrix
 
-> **最后更新**: 2026-04-01
+> **最后更新**: 2026-04-02
 > **维护者**: 每次新增 API 权限注解时必须同步更新此文档
 > **权威来源**: `docs/RBAC_INIT_DATA.md`
 
@@ -14,6 +14,7 @@
 | `ROLE_TEAM_LEADER` | 班组长 | business | 创建订单、出库最终确认 |
 | `ROLE_KEEPER` | 保管员 | business | 确认明细、拒绝订单、入库最终确认 |
 | `ROLE_PLANNER` | 计划员 | business | 计划员，可创建和提交工装订单 |
+| `ROLE_ENGINEERING` | 工程技术部 | business | 维护 MPL，可查看和编辑可拆卸件清单 |
 | `ROLE_PRODUCTION_PREP` | 生产准备工 | business | 运输工装，负责运输执行 |
 | `ROLE_AUDITOR` | 审计员 | system | 审计员，查看日志和报表 |
 
@@ -29,6 +30,8 @@
 | `tool:search` | Search Tools | tool | search |
 | `tool:view` | View Tool Details | tool | view |
 | `tool:location_view` | View Tool Location | tool | location_view |
+| `mpl:view` | View MPL | mpl | view |
+| `mpl:write` | Manage MPL | mpl | write |
 | `order:create` | Create Order | order | create |
 | `order:view` | View Order | order | view |
 | `order:list` | List Orders | order | list |
@@ -41,6 +44,14 @@
 | `notification:view` | View Notification | notification | view |
 | `notification:create` | Create Notification | notification | create |
 | `notification:send_feishu` | Send Feishu | notification | send_feishu |
+| `inspection:create` | Create Inspection Plan | inspection | create |
+| `inspection:list` | List Inspection Data | inspection | list |
+| `inspection:view` | View Inspection Detail | inspection | view |
+| `inspection:write` | Update Inspection Plan | inspection | write |
+| `inspection:publish` | Publish Inspection Plan | inspection | publish |
+| `inspection:execute` | Execute Inspection Task | inspection | execute |
+| `inspection:accept` | Accept Inspection Report | inspection | accept |
+| `inspection:close` | Close Inspection Workflow | inspection | close |
 | `log:view` | View System Log | log | view |
 | `admin:user_manage` | Manage Users | admin | user_manage |
 | `admin:role_manage` | Manage Roles | admin | role_manage |
@@ -51,27 +62,37 @@
 
 **权威来源**: `docs/RBAC_INIT_DATA.md` 第5节
 
-| 权限 | SYS_ADMIN | TEAM_LEADER | KEEPER | PLANNER | PRODUCTION_PREP | AUDITOR |
-|------|-----------|-------------|--------|---------|-----------------|---------|
-| `dashboard:view` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `tool:search` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `tool:view` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `tool:location_view` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| `order:create` | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| `order:view` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| `order:list` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| `order:submit` | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| `order:keeper_confirm` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| `order:final_confirm` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| `order:cancel` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| `order:delete` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `order:transport_execute` | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| `notification:view` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| `notification:create` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| `notification:send_feishu` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| `log:view` | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| `admin:user_manage` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `admin:role_manage` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 权限 | SYS_ADMIN | TEAM_LEADER | KEEPER | PLANNER | ENGINEERING | PRODUCTION_PREP | AUDITOR |
+|------|-----------|-------------|--------|---------|-------------|-----------------|---------|
+| `dashboard:view` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `tool:search` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `tool:view` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `tool:location_view` | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| `mpl:view` | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `mpl:write` | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `order:create` | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `order:view` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| `order:list` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| `order:submit` | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `order:keeper_confirm` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `order:final_confirm` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `order:cancel` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `order:delete` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `order:transport_execute` | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| `notification:view` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| `notification:create` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `notification:send_feishu` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `inspection:create` | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `inspection:list` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| `inspection:view` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| `inspection:write` | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `inspection:publish` | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `inspection:execute` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `inspection:accept` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `inspection:close` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `log:view` | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| `admin:user_manage` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `admin:role_manage` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -84,6 +105,7 @@
 | TEAM_LEADER | SELF, ORG | 可访问自己创建和本组织的订单 |
 | KEEPER | ORG, ASSIGNED | 可访问本组织及分配的订单 |
 | PLANNER | ORG, ORG_AND_CHILDREN | 可访问本组织及子组织的订单 |
+| ENGINEERING | ORG | 可访问本组织 MPL 管理数据 |
 | PRODUCTION_PREP | SELF, ORG | 可访问自己负责和本组织的运输任务 |
 | AUDITOR | ALL | 可访问所有数据 |
 | SYS_ADMIN | ALL | 可访问所有数据 |
@@ -117,6 +139,7 @@
 | `/api/tool-io-orders/pending-keeper` | GET | `order:keeper_confirm` | ❌ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/pre-transport` | GET | `order:transport_execute` | ❌ | ❌ | ❌ | ✅ | ❌ |
 | `/api/tool-io-orders/<order_no>/generate-keeper-text` | GET | `notification:create` | ✅ | ✅ | ❌ | ❌ | ❌ |
+| `/api/tool-io-orders/preview-keeper-text` | POST | `notification:create` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/generate-transport-text` | GET | `notification:create` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/notify-transport` | POST | `notification:send_feishu` | ❌ | ✅ | ❌ | ❌ | ❌ |
 | `/api/tool-io-orders/<order_no>/notify-keeper` | POST | `notification:send_feishu` | ❌ | ✅ | ❌ | ❌ | ❌ |
@@ -125,18 +148,46 @@
 
 ### 工装路由 (tool_routes.py)
 
+| API 端点 | 方法 | 所需权限 | TEAM_LEADER | KEEPER | PLANNER | ENGINEERING | PRODUCTION_PREP | AUDITOR |
+|---------|------|---------|-------------|--------|---------|-------------|-----------------|---------|
+| `/api/tools/search` | GET | `tool:search` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/tools/batch-query` | POST | `tool:view` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/tools/batch-status` | PATCH | `tool:status_update` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/tools/status-history/<code>` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl` | GET | `mpl:view` | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/mpl` | POST | `mpl:write` | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/mpl/<mpl_no>` | GET | `mpl:view` | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/mpl/<mpl_no>` | PUT | `mpl:write` | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/mpl/<mpl_no>` | DELETE | `mpl:write` | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/mpl/by-tool` | GET | `mpl:view` | ❌ | ✅* | ❌ | ✅ | ❌ | ❌ |
+
+`*` KEEPER 不具备 `/mpl` 页面访问权限；该查询仅允许在保管员确认链路中作为间接读能力使用。
+
+### 定检路由 (inspection_routes.py)
+
 | API 端点 | 方法 | 所需权限 | TEAM_LEADER | KEEPER | PLANNER | PRODUCTION_PREP | AUDITOR |
 |---------|------|---------|-------------|--------|---------|-----------------|---------|
-| `/api/tools/search` | GET | `tool:search` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/tools/batch-query` | POST | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/tools/batch-status` | PATCH | `tool:status_update` | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `/api/tools/status-history/<code>` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/mpl` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/mpl` | POST | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/mpl/<mpl_no>` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/mpl/<mpl_no>` | PUT | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/mpl/<mpl_no>` | DELETE | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `/api/mpl/by-tool` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/inspection/plans` | GET | `inspection:list` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/plans` | POST | `inspection:create` | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/inspection/plans/<plan_no>` | GET | `inspection:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/plans/<plan_no>` | PUT | `inspection:write` | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/inspection/plans/<plan_no>/publish` | POST | `inspection:publish` | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `/api/inspection/plans/<plan_no>/preview-tasks` | GET | `inspection:list` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/plans/<plan_no>/close` | POST | `inspection:close` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks` | GET | `inspection:list` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/tasks/<task_no>` | GET | `inspection:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/tasks/<task_no>/receive` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/start-inspection` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/submit-report` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/accept` | POST | `inspection:accept` | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/reject` | POST | `inspection:accept` | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/create-outbound` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/create-inbound` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/close` | POST | `inspection:close` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/tasks/<task_no>/linked-orders` | GET | `inspection:view` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/orders/<order_no>/link-task` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `/api/inspection/status/<serial_no>` | GET | `inspection:list` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `/api/inspection/advance-by-order/<order_no>` | POST | `inspection:execute` | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 ### 组织路由 (org_routes.py)
 
@@ -193,6 +244,9 @@
 
 | 日期 | 变更内容 | 变更人 |
 |------|---------|--------|
+| 2026-04-02 | 新增 inspection 服务与路由权限矩阵，补充 inspection:* 权限目录和 API 映射 | Codex |
+| 2026-04-02 | MPL 权限从 `tool:view` 拆分为 `mpl:view` / `mpl:write`，新增 ENGINEERING 角色并限制 `/mpl` 仅工程技术部与系统管理员访问 | Codex |
+| 2026-04-02 | 新增 `POST /api/tool-io-orders/preview-keeper-text` 权限映射，供订单创建页生成不落库的保管员预览文本 | Codex |
 | 2026-04-01 | 新增 MPL API 与系统配置 API 权限映射；当前 MPL 管理复用 `tool:view`，系统配置使用 `admin:user_manage` | Codex |
 | 2026-04-01 | 修正 `cancel_order` 取消订单业务规则：只允许 `draft` 和 `submitted` 状态取消，`keeper_confirmed` 及之后状态不允许取消 | Claude Code |
 | 2026-03-27 | 移除 KEEPER 的 `order:transport_execute` 权限，修复保管员能看到预知运输菜单但无权限访问的问题 | Claude Code |

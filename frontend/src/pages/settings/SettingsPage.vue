@@ -138,24 +138,61 @@
           <CardHeader class="border-b border-border">
             <div class="space-y-1">
               <p class="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">系统能力</p>
-              <CardTitle class="text-lg text-foreground">MPL 功能开关</CardTitle>
+              <CardTitle class="text-lg text-foreground">功能开关</CardTitle>
             </div>
           </CardHeader>
           <CardContent class="pt-6">
-            <div class="space-y-4">
-              <div class="flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-6">
-                <div class="space-y-1">
-                  <p class="text-sm font-semibold text-foreground">启用 MPL 校验</p>
-                  <p class="text-sm text-muted-foreground">保管员确认时检查工装是否已维护可拆卸件清单。</p>
+            <!-- Feature Flags Table -->
+            <div class="mb-6">
+              <h3 class="text-sm font-semibold text-foreground mb-4">功能开关管理</h3>
+              <el-table :data="featureFlags" stripe class="w-full" v-loading="featureFlagsLoading">
+                <el-table-column prop="config_key" label="开关键" min-width="180" />
+                <el-table-column prop="config_value" label="当前值" min-width="120">
+                  <template #default="{ row }">
+                    <el-tag :type="row.config_value === 'true' ? 'success' : 'info'" disable-transitions>
+                      {{ row.config_value }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="description" label="描述" min-width="240" show-overflow-tooltip />
+                <el-table-column prop="updated_by" label="最后更新人" min-width="100" />
+                <el-table-column prop="updated_at" label="更新时间" min-width="160">
+                  <template #default="{ row }">
+                    {{ formatDateTime(row.updated_at) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" min-width="120" fixed="right">
+                  <template #default="{ row }">
+                    <el-switch
+                      :model-value="row.config_value === 'true'"
+                      :loading="row._loading"
+                      @change="(value) => updateFeatureFlagHandler(row.config_key, value)"
+                      active-value="true"
+                      inactive-value="false"
+                    />
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <!-- MPL Specific Settings -->
+            <div>
+              <h3 class="text-sm font-semibold text-foreground mb-4">MPL 功能</h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-6">
+                  <div class="space-y-1">
+                    <p class="text-sm font-semibold text-foreground">启用 MPL 校验</p>
+                    <p class="text-sm text-muted-foreground">保管员确认时检查工装是否已维护可拆卸件清单。</p>
+                  </div>
+                  <el-switch v-model="systemConfig.mpl_enabled" :loading="systemConfigLoading" @change="(value) => updateMplConfig('mpl_enabled', value)" />
                 </div>
-                <el-switch v-model="systemConfig.mpl_enabled" :loading="systemConfigLoading" @change="(value) => updateMplConfig('mpl_enabled', value)" />
-              </div>
-              <div class="flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-6">
-                <div class="space-y-1">
-                  <p class="text-sm font-semibold text-foreground">严格模式</p>
-                  <p class="text-sm text-muted-foreground">缺少 MPL 时阻止保管员完成确认，而不是仅显示警告。</p>
+                <div class="flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-6">
+                  <div class="space-y-1">
+                    <p class="text-sm font-semibold text-foreground">严格模式</p>
+                    <p class="text-sm text-muted-foreground">缺少 MPL 时阻止保管员完成确认，而不是仅显示警告。</p>
+                  </div>
+                  <el-switch v-model="systemConfig.mpl_strict_mode" :loading="systemConfigLoading" @change="(value) => updateMplConfig('mpl_strict_mode', value)" />
                 </div>
-                <el-switch v-model="systemConfig.mpl_strict_mode" :loading="systemConfigLoading" @change="(value) => updateMplConfig('mpl_strict_mode', value)" />
               </div>
             </div>
           </CardContent>
@@ -294,7 +331,7 @@ import {
   FeedbackStatusLabels,
   validateFeedback
 } from '@/api/feedback'
-import { getSystemConfigs, updateSystemConfig } from '@/api/systemConfig'
+import { getSystemConfigs, updateSystemConfig, getFeatureFlags, updateFeatureFlag } from '@/api/systemConfig'
 
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
@@ -330,6 +367,8 @@ function formatPermission(perm) {
     'order:cancel': '取消订单',
     'tool:search': '工装搜索',
     'tool:view': '工装查看',
+    'mpl:view': 'MPL查看',
+    'mpl:write': 'MPL维护',
     'notification:view': '通知查看',
     'admin:user_manage': '账号管理'
   }
@@ -443,6 +482,8 @@ const systemConfig = ref({
   mpl_enabled: false,
   mpl_strict_mode: false
 })
+const featureFlagsLoading = ref(false)
+const featureFlags = ref([])
 
 function getCategoryLabel(category) {
   return FeedbackCategoryLabels[category] || category
@@ -537,11 +578,47 @@ async function updateMplConfig(configKey, value) {
   }
 }
 
+async function loadFeatureFlags() {
+  if (!session.hasPermission('admin:user_manage')) return
+  featureFlagsLoading.value = true
+  try {
+    const result = await getFeatureFlags()
+    featureFlags.value = Array.isArray(result.data) ? result.data.map(f => ({ ...f, _loading: false })) : []
+  } catch (error) {
+    ElMessage.error(error.message || '获取功能开关列表失败')
+  } finally {
+    featureFlagsLoading.value = false
+  }
+}
+
+async function updateFeatureFlagHandler(flagKey, value) {
+  const flag = featureFlags.value.find(f => f.config_key === flagKey)
+  if (flag) {
+    flag._loading = true
+  }
+  try {
+    const result = await updateFeatureFlag(flagKey, value ? 'true' : 'false')
+    if (result.success) {
+      ElMessage.success('功能开关已更新')
+      await loadFeatureFlags()
+    } else {
+      ElMessage.error(result.error || '功能开关更新失败')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '功能开关更新失败')
+  } finally {
+    if (flag) {
+      flag._loading = false
+    }
+  }
+}
+
 onMounted(async () => {
   initTheme()
   bindSystemThemeListener()
   await loadUserFeedback()
   await loadSystemConfig()
+  await loadFeatureFlags()
 })
 
 onBeforeUnmount(() => {

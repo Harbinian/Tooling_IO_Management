@@ -7,6 +7,7 @@ env/
 venv/
 ENV/
 .env
+migrations/
 .backend.stderr.log
 .backend.stdout.log
 .frontend.stdout.log

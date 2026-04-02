@@ -112,9 +112,9 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 
 如果提示词是 bug 提示词（文件名匹配 `*_bug_*.md`）: / If the prompt is a bug prompt (filename matches `*_bug_*.md`):
 
-1. 以 `docs/BUG_WORKFLOW_RULES.md` 作为权威来源 / Reference `docs/BUG_WORKFLOW_RULES.md` as the source of truth
+1. 以 `.claude/rules/02_debug.md` 作为权威来源 / Reference `.claude/rules/02_debug.md` as the source of truth
 2. 检查 bug 是否遵循一个 bug 一个提示词原则 / Check if the bug follows one-bug-one-prompt principle
-3. 如果这是 bug-triage 创建的新 bug，根据 BUG_WORKFLOW_RULES.md 第 5 节验证升级条件是否满足 / If this is a NEW bug being created by bug-triage, verify escalation conditions are met per Section 5 of BUG_WORKFLOW_RULES.md
+3. Bug 修复任务必须执行 D1-D8 步骤，且 D3/D5/D6 必须有 reviewer 评分审核
 
 ---
 
@@ -169,12 +169,14 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 **Bug修复任务规则 (02_debug.md)**:
 - D1 团队组建
 - D2 问题描述
-- D3 遏制措施
+- D3 遏制措施 → **全部维度达标**
 - D4 根本原因分析
-- D5 永久解决方案
-- D6 实施
+- D5 永久解决方案 → **全部维度达标**
+- D6 实施 → **全部维度达标**
 - D7 预防
 - D8 文档
+
+**各维度最低门槛**：root_cause_depth≥0.24, solution_completeness≥0.24, code_quality≥0.16, test_coverage=0.20(满分)
 
 **重构任务规则 (01_workflow.md)**:
 - Phase 1: 业务需求与场景

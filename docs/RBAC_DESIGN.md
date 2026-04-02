@@ -182,6 +182,11 @@ Roles represent sets of permissions.
 
 Permissions represent atomic actions within the system.
 
+MPL 管理遵循最小权限原则，查看与维护能力必须拆分：
+
+- `mpl:view`: 查询 MPL 数据，包括保管员确认流程中的间接读取
+- `mpl:write`: 访问 `/mpl` 管理页并执行创建、编辑、删除
+
 命名规范：/ Naming convention:
 
 资源:操作 / resource:action
@@ -199,6 +204,8 @@ order:cancel / 订单:取消
 tool:search / 工装:搜索
 tool:view / 工装:查看
 tool:location_view / 工装:库位查看
+mpl:view / MPL:查看
+mpl:write / MPL:维护
 
 notification:view / 通知:查看
 notification:create / 通知:创建

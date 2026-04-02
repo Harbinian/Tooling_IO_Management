@@ -35,6 +35,7 @@ Business roles:
 - team_leader
 - keeper
 - planner
+- engineering
 - production_prep_worker
 
 System roles:
@@ -49,6 +50,7 @@ SQL
     ('ROLE_TEAM_LEADER', 'team_leader', '班组长', 'business'),
     ('ROLE_KEEPER', 'keeper', '保管员', 'business'),
     ('ROLE_PLANNER', 'planner', '计划员', 'business'),
+    ('ROLE_ENGINEERING', 'engineering', '工程技术部', 'business'),
     ('ROLE_PRODUCTION_PREP', 'production_prep_worker', '生产准备工', 'business'),
     ('ROLE_SYS_ADMIN', 'sys_admin', '系统管理员', 'system'),
     ('ROLE_AUDITOR', 'auditor', '审计员', 'system')
@@ -111,6 +113,8 @@ SQL
     ('tool:search', 'Search Tools', 'tool', 'search'),
     ('tool:view', 'View Tool', 'tool', 'view'),
     ('tool:location_view', 'View Tool Location', 'tool', 'location_view'),
+    ('mpl:view', 'View MPL', 'mpl', 'view'),
+    ('mpl:write', 'Manage MPL', 'mpl', 'write'),
     ('tool:status_update', 'Update Tool Status', 'tool', 'status_update'),
     ('order:create', 'Create Order', 'order', 'create'),
     ('order:view', 'View Order', 'order', 'view'),
@@ -124,6 +128,14 @@ SQL
     ('notification:view', 'View Notification', 'notification', 'view'),
     ('notification:create', 'Create Notification', 'notification', 'create'),
     ('notification:send_feishu', 'Send Feishu Notification', 'notification', 'send_feishu'),
+    ('inspection:create', 'Create Inspection Plan', 'inspection', 'create'),
+    ('inspection:list', 'List Inspection Data', 'inspection', 'list'),
+    ('inspection:view', 'View Inspection Detail', 'inspection', 'view'),
+    ('inspection:write', 'Update Inspection Plan', 'inspection', 'write'),
+    ('inspection:publish', 'Publish Inspection Plan', 'inspection', 'publish'),
+    ('inspection:execute', 'Execute Inspection Task', 'inspection', 'execute'),
+    ('inspection:accept', 'Accept Inspection Report', 'inspection', 'accept'),
+    ('inspection:close', 'Close Inspection Workflow', 'inspection', 'close'),
     ('log:view', 'View System Log', 'log', 'view'),
     ('admin:user_manage', 'Manage Users', 'admin', 'user_manage'),
     ('admin:role_manage', 'Manage Roles', 'admin', 'role_manage')
@@ -150,6 +162,9 @@ order:submit
 order:final_confirm
 notification:view
 notification:create
+inspection:list
+inspection:view
+inspection:accept
 
 SQL
 
@@ -164,7 +179,10 @@ SQL
     ('ROLE_TEAM_LEADER', 'order:submit'),
     ('ROLE_TEAM_LEADER', 'order:final_confirm'),
     ('ROLE_TEAM_LEADER', 'notification:view'),
-    ('ROLE_TEAM_LEADER', 'notification:create')
+    ('ROLE_TEAM_LEADER', 'notification:create'),
+    ('ROLE_TEAM_LEADER', 'inspection:list'),
+    ('ROLE_TEAM_LEADER', 'inspection:view'),
+    ('ROLE_TEAM_LEADER', 'inspection:accept')
 
 ---
 
@@ -183,6 +201,10 @@ order:final_confirm
 notification:view  
 notification:create  
 notification:send_feishu  
+inspection:list  
+inspection:view  
+inspection:execute  
+inspection:close  
 log:view  
 
 SQL
@@ -200,6 +222,10 @@ SQL
     ('ROLE_KEEPER', 'notification:view'),
     ('ROLE_KEEPER', 'notification:create'),
     ('ROLE_KEEPER', 'notification:send_feishu'),
+    ('ROLE_KEEPER', 'inspection:list'),
+    ('ROLE_KEEPER', 'inspection:view'),
+    ('ROLE_KEEPER', 'inspection:execute'),
+    ('ROLE_KEEPER', 'inspection:close'),
     ('ROLE_KEEPER', 'log:view')
 
 ---
@@ -216,6 +242,11 @@ order:view
 order:list  
 order:submit  
 notification:view  
+inspection:create  
+inspection:list  
+inspection:view  
+inspection:write  
+inspection:publish  
 
 SQL
 
@@ -228,7 +259,34 @@ SQL
     ('ROLE_PLANNER', 'order:view'),
     ('ROLE_PLANNER', 'order:list'),
     ('ROLE_PLANNER', 'order:submit'),
-    ('ROLE_PLANNER', 'notification:view')
+    ('ROLE_PLANNER', 'notification:view'),
+    ('ROLE_PLANNER', 'inspection:create'),
+    ('ROLE_PLANNER', 'inspection:list'),
+    ('ROLE_PLANNER', 'inspection:view'),
+    ('ROLE_PLANNER', 'inspection:write'),
+    ('ROLE_PLANNER', 'inspection:publish')
+
+---
+
+## 工程技术部 (Engineering)
+
+Permissions
+
+dashboard:view
+tool:search
+tool:view
+mpl:view
+mpl:write
+
+SQL
+
+    INSERT INTO sys_role_permission_rel (role_id, permission_code)
+    VALUES
+    ('ROLE_ENGINEERING', 'dashboard:view'),
+    ('ROLE_ENGINEERING', 'tool:search'),
+    ('ROLE_ENGINEERING', 'tool:view'),
+    ('ROLE_ENGINEERING', 'mpl:view'),
+    ('ROLE_ENGINEERING', 'mpl:write')
 
 ---
 
@@ -300,7 +358,17 @@ ALL
 ORG  
 ORG_AND_CHILDREN  
 SELF  
-ASSIGNED  
+ASSIGNED
+
+Role default scopes:
+
+- TEAM_LEADER: SELF, ORG
+- KEEPER: ORG, ASSIGNED
+- PLANNER: ORG, ORG_AND_CHILDREN
+- ENGINEERING: ORG
+- PRODUCTION_PREP: SELF, ORG
+- AUDITOR: ALL
+- SYS_ADMIN: ALL
 
 ---
 

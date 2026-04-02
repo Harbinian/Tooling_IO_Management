@@ -49,3 +49,50 @@ def api_update_system_config(config_key):
     except Exception as exc:
         logger.error("failed to update system config %s: %s", config_key, exc)
         return jsonify({"success": False, "error": str(exc)}), 500
+
+
+# Feature flag endpoints
+@system_config_bp.route("/api/admin/feature-flags", methods=["GET"])
+@require_permission("admin:user_manage")
+def api_list_feature_flags():
+    try:
+        from backend.services.feature_flag_service import get_feature_flag_service
+
+        service = get_feature_flag_service()
+        flags = service.get_all_flags()
+        return jsonify({"success": True, "data": flags})
+    except Exception as exc:
+        logger.error("failed to list feature flags: %s", exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@system_config_bp.route("/api/admin/feature-flags/<flag_key>", methods=["PUT"])
+@require_permission("admin:user_manage")
+def api_update_feature_flag(flag_key):
+    try:
+        from backend.services.feature_flag_service import get_feature_flag_service
+
+        service = get_feature_flag_service()
+        payload = get_json_dict(required=True)
+        value = payload.get("value")
+        operator_id = get_authenticated_user().get("user_id", "unknown") if get_authenticated_user() else "unknown"
+        success = service.set_flag(flag_key, value, operator_id)
+        if success:
+            return jsonify({"success": True, "data": {"config_key": flag_key, "config_value": value}})
+        return jsonify({"success": False, "error": "Failed to update feature flag"}), 500
+    except Exception as exc:
+        logger.error("failed to update feature flag %s: %s", flag_key, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@system_config_bp.route("/api/feature-flags/<flag_key>/enabled", methods=["GET"])
+def api_is_feature_flag_enabled(flag_key):
+    try:
+        from backend.services.feature_flag_service import get_feature_flag_service
+
+        service = get_feature_flag_service()
+        enabled = service.is_enabled(flag_key)
+        return jsonify({"success": True, "data": {"config_key": flag_key, "enabled": enabled}})
+    except Exception as exc:
+        logger.error("failed to check feature flag %s: %s", flag_key, exc)
+        return jsonify({"success": False, "error": str(exc)}), 500

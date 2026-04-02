@@ -169,6 +169,7 @@ def _bootstrap_initial_data(db: DatabaseManager):
             ('ROLE_TEAM_LEADER', 'team_leader', 'Team Leader', 'business'),
             ('ROLE_KEEPER', 'keeper', 'Keeper', 'business'),
             ('ROLE_PLANNER', 'planner', 'Planner', 'business'),
+            ('ROLE_ENGINEERING', 'engineering', 'Engineering', 'business'),
             ('ROLE_SYS_ADMIN', 'sys_admin', 'System Administrator', 'system'),
             ('ROLE_AUDITOR', 'auditor', 'Auditor', 'system')
         """, fetch=False)
@@ -184,6 +185,8 @@ def _bootstrap_initial_data(db: DatabaseManager):
             ('tool:search', 'Search Tools', 'tool', 'search'),
             ('tool:view', 'View Tool', 'tool', 'view'),
             ('tool:location_view', 'View Tool Location', 'tool', 'location_view'),
+            ('mpl:view', 'View MPL', 'mpl', 'view'),
+            ('mpl:write', 'Manage MPL', 'mpl', 'write'),
             ('order:create', 'Create Order', 'order', 'create'),
             ('order:view', 'View Order', 'order', 'view'),
             ('order:list', 'List Orders', 'order', 'list'),
@@ -286,6 +289,47 @@ def _bootstrap_initial_data(db: DatabaseManager):
 
 def _ensure_incremental_permission_defaults(db: DatabaseManager):
     """Ensure newly introduced permissions exist in upgraded environments."""
+    _ensure_role_exists(
+        db,
+        role_id="ROLE_ENGINEERING",
+        role_code="engineering",
+        role_name="Engineering",
+        role_type="business",
+    )
+    _ensure_permission_exists(
+        db,
+        permission_code="mpl:view",
+        permission_name="View MPL",
+        resource_name="mpl",
+        action_name="view",
+    )
+    _ensure_permission_exists(
+        db,
+        permission_code="mpl:write",
+        permission_name="Manage MPL",
+        resource_name="mpl",
+        action_name="write",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_ENGINEERING",
+        permission_code="mpl:view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_ENGINEERING",
+        permission_code="mpl:write",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_SYS_ADMIN",
+        permission_code="mpl:view",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_SYS_ADMIN",
+        permission_code="mpl:write",
+    )
     _ensure_permission_exists(
         db,
         permission_code="order:delete",
@@ -348,6 +392,62 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
         resource_name="tool",
         action_name="status_update",
     )
+    for permission_code, permission_name, resource_name, action_name in [
+        ("inspection:create", "Create Inspection Plan", "inspection", "create"),
+        ("inspection:list", "List Inspection Data", "inspection", "list"),
+        ("inspection:view", "View Inspection Detail", "inspection", "view"),
+        ("inspection:write", "Update Inspection Plan", "inspection", "write"),
+        ("inspection:publish", "Publish Inspection Plan", "inspection", "publish"),
+        ("inspection:execute", "Execute Inspection Task", "inspection", "execute"),
+        ("inspection:accept", "Accept Inspection Report", "inspection", "accept"),
+        ("inspection:close", "Close Inspection Workflow", "inspection", "close"),
+    ]:
+        _ensure_permission_exists(
+            db,
+            permission_code=permission_code,
+            permission_name=permission_name,
+            resource_name=resource_name,
+            action_name=action_name,
+        )
+    for permission_code in (
+        "inspection:create",
+        "inspection:list",
+        "inspection:view",
+        "inspection:write",
+        "inspection:publish",
+        "inspection:execute",
+        "inspection:accept",
+        "inspection:close",
+    ):
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_SYS_ADMIN",
+            permission_code=permission_code,
+        )
+    for permission_code in ("inspection:create", "inspection:list", "inspection:view", "inspection:write", "inspection:publish"):
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_PLANNER",
+            permission_code=permission_code,
+        )
+    for permission_code in ("inspection:list", "inspection:view", "inspection:execute", "inspection:close"):
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_KEEPER",
+            permission_code=permission_code,
+        )
+    for permission_code in ("inspection:list", "inspection:view", "inspection:accept"):
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_TEAM_LEADER",
+            permission_code=permission_code,
+        )
+    for permission_code in ("inspection:list", "inspection:view"):
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_AUDITOR",
+            permission_code=permission_code,
+        )
     _ensure_role_permission_rel(
         db,
         role_id="ROLE_KEEPER",
@@ -478,7 +578,7 @@ def _ensure_permission_exists(
     permission_name: str,
     resource_name: str,
     action_name: str,
-) -> None:
+    ) -> None:
     """Insert a permission row when older environments do not have it yet."""
     db.execute_query(
         f"""
@@ -486,6 +586,27 @@ def _ensure_permission_exists(
         BEGIN
             INSERT INTO sys_permission (permission_code, permission_name, resource_name, action_name)
             VALUES ('{permission_code}', '{permission_name}', '{resource_name}', '{action_name}')
+        END
+        """,
+        fetch=False,
+    )
+
+
+def _ensure_role_exists(
+    db: DatabaseManager,
+    *,
+    role_id: str,
+    role_code: str,
+    role_name: str,
+    role_type: str,
+) -> None:
+    """Insert a role row when older environments do not have it yet."""
+    db.execute_query(
+        f"""
+        IF NOT EXISTS (SELECT 1 FROM sys_role WHERE role_id = '{role_id}')
+        BEGIN
+            INSERT INTO sys_role (role_id, role_code, role_name, role_type)
+            VALUES ('{role_id}', '{role_code}', '{role_name}', '{role_type}')
         END
         """,
         fetch=False,

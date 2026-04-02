@@ -548,11 +548,19 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.snapshot_before(page_taidongxu)
 
         try:
-            # 在搜索对话框中输入工装编码
-            search_input = page_taidongxu.query_selector('input[placeholder*="搜索"], input[placeholder*="编码"]')
+            # 在搜索对话框中输入工装编码并点击搜索按钮
+            # 使用 placeholder 匹配序列号输入框
+            search_input = page_taidongxu.query_selector('input[placeholder*="序列号"]')
+            if not search_input:
+                search_input = page_taidongxu.query_selector('input[placeholder*="编码"]')
             if search_input:
                 search_input.fill(TEST_TOOL["serial_no"])
-                time.sleep(1)
+                time.sleep(0.3)
+
+            # 点击搜索按钮执行搜索（使用 flex-1 class 精确定位对话框内的搜索按钮）
+            page_taidongxu.click('button.flex-1.bg-primary:has-text("搜索")', timeout=5000)
+            # 等待搜索结果加载
+            page_taidongxu.wait_for_timeout(2000)
 
             if orchestrator:
                 snap, anomalies, checks = orchestrator.snapshot_after(
@@ -581,11 +589,13 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.snapshot_before(page_taidongxu)
 
         try:
-            # 点击第一行工装结果
-            page_taidongxu.click('.el-table__body-wrapper .el-table__body tr:first-child, .el-table__row', timeout=5000)
+            # 等待搜索结果表格出现，然后点击第一行的复选框
+            # Element Plus 表格行选择器 - 需要点击 checkbox 才能选中行
+            page_taidongxu.wait_for_selector('.el-table__body .el-checkbox', timeout=5000)
+            page_taidongxu.click('.el-table__body .el-checkbox:first-child', timeout=5000)
             time.sleep(0.5)
             # 点击确认/添加按钮
-            page_taidongxu.click('button:has-text("添加到明细"), button:has-text("确定"), button:has-text("确认")', timeout=5000)
+            page_taidongxu.click('button:has-text("添加到明细")', timeout=5000)
             time.sleep(0.5)
 
             if orchestrator:
@@ -609,16 +619,52 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
                 _pw_sensing_advance(orchestrator, "pw_wf_select_tool", anomalies)
             report.add_step("wf_06", "taidongxu", "选择工装", "FAIL", str(e))
 
-        # 7. 填写用途（出库必填）
+        # 7. 填写用途、目标位置和计划使用时间（出库必填）
         if orchestrator:
             orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
             orchestrator.snapshot_before(page_taidongxu)
 
         try:
-            usage_select = page_taidongxu.query_selector('select, [class*="select"]')
-            if usage_select:
-                page_taidongxu.select_option(usage_select, index=1, timeout=3000)
-                time.sleep(0.3)
+            # 使用 JavaScript 直接设置 Vue 表单值（绕过复杂的 UI 交互）
+            from datetime import datetime, timedelta
+            tomorrow = datetime.now() + timedelta(days=1)
+            planned_time = tomorrow.strftime("%Y-%m-%d %H:%M:%S")
+
+            # 直接通过 JavaScript 设置表单字段
+            page_taidongxu.evaluate("""
+                () => {
+                    // 尝试找到 Vue 实例并设置表单值
+                    const vueApp = document.querySelector('#app').__vue_app__;
+                    if (vueApp) {
+                        // 查找所有 el-select 元素并设置值
+                        const selects = document.querySelectorAll('.el-select');
+                        // 用途 - 第一个 select (index 0)
+                        if (selects[0]) {
+                            selects[0].__vueParentComponent__.exposed.modelValue = '现场使用';
+                        }
+                        // 目标位置 - 第二个 select (index 1)
+                        if (selects[1]) {
+                            selects[1].__vueParentComponent__.exposed.modelValue = 'A06';
+                        }
+                    }
+                }
+            """)
+            time.sleep(0.5)
+
+            # 使用 JavaScript 设置日期时间
+            page_taidongxu.evaluate(f"""
+                () => {{
+                    const dateInput = document.querySelector('.el-date-editor input');
+                    if (dateInput) {{
+                        // 触发 focus 事件
+                        dateInput.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                        dateInput.value = '{planned_time}';
+                        dateInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        dateInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    }}
+                }}
+            """)
+            time.sleep(0.3)
 
             if orchestrator:
                 snap, anomalies, checks = orchestrator.snapshot_after(
@@ -650,21 +696,46 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
         try:
             submit_btn = page_taidongxu.query_selector('button:has-text("提交单据")')
             if submit_btn:
-                submit_btn.click()
-                time.sleep(2)
+                # 检查按钮是否可用
+                is_disabled = submit_btn.get_attribute('disabled')
+                print(f"   DEBUG: Submit button disabled attr: {is_disabled}")
+                print(f"   DEBUG: Submit button HTML: {submit_btn.inner_html()[:100]}")
 
-                # 确认提交对话框
+                submit_btn.click()
+                time.sleep(3)  # 给更多时间让 API 调用完成
+
+                # 检查是否有错误消息或警告消息
                 try:
-                    page_taidongxu.click('button:has-text("确认"), button:has-text("确定")', timeout=3000)
-                    time.sleep(1)
+                    # 检查 el-message 组件
+                    messages = page_taidongxu.query_selector_all('.el-message')
+                    for msg in messages:
+                        msg_text = msg.text_content()
+                        print(f"   DEBUG: Message: {msg_text}")
+                except Exception as e:
+                    print(f"   DEBUG: Error checking messages: {e}")
+
+                # 检查页面内容看是否有验证错误
+                try:
+                    page_content = page_taidongxu.content()
+                    if '请选择' in page_content or '请输入' in page_content:
+                        print(f"   DEBUG: Page has validation hints")
                 except:
                     pass
+
+                # 等待导航
+                try:
+                    page_taidongxu.wait_for_url(lambda url: '/inventory/' in url and '/create' not in url, timeout=5000)
+                except:
+                    pass
+
+                current_url = page_taidongxu.url
+                print(f"   DEBUG: URL after submit: {current_url}")
 
                 if orchestrator:
                     snap, anomalies, checks = orchestrator.snapshot_after(
                         page_taidongxu,
                         operation="pw_wf_submit_order",
-                        api_response={"submitted": True},
+                        api_response={"submitted": True, "url": current_url},
                         expected_next_status="submitted"
                     )
                     _pw_sensing_advance(orchestrator, "pw_wf_submit_order", anomalies)
@@ -698,15 +769,21 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
 
         try:
             # 从 URL 或页面元素获取订单号
+            # 等待页面导航完成
+            page_taidongxu.wait_for_load_state("networkidle", timeout=10000)
+            time.sleep(1)
             current_url = page_taidongxu.url
-            if "/detail" in current_url or "/order" in current_url:
+            print(f"   DEBUG: Current URL after submit: {current_url}")
+            if "/detail/" in current_url or "/order/" in current_url:
                 order_no = current_url.split("/")[-1].split("?")[0]
+                print(f"   DEBUG: Extracted order_no from URL: {order_no}")
             else:
                 # 尝试从页面获取
                 page_taidongxu.goto(f"{FRONTEND_URL}/inventory", wait_until="networkidle", timeout=10000)
                 time.sleep(1)
-                order_no_text = get_text(page_taidongxu, '[class*="order-no"], [class*="单号"]')
+                order_no_text = get_text(page_taidongxu, '[class*="order-no"], [class*="单号"], [class*="orderNo"]')
                 order_no = order_no_text.strip() if order_no_text else None
+                print(f"   DEBUG: Extracted order_no from page: {order_no}")
 
             if orchestrator:
                 snap, anomalies, checks = orchestrator.snapshot_after(

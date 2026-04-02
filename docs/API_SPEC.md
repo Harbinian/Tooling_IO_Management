@@ -142,7 +142,28 @@
 
 ---
 
-### 1.2 查询订单列表
+### 1.2 预览保管员通知文本
+
+**POST** `/api/tool-io-orders/preview-keeper-text`
+
+**实现说明：** 基于创建订单相同 payload 直接生成保管员通知预览文本，不创建订单、不写入通知记录。
+
+**权限要求：** `notification:create`
+
+**请求参数：**
+
+与 `POST /api/tool-io-orders` 保持一致。
+
+**响应参数：**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| success | boolean | 是否成功 |
+| text | string | 保管员通知预览文本 |
+
+---
+
+### 1.3 查询订单列表
 
 **GET** `/api/tool-io-orders`
 
@@ -174,7 +195,7 @@
 
 ---
 
-### 1.3 查询订单详情
+### 1.4 查询订单详情
 
 **GET** `/api/tool-io-orders/{order_no}`
 
@@ -197,7 +218,7 @@
 
 ---
 
-### 1.4 提交订单
+### 1.5 提交订单
 
 **POST** `/api/tool-io-orders/{order_no}/submit`
 
@@ -562,6 +583,46 @@
 
 ---
 
+## 4. 定检任务 API
+
+### 4.1 定检计划
+
+| 方法 | 端点 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/inspection/plans` | `inspection:list` | 分页查询定检计划，支持 `status`、`plan_year`、`plan_month`、`creator_id`、`inspection_type`、`keyword` |
+| POST | `/api/inspection/plans` | `inspection:create` | 创建定检计划，必填 `plan_name`、`plan_year`、`plan_month` |
+| GET | `/api/inspection/plans/{plan_no}` | `inspection:view` | 获取计划详情 |
+| PUT | `/api/inspection/plans/{plan_no}` | `inspection:write` | 修改草稿计划 |
+| POST | `/api/inspection/plans/{plan_no}/publish` | `inspection:publish` | 发布计划并批量生成任务，同时触发通知 |
+| GET | `/api/inspection/plans/{plan_no}/preview-tasks` | `inspection:list` | 预览计划月份内到期/逾期工装 |
+| POST | `/api/inspection/plans/{plan_no}/close` | `inspection:close` | 关闭已全部完成的计划 |
+
+### 4.2 定检任务
+
+| 方法 | 端点 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/inspection/tasks` | `inspection:list` | 分页查询任务，支持 `task_status`、`plan_no`、`assigned_to_id`、`inspection_result`、`report_no`、`keyword` |
+| GET | `/api/inspection/tasks/{task_no}` | `inspection:view` | 获取任务详情，包含报告与关联订单 |
+| POST | `/api/inspection/tasks/{task_no}/receive` | `inspection:execute` | 领取任务，状态 `pending -> received` |
+| POST | `/api/inspection/tasks/{task_no}/start-inspection` | `inspection:execute` | 开始检验，状态 `received/outbound_completed -> in_progress` |
+| POST | `/api/inspection/tasks/{task_no}/submit-report` | `inspection:execute` | 提交检测报告，附件为 Base64，限制 2MB |
+| POST | `/api/inspection/tasks/{task_no}/accept` | `inspection:accept` | 验收通过，状态 `report_submitted -> accepted` |
+| POST | `/api/inspection/tasks/{task_no}/reject` | `inspection:accept` | 驳回报告，记录 `reject_reason`，并回到 `report_submitted` |
+| POST | `/api/inspection/tasks/{task_no}/create-outbound` | `inspection:execute` | 绑定出库单，状态 `received -> outbound_created` |
+| POST | `/api/inspection/tasks/{task_no}/create-inbound` | `inspection:execute` | 绑定入库单，状态 `accepted -> inbound_created` |
+| POST | `/api/inspection/tasks/{task_no}/close` | `inspection:close` | 关闭任务，状态 `inbound_completed -> closed`，回写下次定检日期 |
+| GET | `/api/inspection/tasks/{task_no}/linked-orders` | `inspection:view` | 查询任务关联的出入库单 |
+| POST | `/api/inspection/orders/{order_no}/link-task` | `inspection:execute` | 依据订单类型回填到定检任务 |
+| POST | `/api/inspection/advance-by-order/{order_no}` | `inspection:execute` | 根据出入库单状态自动推进或回退定检任务 |
+
+### 4.3 定检状态
+
+| 方法 | 端点 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/inspection/status/{serial_no}` | `inspection:list` | 查询工装当前定检状态快照 |
+
+---
+
 ### 2.2 批量查询工装
 
 **POST** `/api/tools/batch-query`
@@ -582,7 +643,7 @@
 
 **GET** `/api/mpl`
 
-**权限**: `tool:view`
+**权限**: `mpl:view`
 
 **查询参数**
 
@@ -597,7 +658,7 @@
 
 **POST** `/api/mpl`
 
-**权限**: `tool:view`
+**权限**: `mpl:write`
 
 **请求体**
 
@@ -625,13 +686,13 @@
 
 **GET** `/api/mpl/{mpl_no}`
 
-**权限**: `tool:view`
+**权限**: `mpl:view`
 
 ### 2.3.4 更新 MPL 分组
 
 **PUT** `/api/mpl/{mpl_no}`
 
-**权限**: `tool:view`
+**权限**: `mpl:write`
 
 **说明**: 使用请求体中的 `items` 全量替换该分组组件列表
 
@@ -639,13 +700,15 @@
 
 **DELETE** `/api/mpl/{mpl_no}`
 
-**权限**: `tool:view`
+**权限**: `mpl:write`
 
 ### 2.3.6 按工装图号和版次查询 MPL
 
 **GET** `/api/mpl/by-tool?drawing_no=xxx&revision=xxx`
 
-**权限**: `tool:view`
+**权限**: `mpl:view`
+
+**说明**: `/mpl` 管理页仅对 `mpl:write` 角色开放；保管员在确认链路中可通过受控后端流程间接使用该查询能力，但不具备管理页访问权限。
 
 ---
 
@@ -682,7 +745,12 @@
 
 **GET** `/api/tool-io-orders/{order_no}/generate-keeper-text`
 
-**实现说明：** 需实现
+**实现说明：** 返回中文保管员确认预览文本，并持久化一条内部通知预览记录
+
+**响应字段要求：**
+- `text` 必须为中文
+- 文本必须包含 `单号`、`申请人`、`部门`、`需求日期`、`备注`、`创建时间`、`提交时间`
+- 明细数量优先使用 `split_quantity`，为空时回退到 `apply_qty`
 
 ---
 
@@ -690,7 +758,13 @@
 
 **GET** `/api/tool-io-orders/{order_no}/generate-transport-text`
 
-**实现说明：** 需实现
+**实现说明：** 返回中文运输预览文本和微信复制文本，并持久化一条内部通知预览记录
+
+**响应字段要求：**
+- `text` 必须为中文
+- `wechat_text` 必须为中文
+- `text` 必须包含 `部门`、`需求日期`、`运输接收人`
+- 明细数量优先使用 `split_quantity`，为空时回退到已确认数量
 
 ---
 

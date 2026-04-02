@@ -207,15 +207,31 @@ Execution: RUNPROMPT
 
 ## Bug 工作流集成 / Bug Workflow Integration
 
-创建新的 bug 提示词之前，此技能必须检查 `docs/BUG_WORKFLOW_RULES.md`。 / Before creating a new bug prompt, this skill MUST check `docs/BUG_WORKFLOW_RULES.md`.
+Bug 修复任务（10101-19999）必须遵循 `.claude/rules/02_debug.md` 中的 8D 问题解决协议。
+
+### 强制审核机制
+
+Bug 修复提示词中 D3/D5/D6 阶段完成后**必须**触发 reviewer 评分审核：
+
+- D3 完成 → 全部维度达标后才能继续 D4
+- D5 完成 → 全部维度达标后才能继续 D6
+- D6 完成 → 全部维度达标后才能继续 D7
+
+**各维度最低门槛**：
+
+| 维度 | 满分 | 最低门槛 |
+|------|------|----------|
+| root_cause_depth | 0.3 | ≥0.24 |
+| solution_completeness | 0.3 | ≥0.24 |
+| code_quality | 0.2 | ≥0.16 |
+| test_coverage | 0.2 | =0.20（必须满分） |
 
 ### 升级检查 / Escalation Check
 
 报告新 bug 时: / When a new bug is reported:
 
 1. 在 `promptsRec/active/` 中扫描匹配 `*_bug_*.md` 的现有 bug 提示词 / Scan existing bug prompts in `promptsRec/active/` for files matching `*_bug_*.md`
-2. 检查 `docs/BUG_*.md` 中现有的 bug 文档 / Check existing bug documentation in `docs/BUG_*.md`
-3. 确定新问题是否是现有 bug 的子问题 / Determine if the new issue is a sub-issue of an existing bug
+2. 确定新问题是否是现有 bug 的子问题 / Determine if the new issue is a sub-issue of an existing bug
 
 ### 升级条件 / Escalation Conditions
 
@@ -226,12 +242,8 @@ Execution: RUNPROMPT
 3. 在现有 bug 范围内修复会导致架构副作用 / Fixing it inside the existing bug scope would cause architectural side effects
 
 否则: / Otherwise:
-- 在现有 bug 文档的"子问题"部分记录子问题 / Record the sub-issue in the existing bug documentation under `Sub-Issues` section
+- 记录为子问题 / Record as sub-issue
 - 不要创建新的提示词 / Do NOT create a new prompt
-
-### 参考 / Reference
-
-此技能必须参考 `docs/BUG_WORKFLOW_RULES.md` 作为 bug 生命周期规则的权威来源。 / This skill must reference `docs/BUG_WORKFLOW_RULES.md` as the source of truth for bug lifecycle rules.
 
 ---
 

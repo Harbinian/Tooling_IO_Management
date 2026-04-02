@@ -247,7 +247,7 @@ Executor:
 
 | 执行器 | 职责范围 |
 |--------|---------|
-| Claude Code | 重构任务、测试任务 / Refactoring tasks, Testing tasks |
+| Claude Code | 所有重构任务、测试任务 / All Refactoring tasks, Testing tasks |
 
 ---
 
@@ -273,7 +273,7 @@ Executor:
 
 | 执行器 | 职责范围 |
 |--------|---------|
-| Codex | 测试任务 / Testing tasks |
+| Claude Code | 测试任务 / Testing tasks |
 
 ---
 

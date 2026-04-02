@@ -33,6 +33,10 @@ TABLE_NAMES = {
     'TRANSPORT_ISSUE': 'tool_io_transport_issue',
     'MPL': 'tool_io_mpl',
     'SYSTEM_CONFIG': 'sys_system_config',
+    'INSPECTION_PLAN': 'tool_io_inspection_plan',
+    'INSPECTION_TASK': 'tool_io_inspection_task',
+    'INSPECTION_REPORT': 'tool_io_inspection_report',
+    'TOOL_INSPECTION_STATUS': 'tool_io_tool_inspection_status',
 }
 
 # =============================================================================
@@ -533,4 +537,93 @@ SYSTEM_CONFIG_COLUMNS = {
     'description': 'description',
     'updated_by': 'updated_by',
     'updated_at': 'updated_at',
+}
+
+# =============================================================================
+# tool_io_inspection_plan
+# =============================================================================
+INSPECTION_PLAN_COLUMNS = {
+    'id': 'id',
+    'plan_no': 'plan_no',
+    'plan_name': 'plan_name',
+    'plan_year': 'plan_year',
+    'plan_month': 'plan_month',
+    'inspection_type': 'inspection_type',
+    'status': 'status',
+    'creator_id': 'creator_id',
+    'creator_name': 'creator_name',
+    'publish_time': 'publish_time',
+    'remark': 'remark',
+    'created_at': 'created_at',
+    'updated_at': 'updated_at',
+    'created_by': 'created_by',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
+# tool_io_inspection_task
+# =============================================================================
+INSPECTION_TASK_COLUMNS = {
+    'id': 'id',
+    'task_no': 'task_no',
+    'plan_no': 'plan_no',
+    'serial_no': 'serial_no',
+    'tool_name': 'tool_name',
+    'drawing_no': 'drawing_no',
+    'spec_model': 'spec_model',
+    'task_status': 'task_status',
+    'assigned_to_id': 'assigned_to_id',
+    'assigned_to_name': 'assigned_to_name',
+    'receive_time': 'receive_time',
+    'outbound_order_no': 'outbound_order_no',
+    'inbound_order_no': 'inbound_order_no',
+    'inspection_result': 'inspection_result',
+    'reject_reason': 'reject_reason',
+    'report_no': 'report_no',
+    'next_inspection_date': 'next_inspection_date',
+    'deadline': 'deadline',
+    'actual_complete_time': 'actual_complete_time',
+    'remark': 'remark',
+    'created_at': 'created_at',
+    'updated_at': 'updated_at',
+    'created_by': 'created_by',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
+# tool_io_inspection_report
+# =============================================================================
+INSPECTION_REPORT_COLUMNS = {
+    'id': 'id',
+    'report_no': 'report_no',
+    'task_no': 'task_no',
+    'inspector_id': 'inspector_id',
+    'inspector_name': 'inspector_name',
+    'inspection_date': 'inspection_date',
+    'inspection_result': 'inspection_result',
+    'measurement_data': 'measurement_data',
+    'attachment_data': 'attachment_data',
+    'attachment_name': 'attachment_name',
+    'remark': 'remark',
+    'created_at': 'created_at',
+    'updated_at': 'updated_at',
+    'created_by': 'created_by',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
+# tool_io_tool_inspection_status
+# =============================================================================
+TOOL_INSPECTION_STATUS_COLUMNS = {
+    'id': 'id',
+    'serial_no': 'serial_no',
+    'tool_name': 'tool_name',
+    'drawing_no': 'drawing_no',
+    'last_inspection_date': 'last_inspection_date',
+    'next_inspection_date': 'next_inspection_date',
+    'inspection_cycle_days': 'inspection_cycle_days',
+    'inspection_status': 'inspection_status',
+    'remark': 'remark',
+    'updated_at': 'updated_at',
+    'updated_by': 'updated_by',
 }

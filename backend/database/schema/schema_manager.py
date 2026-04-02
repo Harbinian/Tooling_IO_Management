@@ -26,6 +26,15 @@ SCHEMA_ALIGNMENT_INDEXES = (
     ("tool_io_transport_issue", "IX_tool_io_transport_issue_order_no", "order_no"),
     ("tool_io_transport_issue", "IX_tool_io_transport_issue_status", "status"),
     ("tool_io_transport_issue", "IX_tool_io_transport_issue_report_time", "report_time"),
+    ("tool_io_inspection_plan", "IX_tool_io_inspection_plan_year_month", "plan_year, plan_month"),
+    ("tool_io_inspection_plan", "IX_tool_io_inspection_plan_status", "status"),
+    ("tool_io_inspection_task", "IX_tool_io_inspection_task_plan_no", "plan_no"),
+    ("tool_io_inspection_task", "IX_tool_io_inspection_task_serial_no", "serial_no"),
+    ("tool_io_inspection_task", "IX_tool_io_inspection_task_status", "task_status"),
+    ("tool_io_inspection_task", "IX_tool_io_inspection_task_deadline", "deadline"),
+    ("tool_io_inspection_report", "IX_tool_io_inspection_report_task_no", "task_no"),
+    ("tool_io_tool_inspection_status", "IX_tool_io_tool_inspection_status_next_date", "next_inspection_date"),
+    ("tool_io_tool_inspection_status", "IX_tool_io_tool_inspection_status_status", "inspection_status"),
 )
 
 
@@ -257,6 +266,26 @@ def ensure_system_config_table() -> bool:
         INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
         VALUES ('mpl_strict_mode', N'false', N'Block keeper confirmation when MPL is missing', 'system', SYSDATETIME())
         """,
+        """
+        IF NOT EXISTS (SELECT 1 FROM [sys_system_config] WHERE [config_key] = 'feishu_notification_enabled')
+        INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
+        VALUES ('feishu_notification_enabled', N'false', N'Enable Feishu notification delivery', 'system', SYSDATETIME())
+        """,
+        """
+        IF NOT EXISTS (SELECT 1 FROM [sys_system_config] WHERE [config_key] = 'feishu_webhook_supply_team')
+        INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
+        VALUES ('feishu_webhook_supply_team', N'', N'Feishu webhook URL for supply team notification', 'system', SYSDATETIME())
+        """,
+        """
+        IF NOT EXISTS (SELECT 1 FROM [sys_system_config] WHERE [config_key] = 'feishu_webhook_transport')
+        INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
+        VALUES ('feishu_webhook_transport', N'', N'Feishu webhook URL for transport notification', 'system', SYSDATETIME())
+        """,
+        """
+        IF NOT EXISTS (SELECT 1 FROM [sys_system_config] WHERE [config_key] = 'feishu_webhook_url')
+        INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
+        VALUES ('feishu_webhook_url', N'', N'Feishu default webhook URL', 'system', SYSDATETIME())
+        """,
         build_create_index_sql("sys_system_config", "IX_sys_system_config_updated_at", "updated_at"),
     ]
     return _execute_statements_in_transaction(sql_statements, "System config table ensured")
@@ -307,6 +336,197 @@ def ensure_mpl_table() -> bool:
         """,
     ]
     return _execute_statements_in_transaction(sql_statements, "MPL table ensured")
+
+
+def ensure_inspection_plan_table() -> bool:
+    """Create or align inspection plan table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_inspection_plan', N'U') IS NULL
+        CREATE TABLE [tool_io_inspection_plan] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [plan_no] VARCHAR(50) NOT NULL UNIQUE,
+            [plan_name] NVARCHAR(200) NOT NULL,
+            [plan_year] INT NOT NULL,
+            [plan_month] INT NOT NULL,
+            [inspection_type] VARCHAR(50) NOT NULL,
+            [status] VARCHAR(20) NOT NULL DEFAULT 'draft',
+            [creator_id] VARCHAR(50) NOT NULL,
+            [creator_name] NVARCHAR(100) NOT NULL,
+            [publish_time] DATETIME NULL,
+            [remark] NVARCHAR(500) NULL,
+            [created_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [created_by] VARCHAR(100) NULL,
+            [updated_by] VARCHAR(100) NULL
+        )
+        """,
+        build_add_column_sql("tool_io_inspection_plan", "plan_no", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_plan", "plan_name", "NVARCHAR(200) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_plan", "plan_year", "INT NOT NULL DEFAULT 0"),
+        build_add_column_sql("tool_io_inspection_plan", "plan_month", "INT NOT NULL DEFAULT 0"),
+        build_add_column_sql("tool_io_inspection_plan", "inspection_type", "VARCHAR(50) NOT NULL DEFAULT 'regular'"),
+        build_add_column_sql("tool_io_inspection_plan", "status", "VARCHAR(20) NOT NULL DEFAULT 'draft'"),
+        build_add_column_sql("tool_io_inspection_plan", "creator_id", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_plan", "creator_name", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_plan", "publish_time", "DATETIME NULL"),
+        build_add_column_sql("tool_io_inspection_plan", "remark", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_inspection_plan", "created_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_inspection_plan", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_inspection_plan", "created_by", "VARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_inspection_plan", "updated_by", "VARCHAR(100) NULL"),
+        build_create_index_sql("tool_io_inspection_plan", "IX_tool_io_inspection_plan_year_month", "plan_year, plan_month"),
+        build_create_index_sql("tool_io_inspection_plan", "IX_tool_io_inspection_plan_status", "status"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Inspection plan table ensured")
+
+
+def ensure_inspection_task_table() -> bool:
+    """Create or align inspection task table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_inspection_task', N'U') IS NULL
+        CREATE TABLE [tool_io_inspection_task] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [task_no] VARCHAR(50) NOT NULL UNIQUE,
+            [plan_no] VARCHAR(50) NOT NULL,
+            [serial_no] VARCHAR(100) NOT NULL,
+            [tool_name] NVARCHAR(200) NULL,
+            [drawing_no] VARCHAR(100) NULL,
+            [spec_model] VARCHAR(100) NULL,
+            [task_status] VARCHAR(30) NOT NULL DEFAULT 'pending',
+            [assigned_to_id] VARCHAR(50) NULL,
+            [assigned_to_name] NVARCHAR(100) NULL,
+            [receive_time] DATETIME NULL,
+            [outbound_order_no] VARCHAR(50) NULL,
+            [inbound_order_no] VARCHAR(50) NULL,
+            [inspection_result] VARCHAR(20) NULL,
+            [reject_reason] NVARCHAR(500) NULL,
+            [report_no] VARCHAR(50) NULL,
+            [next_inspection_date] DATE NULL,
+            [deadline] DATETIME NULL,
+            [actual_complete_time] DATETIME NULL,
+            [remark] NVARCHAR(500) NULL,
+            [created_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [created_by] VARCHAR(100) NULL,
+            [updated_by] VARCHAR(100) NULL
+        )
+        """,
+        build_add_column_sql("tool_io_inspection_task", "task_no", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_task", "plan_no", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_task", "serial_no", "VARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_task", "tool_name", "NVARCHAR(200) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "drawing_no", "VARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "spec_model", "VARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "task_status", "VARCHAR(30) NOT NULL DEFAULT 'pending'"),
+        build_add_column_sql("tool_io_inspection_task", "assigned_to_id", "VARCHAR(50) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "assigned_to_name", "NVARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "receive_time", "DATETIME NULL"),
+        build_add_column_sql("tool_io_inspection_task", "outbound_order_no", "VARCHAR(50) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "inbound_order_no", "VARCHAR(50) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "inspection_result", "VARCHAR(20) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "reject_reason", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "report_no", "VARCHAR(50) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "next_inspection_date", "DATE NULL"),
+        build_add_column_sql("tool_io_inspection_task", "deadline", "DATETIME NULL"),
+        build_add_column_sql("tool_io_inspection_task", "actual_complete_time", "DATETIME NULL"),
+        build_add_column_sql("tool_io_inspection_task", "remark", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "created_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_inspection_task", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_inspection_task", "created_by", "VARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_inspection_task", "updated_by", "VARCHAR(100) NULL"),
+        build_create_index_sql("tool_io_inspection_task", "IX_tool_io_inspection_task_plan_no", "plan_no"),
+        build_create_index_sql("tool_io_inspection_task", "IX_tool_io_inspection_task_serial_no", "serial_no"),
+        build_create_index_sql("tool_io_inspection_task", "IX_tool_io_inspection_task_status", "task_status"),
+        build_create_index_sql("tool_io_inspection_task", "IX_tool_io_inspection_task_deadline", "deadline"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Inspection task table ensured")
+
+
+def ensure_inspection_report_table() -> bool:
+    """Create or align inspection report table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_inspection_report', N'U') IS NULL
+        CREATE TABLE [tool_io_inspection_report] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [report_no] VARCHAR(50) NOT NULL UNIQUE,
+            [task_no] VARCHAR(50) NOT NULL,
+            [inspector_id] VARCHAR(50) NOT NULL,
+            [inspector_name] NVARCHAR(100) NOT NULL,
+            [inspection_date] DATE NOT NULL,
+            [inspection_result] VARCHAR(20) NOT NULL,
+            [measurement_data] NVARCHAR(MAX) NULL,
+            [attachment_data] NVARCHAR(MAX) NULL,
+            [attachment_name] NVARCHAR(200) NULL,
+            [remark] NVARCHAR(500) NULL,
+            [created_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [created_by] VARCHAR(100) NULL,
+            [updated_by] VARCHAR(100) NULL
+        )
+        """,
+        build_add_column_sql("tool_io_inspection_report", "report_no", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_report", "task_no", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_report", "inspector_id", "VARCHAR(50) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_report", "inspector_name", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_inspection_report", "inspection_date", "DATE NOT NULL DEFAULT '2000-01-01'"),
+        build_add_column_sql("tool_io_inspection_report", "inspection_result", "VARCHAR(20) NOT NULL DEFAULT 'pass'"),
+        build_add_column_sql("tool_io_inspection_report", "measurement_data", "NVARCHAR(MAX) NULL"),
+        build_add_column_sql("tool_io_inspection_report", "attachment_data", "NVARCHAR(MAX) NULL"),
+        build_add_column_sql("tool_io_inspection_report", "attachment_name", "NVARCHAR(200) NULL"),
+        build_add_column_sql("tool_io_inspection_report", "remark", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_inspection_report", "created_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_inspection_report", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_inspection_report", "created_by", "VARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_inspection_report", "updated_by", "VARCHAR(100) NULL"),
+        build_create_index_sql("tool_io_inspection_report", "IX_tool_io_inspection_report_task_no", "task_no"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Inspection report table ensured")
+
+
+def ensure_tool_inspection_status_table() -> bool:
+    """Create or align tool inspection status table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_tool_inspection_status', N'U') IS NULL
+        CREATE TABLE [tool_io_tool_inspection_status] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [serial_no] VARCHAR(100) NOT NULL UNIQUE,
+            [tool_name] NVARCHAR(200) NULL,
+            [drawing_no] VARCHAR(100) NULL,
+            [last_inspection_date] DATE NULL,
+            [next_inspection_date] DATE NULL,
+            [inspection_cycle_days] INT NULL,
+            [inspection_status] VARCHAR(20) NOT NULL DEFAULT 'pending',
+            [remark] NVARCHAR(500) NULL,
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [updated_by] VARCHAR(100) NULL
+        )
+        """,
+        build_add_column_sql("tool_io_tool_inspection_status", "serial_no", "VARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_tool_inspection_status", "tool_name", "NVARCHAR(200) NULL"),
+        build_add_column_sql("tool_io_tool_inspection_status", "drawing_no", "VARCHAR(100) NULL"),
+        build_add_column_sql("tool_io_tool_inspection_status", "last_inspection_date", "DATE NULL"),
+        build_add_column_sql("tool_io_tool_inspection_status", "next_inspection_date", "DATE NULL"),
+        build_add_column_sql("tool_io_tool_inspection_status", "inspection_cycle_days", "INT NULL"),
+        build_add_column_sql("tool_io_tool_inspection_status", "inspection_status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
+        build_add_column_sql("tool_io_tool_inspection_status", "remark", "NVARCHAR(500) NULL"),
+        build_add_column_sql("tool_io_tool_inspection_status", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_tool_inspection_status", "updated_by", "VARCHAR(100) NULL"),
+        build_create_index_sql("tool_io_tool_inspection_status", "IX_tool_io_tool_inspection_status_next_date", "next_inspection_date"),
+        build_create_index_sql("tool_io_tool_inspection_status", "IX_tool_io_tool_inspection_status_status", "inspection_status"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "Tool inspection status table ensured")
 
 
 def ensure_tool_io_tables() -> bool:
@@ -467,7 +687,15 @@ def ensure_tool_io_tables() -> bool:
         return False
     if not ensure_system_config_table():
         return False
-    return ensure_mpl_table()
+    if not ensure_mpl_table():
+        return False
+    if not ensure_inspection_plan_table():
+        return False
+    if not ensure_inspection_task_table():
+        return False
+    if not ensure_inspection_report_table():
+        return False
+    return ensure_tool_inspection_status_table()
 
 
 def ensure_schema_alignment() -> bool:

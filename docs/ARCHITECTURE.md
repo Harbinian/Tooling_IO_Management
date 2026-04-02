@@ -575,3 +575,30 @@ def update_order_status(order_no: str, new_status: str):
 ## 12. 相关文档
 
 - [产品需求文档](./PRD.md)
+
+---
+
+## 13. Inspection Backend Foundation
+
+### 13.1 Repositories
+- `InspectionPlanRepository` manages `tool_io_inspection_plan` and plan publication.
+- `InspectionTaskRepository` manages `tool_io_inspection_task` state transitions and order linkage.
+- `InspectionReportRepository` manages `tool_io_inspection_report` creation and task report backfill.
+- `ToolInspectionStatusRepository` manages `tool_io_tool_inspection_status` snapshots and due-date queries.
+
+### 13.2 Data Flow
+1. Planner creates an inspection plan.
+2. Publishing previews due tools from `tool_io_tool_inspection_status` and bulk-creates tasks.
+3. Inspector submits report data and attachments.
+4. Keeper closes the task and updates next inspection date in status snapshot.
+
+### 13.3 Constraints
+- Inspection numbers reuse the atomic sequence allocation pattern backed by `tool_io_order_no_sequence`.
+- The module links to Tool IO orders by `outbound_order_no` and `inbound_order_no`.
+- `Tooling_ID_Main` remains read-only.
+
+### 13.4 Service and Route Layer
+- `backend/services/inspection_plan_service.py` validates draft-only edits, previews expiring tools, publishes plans, and closes plans after all tasks are closed.
+- `backend/services/inspection_task_service.py` enforces the inspection task state machine, validates report attachments, links Tool IO orders, advances by order completion, and updates inspection status snapshots on close.
+- `backend/services/inspection_notification_service.py` records internal notifications and reuses the Feishu adapter for key inspection events.
+- `backend/routes/inspection_routes.py` exposes `/api/inspection/*` endpoints with RBAC permission guards.

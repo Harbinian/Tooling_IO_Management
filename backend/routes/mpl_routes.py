@@ -5,14 +5,14 @@ import logging
 
 from flask import Blueprint, jsonify, request
 
-from backend.routes.common import get_authenticated_user, get_json_dict, parse_positive_int_arg, require_permission, validation_error
+from backend.routes.common import get_authenticated_user, get_json_dict, json_error, parse_positive_int_arg, require_auth, require_permission, validation_error
 
 mpl_bp = Blueprint("mpl_routes", __name__)
 logger = logging.getLogger(__name__)
 
 
 @mpl_bp.route("/api/mpl", methods=["GET"])
-@require_permission("tool:view")
+@require_permission("mpl:view")
 def api_list_mpl():
     try:
         from backend.services.tool_io_service import list_mpl_groups
@@ -35,7 +35,7 @@ def api_list_mpl():
 
 
 @mpl_bp.route("/api/mpl", methods=["POST"])
-@require_permission("tool:view")
+@require_permission("mpl:write")
 def api_create_mpl():
     try:
         from backend.services.tool_io_service import create_mpl_group
@@ -50,7 +50,7 @@ def api_create_mpl():
 
 
 @mpl_bp.route("/api/mpl/<mpl_no>", methods=["GET"])
-@require_permission("tool:view")
+@require_permission("mpl:view")
 def api_get_mpl(mpl_no):
     try:
         from backend.services.tool_io_service import get_mpl_group
@@ -63,7 +63,7 @@ def api_get_mpl(mpl_no):
 
 
 @mpl_bp.route("/api/mpl/<mpl_no>", methods=["PUT"])
-@require_permission("tool:view")
+@require_permission("mpl:write")
 def api_update_mpl(mpl_no):
     try:
         from backend.services.tool_io_service import update_mpl_group
@@ -78,7 +78,7 @@ def api_update_mpl(mpl_no):
 
 
 @mpl_bp.route("/api/mpl/<mpl_no>", methods=["DELETE"])
-@require_permission("tool:view")
+@require_permission("mpl:write")
 def api_delete_mpl(mpl_no):
     try:
         from backend.services.tool_io_service import delete_mpl_group
@@ -91,10 +91,17 @@ def api_delete_mpl(mpl_no):
 
 
 @mpl_bp.route("/api/mpl/by-tool", methods=["GET"])
-@require_permission("tool:view")
+@require_auth
 def api_get_mpl_by_tool():
     try:
+        from backend.services.auth_service import PermissionDeniedError, require_permission as ensure_permission
         from backend.services.tool_io_service import get_mpl_by_tool
+
+        user = get_authenticated_user()
+        try:
+            ensure_permission(user, "mpl:view")
+        except PermissionDeniedError:
+            ensure_permission(user, "order:keeper_confirm")
 
         drawing_no = str(request.args.get("drawing_no", "")).strip()
         revision = str(request.args.get("revision", "")).strip()
@@ -102,8 +109,15 @@ def api_get_mpl_by_tool():
             return validation_error("drawing_no is required")
         if not revision:
             return validation_error("revision is required")
-        result = get_mpl_by_tool(drawing_no, revision, current_user=get_authenticated_user())
+        result = get_mpl_by_tool(drawing_no, revision, current_user=user)
         return jsonify(result) if result.get("success") else (jsonify(result), 404)
+    except PermissionDeniedError:
+        return json_error(
+            "missing required permission: mpl:view or order:keeper_confirm",
+            status_code=403,
+            code="PERMISSION_DENIED",
+            details={"required_permission": "mpl:view|order:keeper_confirm"},
+        )
     except Exception as exc:
         logger.error("failed to query mpl by tool: %s", exc)
         return jsonify({"success": False, "error": str(exc)}), 500

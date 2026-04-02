@@ -1,7 +1,8 @@
 # 计划转提示词技能 / Plan-to-Prompt Skill
 
 **规则约束**: 本技能在转换计划时，根据任务类型调用相应规则：
-- 功能开发/重构/测试 → `.claude/rules/01_workflow.md` (ADP)
+- 功能开发/重构 → `.claude/rules/01_workflow.md` (ADP)
+- 测试任务 → `.claude/rules/06_testing.md`
 - Bug 修复 → `.claude/rules/02_debug.md` (8D)
 - 紧急修复 → `.claude/rules/03_hotfix.md` (HOTFIX)
 
@@ -47,7 +48,7 @@ Use this skill when:
 | 功能开发 / Feature | `.claude/rules/01_workflow.md` (ADP) | 四阶段开发流程 |
 | Bug 修复 / Bug Fix | `.claude/rules/02_debug.md` (8D) | 问题解决协议 |
 | 重构 / Refactoring | `.claude/rules/01_workflow.md` (ADP) | 架构设计优先 |
-| 测试 / Testing | `.claude/rules/01_workflow.md` (ADP) | 四阶段开发流程 |
+| 测试 / Testing | `.claude/rules/06_testing.md` | 测试任务规范 |
 | 紧急修复 / Hotfix | `.claude/rules/03_hotfix.md` | 热修复流程 |
 
 ---

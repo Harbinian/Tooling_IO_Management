@@ -241,7 +241,7 @@ import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Box, RefreshCw, Search, Trash2 } from 'lucide-vue-next'
-import { createOrder, generateKeeperText, submitOrder } from '@/api/orders'
+import { createOrder, previewKeeperText, submitOrder } from '@/api/orders'
 import { DEBUG_IDS } from '@/debug/debugIds'
 import ToolSearchDialog from '@/components/tool-io/ToolSearchDialog.vue'
 import NotificationPreview from '@/components/tool-io/NotificationPreview.vue'
@@ -378,22 +378,16 @@ function buildPayload() {
 async function handlePreview() {
   if (!validateBeforeSubmit()) return
 
-  const created = await createOrder(buildPayload())
-  if (!created.success) {
-    ElMessage.error(created.error || '生成预览失败')
+  const preview = await previewKeeperText(buildPayload())
+  if (!preview.success) {
+    ElMessage.error(preview.error || '生成预览失败')
     return
   }
-  if (created.warning) {
-    ElMessage.warning(created.warning)
+  if (preview.warning) {
+    ElMessage.warning(preview.warning)
   }
-
-  const preview = await generateKeeperText(created.order_no)
-  if (preview.success) {
-    keeperText.value = preview.text
-    ElMessage.success(`已生成保管员通知预览：${created.order_no}`)
-  } else {
-    ElMessage.error(preview.error || '生成预览失败')
-  }
+  keeperText.value = preview.text
+  ElMessage.success('已生成保管员通知预览')
 }
 
 async function saveDraft() {

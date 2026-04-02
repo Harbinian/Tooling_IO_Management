@@ -66,12 +66,12 @@ This skill uses real human-named test accounts. All users must belong to the sam
 
 | User Name | Login Name | Password | Role | Role ID | Organization | Test Focus |
 |-----------|------------|----------|------|---------|-------------|------------|
-| 冯亮 | fengliang | test123 | Production Prep (生产准备工) | ROLE_PRODUCTION_PREP | 同一组织 | 运输执行、位置查看 |
-| 胡婷婷 | hutingting | test123 | Keeper (保管员) | ROLE_KEEPER | 同一组织 | 订单确认、驳回、通知 |
-| 太东旭 | taidongxu | test123 | Team Leader (班组长) | ROLE_TEAM_LEADER | 同一组织 | 创建订单、提交、最终确认 |
+| 冯亮 | fengliang | test1234 | Production Prep (生产准备工) | ROLE_PRODUCTION_PREP | 同一组织 | 运输执行、位置查看 |
+| 胡婷婷 | hutingting | test1234 | Keeper (保管员) | ROLE_KEEPER | 同一组织 | 订单确认、驳回、通知 |
+| 太东旭 | taidongxu | test1234 | Team Leader (班组长) | ROLE_TEAM_LEADER | 同一组织 | 创建订单、提交、最终确认 |
 | CA | admin | admin123 | System Administrator | ROLE_SYS_ADMIN | ALL | 管理权限、订单删除 |
 
-**注意**: 太东旭的登录名是 `taidongxu`（非 taitongxu），密码已统一重置为 `test123`。
+**注意**: 太东旭的登录名是 `taidongxu`（非 taitongxu），密码已统一重置为 `test1234`。
 
 ---
 
@@ -204,7 +204,7 @@ For each role, verify:
 
 ### RBAC Test Sequence
 
-#### 1. Login as 太东旭 (taidongxu / password: test123) — TEAM_LEADER
+#### 1. Login as 太东旭 (taidongxu / password: test1234) — TEAM_LEADER
 **Test Permissions:**
 - `order:list` - List own and org orders
 - `order:create` - Create new orders
@@ -221,7 +221,7 @@ For each role, verify:
 - `order:transport_execute` - Transport APIs return 403
 - `notification:send_feishu` - Feishu notification APIs return 403
 
-#### 2. Login as 胡婷婷 (hutingting / password: test123) — KEEPER
+#### 2. Login as 胡婷婷 (hutingting / password: test1234) — KEEPER
 **Test Permissions:**
 - `order:list` - List orders in org
 - `order:view` - View order details
@@ -243,7 +243,7 @@ For each role, verify:
 - `order:submit` - Submit order APIs return 403
 - `admin:*` - Admin APIs return 403
 
-#### 3. Login as 冯亮 (fengliang / password: test123) — PRODUCTION_PREP
+#### 3. Login as 冯亮 (fengliang / password: test1234) — PRODUCTION_PREP
 **Test Permissions:**
 - `tool:search` - Search tools
 - `tool:view` - View tool details
@@ -1346,4 +1346,3 @@ IDLE → RUNNING → PAUSED → COMPLETED
 2. **停止时清理**：测试完成后使用 `stop` 命令清理 Agent 进程
 3. **数据库保留**：测试数据保留在 SQLite 中，可以多次查询报告
 4. **PID 文件**：如果 Agent 崩溃，手动删除 `.agent.pid` 文件
-

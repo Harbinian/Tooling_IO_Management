@@ -8,6 +8,60 @@
 
 ---
 
+## 强制审核机制 / MANDATORY Review Mechanism
+
+**红线警告**: 以下审核节点不可跳过：
+
+### Bug 修复 D3/D5/D6 评分审核
+
+Bug 修复任务（10101-19999）在 D3、D5、D6 阶段**必须**触发 reviewer 评分审核：
+
+```
+D3 完成 → SendMessage(to: "reviewer", type: "plan_approval_request")
+        → reviewer 回复评分结果
+        → 收到全部维度达标后才能继续 D4
+
+D5 完成 → SendMessage(to: "reviewer", type: "plan_approval_request")
+        → reviewer 回复评分结果
+        → 收到全部维度达标后才能继续 D6
+
+D6 完成 → SendMessage(to: "reviewer", type: "plan_approval_request")
+        → reviewer 回复评分结果
+        → 收到全部维度达标后才能继续 D7
+```
+
+**评分维度与门槛**：
+
+| 维度 | 满分 | 最低门槛 | 说明 |
+|------|------|----------|------|
+| root_cause_depth | 0.3 | ≥0.24 | 根因分析必须达到满分的 80% |
+| solution_completeness | 0.3 | ≥0.24 | 方案完整性必须达到满分的 80% |
+| code_quality | 0.2 | ≥0.16 | 代码质量必须达到满分的 80% |
+| test_coverage | 0.2 | =0.20 | 测试覆盖率必须满分（100%） |
+
+**通过条件**：全部维度达标，任意一项不达标则 ❌ REJECT。
+
+### 功能/重构 Phase 4 tester E2E 验证
+
+功能/重构任务在 Phase 4 完成后**必须**触发 tester E2E 验证：
+
+```
+Phase 4 完成 → 通知 tester 执行 E2E 验证
+            → tester 回复 pass/fail
+            → 收到 pass 后才能归档
+```
+
+### 归档前置条件
+
+提示词在归档前必须验证：
+1. Bug 修复：D3/D5/D6 reviewer 评分记录存在
+2. 功能/重构：tester E2E 验证 pass 记录存在
+3. 所有 Completion Criteria 已满足
+
+**禁止将 🔶 前缀文件归档** — 🔶 表示部分完成，不得进入 archive 目录。
+
+---
+
 ## 目的 / Purpose
 
 自愈开发循环技能使系统能够自动检测开发问题、生成结构化的开发提示词、执行修复并更新项目任务管道。

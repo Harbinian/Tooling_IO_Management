@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from typing import Dict, List, Optional
+from datetime import datetime
 
 from backend.database.repositories.mpl_repository import MplRepository
 from backend.database.repositories.system_config_repository import SystemConfigRepository
@@ -40,6 +41,7 @@ from backend.services.notification_service import (
     ORDER_CREATED,
     ORDER_REJECTED,
     ORDER_SUBMITTED,
+    ORDER_SUBMITTED_TO_SUPPLY_TEAM,
     TRANSPORT_COMPLETED,
     TRANSPORT_REQUIRED,
     TRANSPORT_STARTED,
@@ -112,6 +114,7 @@ def _emit_internal_notification(
         {
             "notification_id": result.get("notification_id", 0),
             "order_no": order.get("order_no", ""),
+            "order": order,  # 传递完整订单对象，用于 Markdown 消息构建
             "notification_type": notification_type,
             "receiver": result.get("receiver", ""),
             "title": result.get("title", ""),
@@ -249,14 +252,21 @@ def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     return result
 
 
+def _ensure_system_config_ready() -> None:
+    from backend.database.schema.schema_manager import ensure_system_config_table
+
+    if not ensure_system_config_table():
+        raise RuntimeError("sys_system_config is not ready")
+
+
 def list_system_configs() -> Dict:
-    ensure_tool_io_tables()
+    _ensure_system_config_ready()
     repo = SystemConfigRepository()
     return {"success": True, "data": repo.list_configs()}
 
 
 def get_system_config(config_key: str) -> Dict:
-    ensure_tool_io_tables()
+    _ensure_system_config_ready()
     repo = SystemConfigRepository()
     value = repo.get_config(config_key)
     if value is None:
@@ -266,7 +276,7 @@ def get_system_config(config_key: str) -> Dict:
 
 
 def update_system_config(config_key: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    ensure_tool_io_tables()
+    _ensure_system_config_ready()
     if "config_value" not in payload:
         raise ValueError("config_value is required")
     normalized_value = _normalize_bool_text(payload.get("config_value")) if config_key in {"mpl_enabled", "mpl_strict_mode"} else str(payload.get("config_value", ""))
@@ -527,6 +537,14 @@ def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
                             "org_id": order_org_id,
                         },
                     )
+
+            # Notify supply team (物资保障部) with tool list in Markdown format
+            _emit_internal_notification(
+                ORDER_SUBMITTED_TO_SUPPLY_TEAM,
+                order=order,
+                actor=actor,
+                metadata={"trigger": "submit_order", "notify_channel": "supply_team"},
+            )
     return result
 
 
@@ -936,7 +954,8 @@ def get_pre_transport_orders(current_user: Optional[Dict] = None) -> Dict:
     role_codes = current_user.get("role_codes", [])
     if not role_codes:
         role_codes = [r.get("role_code") for r in current_user.get("roles", []) if r.get("role_code")]
-    if "PRODUCTION_PREP" not in role_codes:
+    # role_codes comes from RBAC role_code and must be compared case-insensitively.
+    if not any(str(role_code).strip().lower() == "production_prep_worker" for role_code in role_codes):
         return {"success": False, "error": "permission denied", "orders": []}
 
     # Verify user belongs to Material Support Department (物资保障部)
@@ -1360,8 +1379,65 @@ def _extract_item_values(item: Dict) -> Dict:
         "location_text": _pick_value(item, ["location_text"], ""),
         "apply_qty": _pick_value(item, ["apply_qty"], 1),
         "approved_qty": _pick_value(item, ["approved_qty"], 0),
+        "split_quantity": _pick_value(item, ["split_quantity"], 0),
         "item_status": _pick_value(item, ["item_status", "status"], ""),
     }
+
+
+def _build_keeper_text(summary: Dict, items: List[Dict], order_no: str) -> str:
+    order_label = "出库" if summary["order_type"] == "outbound" else "入库"
+    items_text = "\n".join(
+        [
+            f"{idx + 1}. {item['serial_no']} / {item['tool_name'] or '-'} / 图号 {item['drawing_no'] or '-'} / 数量 {item['split_quantity'] or item['apply_qty'] or 1}"
+            for idx, item in enumerate(items)
+        ]
+    ) or "- 无明细"
+
+    return (
+        f"{order_label}保管员确认请求\n"
+        f"单号：{summary['order_no'] or order_no}\n"
+        f"申请人：{summary['initiator_name'] or '-'}（{summary['initiator_id'] or '-'}）\n"
+        f"部门：{summary['department'] or '-'}\n"
+        f"需求日期：{summary['required_by'] or '-'}\n"
+        f"备注：{summary['remark'] or '-'}\n"
+        f"创建时间：{_format_order_datetime(summary['created_at'])}\n"
+        f"提交时间：{_format_order_datetime(summary['submitted_at'])}\n\n"
+        f"申请明细：\n{items_text}\n\n"
+        "请确认订单明细并完成保管员审核。"
+    )
+
+
+def _build_preview_order_no(order_type: str) -> str:
+    prefix = "TO-OUT" if order_type == "outbound" else "TO-IN"
+    return f"{prefix}-{datetime.now().strftime('%Y%m%d')}-PREVIEW"
+
+
+def preview_keeper_text(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    _ = current_user
+    items_payload = payload.get("items")
+    if not isinstance(items_payload, list) or not items_payload:
+        return {"success": False, "error": "请至少选择一项工装"}
+
+    order_type = str(payload.get("order_type") or "").strip()
+    if order_type not in {"outbound", "inbound"}:
+        return {"success": False, "error": "单据类型不正确"}
+
+    required_by = payload.get("planned_use_time") if order_type == "outbound" else payload.get("planned_return_time")
+    order_no = _build_preview_order_no(order_type)
+    summary = {
+        "order_no": order_no,
+        "order_type": order_type,
+        "initiator_name": str(payload.get("initiator_name") or "").strip(),
+        "initiator_id": str(payload.get("initiator_id") or "").strip(),
+        "department": str(payload.get("department") or "").strip(),
+        "required_by": required_by,
+        "remark": str(payload.get("remark") or "").strip(),
+        "created_at": datetime.now(),
+        "submitted_at": None,
+    }
+    items = [_extract_item_values(item or {}) for item in items_payload]
+    return {"success": True, "text": _build_keeper_text(summary, items, order_no)}
+
 
 def generate_keeper_text(order_no: str, current_user: Optional[Dict] = None) -> Dict:
     order = get_order_detail(order_no, current_user=current_user)
@@ -1370,32 +1446,13 @@ def generate_keeper_text(order_no: str, current_user: Optional[Dict] = None) -> 
 
     summary = _extract_order_values(order)
     items = [_extract_item_values(item) for item in order.get("items", [])]
-    order_label = "Outbound" if summary["order_type"] == "outbound" else "Inbound"
-    items_text = "\n".join(
-        [
-            f"{idx + 1}. {item['serial_no']} / {item['tool_name'] or '-'} / drawing {item['drawing_no'] or '-'} / qty {item['apply_qty'] or 1}"
-            for idx, item in enumerate(items)
-        ]
-    ) or "- No items"
-
-    text = (
-        f"Keeper request for {order_label} order\n"
-        f"Order No: {summary['order_no'] or order_no}\n"
-        f"Initiator: {summary['initiator_name'] or '-'} ({summary['initiator_id'] or '-'})\n"
-        f"Department: {summary['department'] or '-'}\n"
-        f"Required By: {summary['required_by'] or '-'}\n"
-        f"Remark: {summary['remark'] or '-'}\n"
-        f"Created At: {_format_order_datetime(summary['created_at'])}\n"
-        f"Submitted At: {_format_order_datetime(summary['submitted_at'])}\n\n"
-        f"Requested Items:\n{items_text}\n\n"
-        "Please review the order and complete keeper confirmation."
-    )
+    text = _build_keeper_text(summary, items, order_no)
     _create_notification_record(
         order_no=order_no,
         notify_type="keeper_request",
         notify_channel="internal",
         receiver="",
-        title="Keeper request message",
+        title="保管员确认请求",
         content=text,
     )
     return {"success": True, "text": text}
@@ -1415,37 +1472,41 @@ def generate_transport_text(order_no: str, current_user: Optional[Dict] = None) 
         return {"success": False, "error": "no approved items are available for transport preparation"}
 
     summary = _extract_order_values(order)
+    department = summary.get("department") or "-"
+    required_by = summary.get("required_by") or "-"
     items_text = "\n".join(
         [
-            f"{idx + 1}. {item['location_text'] or '-'} / {item['tool_name'] or '-'} / {item['serial_no']} / qty {item['approved_qty'] or 1}"
+            f"{idx + 1}. {item['location_text'] or '-'} / {item['tool_name'] or '-'} / {item['serial_no']} / 数量 {item['split_quantity'] or item['approved_qty'] or 1}"
             for idx, item in enumerate(approved_items)
         ]
     )
     transport_type = summary["transport_type"] or "-"
     text = (
-        f"Transport preparation notice\n"
-        f"Order No: {summary['order_no'] or order_no}\n"
-        f"Transport Type: {transport_type}\n"
-        f"Initiator: {summary['initiator_name'] or '-'}\n"
-        f"Transport Assignee: {summary['transport_assignee_name'] or '-'}\n\n"
-        f"Approved Items:\n{items_text}\n\n"
-        "Please arrange transport based on the confirmed tool list."
+        f"运输准备通知\n"
+        f"单号：{summary['order_no'] or order_no}\n"
+        f"运输类型：{transport_type}\n"
+        f"申请人：{summary['initiator_name'] or '-'}\n"
+        f"部门：{department}\n"
+        f"需求日期：{required_by}\n"
+        f"运输接收人：{summary['transport_assignee_name'] or '-'}\n\n"
+        f"确认明细：\n{items_text}\n\n"
+        "请根据确认的工装清单安排运输。"
     )
     wechat_text = (
-        f"Tool transport notice\n"
-        f"Order No: {summary['order_no'] or order_no}\n"
-        f"Transport Type: {transport_type}\n\n"
-        f"Pickup Location: {approved_items[0]['location_text'] or '-'}\n"
-        f"Receiver: {summary['transport_assignee_name'] or '-'}\n\n"
+        f"工装运输通知\n"
+        f"单号：{summary['order_no'] or order_no}\n"
+        f"运输类型：{transport_type}\n\n"
+        f"取货地点：{approved_items[0]['location_text'] or '-'}\n"
+        f"接收人：{summary['transport_assignee_name'] or '-'}\n\n"
         + "\n".join([f"- {item['serial_no']} ({item['tool_name'] or '-'})" for item in approved_items])
-        + f"\n\nRequested By: {summary['initiator_name'] or '-'} / {summary['keeper_name'] or '-'}"
+        + f"\n\n申请人：{summary['initiator_name'] or '-'} / 保管员：{summary['keeper_name'] or '-'}"
     )
     _create_notification_record(
         order_no=order_no,
         notify_type="transport_preview",
         notify_channel="internal",
         receiver="",
-        title="Transport preview message",
+        title="运输预览通知",
         content=text,
         copy_text=wechat_text,
     )
@@ -1472,7 +1533,7 @@ def notify_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
     notify_type = payload.get("notify_type", "transport_notice")
     notify_channel = payload.get("notify_channel", "feishu")
     receiver = payload.get("receiver") or summary["transport_receiver"]
-    title = payload.get("title") or "Transport notification"
+    title = payload.get("title") or "运输通知"
     content = payload.get("content") or generated["text"]
     copy_text = payload.get("copy_text") or generated["wechat_text"]
 
@@ -1566,7 +1627,7 @@ def notify_keeper(order_no: str, payload: Dict, current_user: Optional[Dict] = N
     keeper_id = payload.get("keeper_id") or summary.get("keeper_id")
     keeper_name = summary.get("keeper_name", "")
     receiver = payload.get("receiver") or keeper_name
-    title = payload.get("title") or "Keeper request notification"
+    title = payload.get("title") or "保管员确认请求"
     content = payload.get("content") or generated["text"]
 
     # Get the notification record that was just created by generate_keeper_text

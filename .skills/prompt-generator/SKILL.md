@@ -199,6 +199,25 @@ Typical scenarios include:
 
 **禁止使用临时补丁** / Temporary patches are forbidden.
 
+### 强制审核机制
+
+D3、D5、D6 阶段完成后**必须**触发 reviewer 评分审核：
+
+- D3 完成 → 全部维度达标后才能继续 D4
+- D5 完成 → 全部维度达标后才能继续 D6
+- D6 完成 → 全部维度达标后才能继续 D7
+
+**各维度最低门槛**：
+
+| 维度 | 满分 | 最低门槛 |
+|------|------|----------|
+| root_cause_depth | 0.3 | ≥0.24 |
+| solution_completeness | 0.3 | ≥0.24 |
+| code_quality | 0.2 | ≥0.16 |
+| test_coverage | 0.2 | =0.20（必须满分） |
+
+**Bug 修复归档前必须验证**：D3/D5/D6 全部维度达标记录存在。
+
 ---
 
 ## 3. HOTFIX SOP - 热修复标准操作流程（紧急修复）
@@ -408,6 +427,8 @@ If the task is refactoring:
 
 # 测试提示词规则 / Testing Prompt Rules (30101–39999)
 
+**规则文件**: `.claude/rules/06_testing.md`
+
 如果任务是测试：
 
 If the task is testing:
@@ -416,6 +437,7 @@ If the task is testing:
 - 必须指定测试框架和断言策略 / Must specify test framework and assertion strategy
 - 必须定义覆盖率目标 / Must define coverage targets
 - 提示词必须包含优先级 (P0/P1/P2) / The prompt must include priority (P0/P1/P2)
+- 必须包含 Test Scope、Test Strategy、Test Cases、Pass Criteria 章节
 
 ---
 

@@ -14,6 +14,14 @@ export async function createOrder(payload) {
 }
 
 /**
+ * 生成保管员通知文本预览（不落库）
+ * @param {Object} payload
+ */
+export async function previewKeeperText(payload) {
+  return unwrap(await client.post('/tool-io-orders/preview-keeper-text', payload))
+}
+
+/**
  * 获取申请单列表
  * @param {Object} params { page_no, page_size, keyword, order_type, order_status, ... }
  */
