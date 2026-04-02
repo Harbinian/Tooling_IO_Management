@@ -284,7 +284,7 @@ function handleCancel() {
 .tool-search-dialog-custom .el-dialog__header {
   padding: 24px 24px 16px;
   margin-right: 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .tool-search-dialog-custom .el-dialog__body {
@@ -293,12 +293,12 @@ function handleCancel() {
 
 .tool-search-dialog-custom .el-dialog__footer {
   padding: 16px 24px 24px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid hsl(var(--border));
 }
 
 .tool-search-table .el-table__header th {
-  background-color: #f8fafc;
-  color: #64748b;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -308,7 +308,7 @@ function handleCancel() {
 
 .tool-item-disabled {
   opacity: 0.5;
-  background-color: var(--muted) !important;
+  background-color: hsl(var(--muted)) !important;
   cursor: not-allowed;
 }
 

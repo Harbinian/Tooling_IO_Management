@@ -949,7 +949,7 @@ loadPendingOrders()
 }
 
 :deep(.custom-tabs .el-tabs__active-bar) {
-  background-color: #3b82f6;
+  background-color: hsl(var(--primary));
   height: 2px;
 }
 

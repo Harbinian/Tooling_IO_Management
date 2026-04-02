@@ -156,6 +156,6 @@ async function handleCopy() {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
   line-height: 1.6;
-  color: #475569;
+  color: hsl(var(--muted-foreground));
 }
 </style>
