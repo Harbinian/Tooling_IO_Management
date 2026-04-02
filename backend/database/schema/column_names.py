@@ -31,6 +31,8 @@ TABLE_NAMES = {
     'ORDER_NOTIFICATION': 'tool_io_notification',
     'ORDER_LOCATION': 'tool_io_location',
     'TRANSPORT_ISSUE': 'tool_io_transport_issue',
+    'MPL': 'tool_io_mpl',
+    'SYSTEM_CONFIG': 'sys_system_config',
 }
 
 # =============================================================================
@@ -127,7 +129,7 @@ ITEM_COLUMNS = {
     'id': 'id',
     'order_no': 'order_no',
     'tool_id': 'tool_id',
-    'tool_code': 'tool_code',
+    'serial_no': 'serial_no',
     'tool_name': 'tool_name',
     'drawing_no': 'drawing_no',
     'spec_model': 'spec_model',
@@ -161,7 +163,7 @@ ITEM_CHINESE_COLUMNS = {
     'id': 'id',
     'order_no': 'order_no',
     'tool_id': 'tool_id',
-    'tool_code': 'tool_code',
+    'serial_no': 'serial_no',
     'tool_name': 'tool_name',
     'drawing_no': 'drawing_no',
     'spec_model': 'spec_model',
@@ -291,7 +293,7 @@ TOOL_MASTER_COLUMNS = {
     'tool_name': '工装名称',
     'drawing_no': '工装图号',
     'tool_code': '序列号',
-    'original_tool_code': '原样工装序列号',
+    'original_tool_serial_no': '原样工装序列号',
     'manufacturing_date': '制造日期',
     'manufacturing_version': '制造版次',
     'manufacturing_dispatch_no': '制造派工号',
@@ -362,7 +364,7 @@ TOOL_MASTER_COLUMNS = {
 # =============================================================================
 TOOL_STATUS_HISTORY_COLUMNS = {
     'id': 'id',
-    'tool_code': 'tool_code',
+    'serial_no': 'serial_no',
     'old_status': 'old_status',
     'new_status': 'new_status',
     'remark': 'remark',
@@ -503,4 +505,32 @@ TRANSPORT_ISSUE_CHINESE_COLUMNS = {
     'handle_time': 'handle_time',
     'handle_reply': 'handle_reply',
     'created_at': 'created_at',
+}
+
+# =============================================================================
+# tool_io_mpl
+# =============================================================================
+MPL_COLUMNS = {
+    'id': 'id',
+    'mpl_no': 'mpl_no',
+    'tool_drawing_no': 'tool_drawing_no',
+    'tool_revision': 'tool_revision',
+    'component_no': 'component_no',
+    'component_name': 'component_name',
+    'quantity': 'quantity',
+    'photo_data': 'photo_data',
+    'created_by': 'created_by',
+    'created_at': 'created_at',
+    'updated_at': 'updated_at',
+}
+
+# =============================================================================
+# sys_system_config
+# =============================================================================
+SYSTEM_CONFIG_COLUMNS = {
+    'config_key': 'config_key',
+    'config_value': 'config_value',
+    'description': 'description',
+    'updated_by': 'updated_by',
+    'updated_at': 'updated_at',
 }

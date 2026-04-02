@@ -1,0 +1,18 @@
+# 提示词序列计数器 / Prompt Sequence Counters
+# 格式: <类型>_<下一个可用编号>
+# 此文件避免频繁扫描 archive 目录获取编号
+
+# 功能开发 (00001-09999)
+feature_next=00019
+
+# Bug修复 (10101-19999)
+bugfix_next=10182
+
+# 重构 (20101-29999)
+refactor_next=20112
+
+# 测试 (30101-39999)
+test_next=30101
+
+# 执行顺序号（归档用）
+exec_next=00191

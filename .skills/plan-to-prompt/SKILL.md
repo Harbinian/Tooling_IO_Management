@@ -1,5 +1,10 @@
 # 计划转提示词技能 / Plan-to-Prompt Skill
 
+**规则约束**: 本技能在转换计划时，根据任务类型调用相应规则：
+- 功能开发/重构/测试 → `.claude/rules/01_workflow.md` (ADP)
+- Bug 修复 → `.claude/rules/02_debug.md` (8D)
+- 紧急修复 → `.claude/rules/03_hotfix.md` (HOTFIX)
+
 ## 目的 / Purpose
 
 本技能将 Claude Code "计划模式"（Plan Mode）产生的对话结果转换为符合项目标准的可执行开发提示词。
@@ -32,6 +37,18 @@ Use this skill when:
 - 用户在对话中直接提供了计划内容
 - 需要将计划转换为可执行的开发提示词
 - 需要分析任务依赖关系并智能拆分任务
+
+## 规则引用指南 / Rule Reference Guide
+
+转换计划时，根据任务类型选择正确的规则文件：
+
+| 任务类型 | 适用规则 | 说明 |
+|----------|---------|------|
+| 功能开发 / Feature | `.claude/rules/01_workflow.md` (ADP) | 四阶段开发流程 |
+| Bug 修复 / Bug Fix | `.claude/rules/02_debug.md` (8D) | 问题解决协议 |
+| 重构 / Refactoring | `.claude/rules/01_workflow.md` (ADP) | 架构设计优先 |
+| 测试 / Testing | `.claude/rules/01_workflow.md` (ADP) | 四阶段开发流程 |
+| 紧急修复 / Hotfix | `.claude/rules/03_hotfix.md` | 热修复流程 |
 
 ---
 
@@ -69,6 +86,21 @@ Analyze plan content to identify:
 | **执行器** | Gemini（前端）\| Codex（后端）\| Claude Code（架构）|
 | **依赖关系** | 任务间的执行顺序 |
 | **优先级** | P0 / P1 / P2 |
+
+---
+
+# 编号服务 / Numbering Service
+
+获取提示词编号时，使用 `promptsRec/.sequence` 计数器文件：
+
+| 任务类型 | 计数器 | 范围 |
+|---------|--------|------|
+| Feature | feature_next | 00001-09999 |
+| Bug Fix | bugfix_next | 10101-19999 |
+| Refactoring | refactor_next | 20101-29999 |
+| Testing | test_next | 30101-39999 |
+
+详见 `.claude/rules/05_task_convention.md` 的"计数器文件"章节。
 
 ---
 
@@ -126,9 +158,9 @@ Prompt numbering is strictly defined.
 | Range   | Category              |
 |---------|----------------------|
 | 00001–09999 | Feature Development  |
-| 10001–19999 | Bug Fix / Security Fix |
-| 20001–29999 | Refactoring / Tech Debt |
-| 30001–39999 | Testing / Quality    |
+| 10101–19999 | Bug Fix / Security Fix |
+| 20101–29999 | Refactoring / Tech Debt |
+| 30101–39999 | Testing / Quality    |
 
 ---
 
@@ -187,3 +219,16 @@ The AI must NOT:
 4. 包含具体的验收测试
 5. 正确声明依赖关系
 6. 可以由 RUNPROMPT 直接执行
+
+---
+
+# 会话结束规则 / Session End Rule
+
+**生成提示词后，必须退出计划模式，会话结束。**
+
+生成完所有提示词后，AI 必须：
+1. 调用 `ExitPlanMode` 退出计划模式
+2. 不进行任何额外的解释或说明
+3. 等待用户下一步指令
+
+This is the final step. After generating all prompts, exit plan mode immediately and end the conversation.

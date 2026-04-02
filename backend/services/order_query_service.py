@@ -126,7 +126,7 @@ def batch_query_tools(tool_codes: List[str]) -> Dict:
     placeholders = ",".join(["?"] * len(tool_codes))
     sql = f"""
         SELECT
-            tool_code,
+            serial_no,
             tool_name,
             spec,
             unit,
@@ -135,9 +135,9 @@ def batch_query_tools(tool_codes: List[str]) -> Dict:
             status,
             remark
         FROM 工装主数据
-        WHERE tool_code IN ({placeholders})
+        WHERE serial_no IN ({placeholders})
           AND status = 'active'
-        ORDER BY tool_code
+        ORDER BY serial_no
     """
     try:
         rows = db.execute_query(sql, tuple(tool_codes))
@@ -151,7 +151,7 @@ def batch_query_tools(tool_codes: List[str]) -> Dict:
 def _extract_tool_values(record: Dict) -> Dict:
     """Extract tool values from database record."""
     return {
-        "tool_code": _pick_value(record, ["tool_code", "ToolCode"], ""),
+        "serial_no": _pick_value(record, ["serial_no", "tool_code", "ToolCode"], ""),
         "tool_name": _pick_value(record, ["tool_name", "ToolName"], ""),
         "spec": _pick_value(record, ["spec", "Spec"], ""),
         "unit": _pick_value(record, ["unit", "Unit"], ""),

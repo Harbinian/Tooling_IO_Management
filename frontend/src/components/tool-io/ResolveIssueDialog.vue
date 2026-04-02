@@ -37,7 +37,7 @@
         <Button variant="outline" @click="visible = false">取消</Button>
         <Button 
           variant="default" 
-          class="bg-emerald-500 hover:bg-emerald-400 text-white border-none"
+          class="bg-primary hover:bg-primary/90 text-primary-foreground border-none"
           :loading="submitting"
           @click="submitForm"
         >

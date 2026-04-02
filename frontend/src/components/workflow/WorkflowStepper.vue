@@ -295,16 +295,16 @@ function getStepState(index, activeIndex, activeStatus) {
 }
 
 function stepClass(state) {
-  if (state === 'complete') return 'border-emerald-500/30 bg-emerald-500/10'
-  if (state === 'current') return 'border-sky-500/40 bg-sky-500/10'
-  if (state === 'blocked') return 'border-rose-500/30 bg-rose-500/10'
+  if (state === 'complete') return 'border-primary/30 bg-primary/10'
+  if (state === 'current') return 'border-primary/40 bg-primary/20'
+  if (state === 'blocked') return 'border-destructive/30 bg-destructive/10'
   return 'border-border bg-muted/20'
 }
 
 function stepDotClass(state) {
-  if (state === 'complete') return 'bg-emerald-500 text-white'
-  if (state === 'current') return 'bg-sky-500 text-white'
-  if (state === 'blocked') return 'bg-rose-500 text-white'
+  if (state === 'complete') return 'bg-primary text-primary-foreground'
+  if (state === 'current') return 'bg-primary text-primary-foreground'
+  if (state === 'blocked') return 'bg-destructive text-primary-foreground'
   return 'bg-muted text-muted-foreground'
 }
 </script>

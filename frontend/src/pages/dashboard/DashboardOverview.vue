@@ -100,7 +100,7 @@ const availableQuickActions = computed(() =>
           高效管理工装库存。通过实时追踪、自动通知和结构化流程，让出入库过程更简单、更透明。
         </p>
         <div class="mt-10 flex flex-wrap gap-4">
-          <Button v-debug-id="DEBUG_IDS.DASHBOARD.CREATE_OUTBOUND_BTN" v-if="session.hasPermission('order:create')" size="lg" class="bg-white text-slate-900 hover:bg-slate-100 font-bold border-none" asChild>
+          <Button v-debug-id="DEBUG_IDS.DASHBOARD.CREATE_OUTBOUND_BTN" v-if="session.hasPermission('order:create')" size="lg" class="bg-background text-foreground hover:bg-muted font-bold border-none" asChild>
             <router-link to="/inventory/create">
               <PlusCircle class="mr-2 h-5 w-5" /> 发起申请
             </router-link>

@@ -46,6 +46,12 @@ const routes = [
         meta: { title: '预知运输任务', permission: 'order:transport_execute' }
       },
       {
+        path: 'mpl',
+        name: 'mpl-management',
+        component: () => import('@/pages/tool-io/MplManagement.vue'),
+        meta: { title: 'MPL管理', permission: 'tool:view' }
+      },
+      {
         path: 'inventory/:orderNo',
         name: 'tool-io-detail',
         component: () => import('@/pages/tool-io/OrderDetail.vue'),

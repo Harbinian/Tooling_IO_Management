@@ -17,7 +17,7 @@
 
 工装搜索必须支持：
 
-- 工装编码 / tool code
+- 工装序列号 / serial number
 - 工装名称 / tool name
 - 规格 / specification
 - 位置 / location
@@ -54,7 +54,7 @@ UI 字段 -> API 字段 / UI Field -> API Field
 | UI 字段 | API 字段 |
 |---------|----------|
 | 订单号 / Order Number | order_no |
-| 工装编码 / Tool Code | tool_code |
+| 工装序列号 / Serial Number | serial_no |
 | 工装名称 / Tool Name | tool_name |
 
 ---

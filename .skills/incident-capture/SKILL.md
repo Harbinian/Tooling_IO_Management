@@ -23,6 +23,7 @@
 - 数据库错误 / database errors
 - 用户 bug 报告 / user bug reports
 - 截图或描述 / screenshots or descriptions
+- incidents/gui_events/GUI_EVENT_*.json  # GUI Launcher 生成的事件文件
 
 ---
 

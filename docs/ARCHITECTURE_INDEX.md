@@ -88,11 +88,11 @@
 
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
-| docs/AI_DEVOPS_ARCHITECTURE.md | AI DevOps 架构 / AI DevOps architecture |
-| docs/AI_DEVOPS_SYSTEM_ARCHITECTURE.md | AI DevOps 系统架构 / AI DevOps system architecture |
-| docs/AI_PIPELINE.md | AI 流水线 / AI pipeline |
-| docs/PROMPT_TASK_CONVENTION.md | 提示词任务规范 / Prompt task convention |
-| docs/COLLABORATION.md | 协作规范 / Collaboration guidelines |
+| docs/for-review/AI_PROMPT_PIPELINE.md | AI 提示词流水线架构 / AI prompt pipeline architecture |
+| .claude/rules/05_task_convention.md | 提示词任务编号约定 / Prompt task numbering convention |
+| .claude/rules/01_workflow.md | ADP 四阶段开发流程 / ADP four-phase workflow |
+| .claude/rules/02_debug.md | 8D 问题解决协议 / 8D problem solving protocol |
+| .claude/rules/03_hotfix.md | 热修复 SOP / Hotfix SOP |
 
 ---
 

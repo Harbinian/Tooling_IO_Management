@@ -48,6 +48,7 @@ client.interceptors.response.use(
     const { response } = error
     const status = response?.status
     const errorPayload = response?.data?.error
+    const suppressErrorMessage = Boolean(error.config?.suppressErrorMessage)
     
     // Centralized Error Message
     const message =
@@ -65,7 +66,7 @@ client.interceptors.response.use(
           query: { redirect: router.currentRoute.value.fullPath }
         })
       }
-    } else {
+    } else if (!suppressErrorMessage) {
       // Show error toast for other errors (including 500)
       ElMessage.error(message)
     }

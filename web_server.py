@@ -8,14 +8,17 @@ import os
 
 from flask import Flask
 
+from backend.extensions import limiter
 from backend.routes.admin_user_routes import admin_user_bp
 from backend.routes.auth_routes import auth_bp
 from backend.routes.common import register_request_identity_hook
 from backend.routes.dashboard_routes import dashboard_bp
 from backend.routes.feedback_routes import feedback_bp
+from backend.routes.mpl_routes import mpl_bp
 from backend.routes.order_routes import order_bp
 from backend.routes.org_routes import org_bp
 from backend.routes.page_routes import page_bp
+from backend.routes.system_config_routes import system_config_bp
 from backend.routes.system_routes import system_bp
 from backend.routes.tool_routes import tool_bp
 
@@ -35,20 +38,13 @@ try:
     FLASK_USE_RELOADER = settings.FLASK_USE_RELOADER
     FLASK_RELOADER_TYPE = settings.FLASK_RELOADER_TYPE
     SECRET_KEY = settings.SECRET_KEY
-except ImportError:
-    FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
-    FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
-    FLASK_DEBUG = os.getenv("FLASK_DEBUG", "True").lower() == "true"
-    FLASK_THREADED = os.getenv("FLASK_THREADED", "True").lower() == "true"
-    FLASK_USE_RELOADER = os.getenv("FLASK_USE_RELOADER", str(FLASK_DEBUG)).lower() == "true"
-    FLASK_RELOADER_TYPE = os.getenv("FLASK_RELOADER_TYPE", "stat").strip().lower() or "stat"
-    if FLASK_RELOADER_TYPE not in {"stat", "watchdog", "auto"}:
-        FLASK_RELOADER_TYPE = "stat"
-    SECRET_KEY = os.getenv("SECRET_KEY", "tooling-io-secret-key")
+except ImportError as exc:
+    raise RuntimeError("Failed to load application settings") from exc
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, template_folder="templates")
 app.config["SECRET_KEY"] = SECRET_KEY
+limiter.init_app(app)
 
 register_request_identity_hook(app, logger)
 app.register_blueprint(admin_user_bp)
@@ -56,9 +52,11 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(org_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(feedback_bp)
+app.register_blueprint(mpl_bp)
 app.register_blueprint(order_bp)
 app.register_blueprint(tool_bp)
 app.register_blueprint(page_bp)
+app.register_blueprint(system_config_bp)
 app.register_blueprint(system_bp)
 
 

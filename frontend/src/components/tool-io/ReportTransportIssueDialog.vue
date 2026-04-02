@@ -52,7 +52,7 @@
         <Button variant="outline" @click="visible = false">取消</Button>
         <Button 
           variant="default" 
-          class="bg-amber-500 hover:bg-amber-400 text-white border-none"
+          class="bg-warning hover:bg-warning/90 text-primary-foreground border-none"
           :loading="submitting"
           @click="submitForm"
         >

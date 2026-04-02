@@ -19,7 +19,6 @@
 | /plan-to-prompt | 将计划转换为提示词 / Convert plan to prompts |
 | /dev-inspector | 检查代码 / Inspect code |
 | /self-healing-dev-loop | 自愈开发循环 / Self-healing dev loop |
-| /start-dev | 启动开发环境并监控日志 / Start dev environment and monitor logs |
 
 ---
 
@@ -43,8 +42,8 @@ Type `/` followed by the command name to invoke the corresponding skill.
 
 所有技能位于: / All skills are located at:
 
-- `.claude/skills/` (符号链接 → `../skills/`)
-- `skills/`
+- `.skills/` (符号链接 → `C:\Users\charl\.claude\skills\`)
+- `.skills/start-dev/` (已删除)
 
 ---
 
@@ -53,4 +52,3 @@ Type `/` followed by the command name to invoke the corresponding skill.
 参见 / See also:
 
 - `docs/ARCHITECTURE_INDEX.md` - 架构索引
-- `docs/AI_DEVOPS_ARCHITECTURE.md` - AI DevOps 架构

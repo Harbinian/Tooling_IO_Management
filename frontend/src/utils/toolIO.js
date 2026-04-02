@@ -80,7 +80,7 @@ export function normalizeItem(record = {}) {
 
   return {
     toolId: pickValue(record, ['tool_id', '工装ID']),
-    toolCode: pickValue(record, ['tool_code', '序列号', '工装编码']),
+    toolCode: pickValue(record, ['serial_no', 'tool_code', '序列号']),
     toolName: pickValue(record, ['tool_name', '工装名称']),
     drawingNo: pickValue(record, ['drawing_no', '工装图号']),
     specModel: pickValue(record, ['spec_model', '机型', '规格型号']),

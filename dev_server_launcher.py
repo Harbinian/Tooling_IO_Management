@@ -12,6 +12,7 @@ import time
 import webbrowser
 import ctypes
 import atexit
+import json
 import re
 from pathlib import Path
 from datetime import datetime
@@ -125,6 +126,7 @@ def _python_candidates() -> list[str]:
 BASE_DIR = _get_base_dir()
 FRONTEND_DIR = BASE_DIR / "frontend"
 BACKEND_SCRIPT = BASE_DIR / "web_server.py"
+GUI_EVENT_DIR = BASE_DIR / "incidents" / "gui_events"
 
 # Pre-flight validation results (computed once at import time for the GUI)
 _VALIDATION_ERRORS: list[str] = []
@@ -255,6 +257,10 @@ class DevServerLauncher:
         self.backend_reachable = False
         self.backend_db_healthy = False
         self._health_check_inflight = False
+        self._last_backend_health_error: str | None = None
+        self._backend_was_running = False
+        self._frontend_was_running = False
+        self._expected_stops: dict[str, bool] = {"backend": False, "frontend": False}
 
         self._setup_ui()
         self._update_status_loop()
@@ -458,6 +464,40 @@ class DevServerLauncher:
         with open(log_file, "w", encoding="utf-8"):
             pass
 
+    def _read_log_tail(self, log_file: Path, max_lines: int = 50) -> str:
+        if not log_file.exists():
+            return ""
+        try:
+            with open(log_file, "r", encoding="utf-8") as f:
+                return "".join(f.readlines()[-max_lines:])
+        except Exception:
+            return ""
+
+    def _write_gui_event(self, event_data: dict) -> None:
+        """Write GUI-detected incidents for skill-based monitoring."""
+
+        def worker() -> None:
+            try:
+                GUI_EVENT_DIR.mkdir(parents=True, exist_ok=True)
+                now = datetime.now()
+                timestamp = now.strftime("%Y%m%d_%H%M%S_%f")
+                event_type = str(event_data.get("event_type", "unknown"))
+                event_id = f"GUI_EVENT_{timestamp}_{event_type}"
+                event_file = GUI_EVENT_DIR / f"{event_id}.json"
+                event = {
+                    "event_id": event_id,
+                    "timestamp": now.isoformat(),
+                    "source": "dev_server_launcher",
+                    "session_id": self.instance_id,
+                    **event_data,
+                }
+                with open(event_file, "w", encoding="utf-8") as f:
+                    json.dump(event, f, ensure_ascii=False, indent=2)
+            except Exception:
+                return
+
+        threading.Thread(target=worker, daemon=True).start()
+
     def _start_backend(self) -> None:
         if self.backend_process and self.backend_process.poll() is None:
             messagebox.showwarning("提示", "后端服务已在运行")
@@ -477,6 +517,7 @@ class DevServerLauncher:
         self._set_status("正在启动后端服务...")
 
         def do_start() -> None:
+            self._expected_stops["backend"] = False
             self._write_startup_info("backend", os.getpid())
             log_path = self.backend_log_path
             self._reset_log_file(log_path)
@@ -518,6 +559,7 @@ class DevServerLauncher:
         self._set_status("正在启动前端服务...")
 
         def do_start() -> None:
+            self._expected_stops["frontend"] = False
             npm_cmd_val = shutil.which("npm.cmd") or shutil.which("npm") or "npm.cmd"
             log_path = self.frontend_log_path
             self._reset_log_file(log_path)
@@ -537,6 +579,7 @@ class DevServerLauncher:
 
     def _stop_backend(self) -> None:
         if self.backend_process and self.backend_process.poll() is None:
+            self._expected_stops["backend"] = True
             self.backend_process.terminate()
             self._set_status("后端已停止")
             return
@@ -544,6 +587,7 @@ class DevServerLauncher:
 
     def _stop_frontend(self) -> None:
         if self.frontend_process and self.frontend_process.poll() is None:
+            self._expected_stops["frontend"] = True
             self.frontend_process.terminate()
             self._set_status("前端已停止")
             return
@@ -595,8 +639,23 @@ class DevServerLauncher:
                             db_healthy = status in {"ok", "healthy"}
                     except ValueError:
                         pass
-            except requests.RequestException:
-                pass
+                self._last_backend_health_error = None
+            except requests.RequestException as exc:
+                error_message = str(exc)
+                if self._last_backend_health_error != error_message:
+                    self._write_gui_event(
+                        {
+                            "event_type": "health_check_failed",
+                            "severity": "high",
+                            "affected_service": "backend",
+                            "error_summary": f"后端健康检查失败: {error_message}",
+                            "error_details": {
+                                "exception": error_message,
+                                "health_check_url": BACKEND_HEALTH_URL,
+                            },
+                        }
+                    )
+                    self._last_backend_health_error = error_message
             finally:
                 self.backend_reachable = reachable
                 self.backend_db_healthy = db_healthy
@@ -633,6 +692,45 @@ class DevServerLauncher:
         else:
             self._set_indicator(self.backend_health_value, STATUS_STOPPED)
 
+        if self._backend_was_running and not backend_running:
+            if self._expected_stops["backend"]:
+                self._expected_stops["backend"] = False
+            else:
+                exit_code = self.backend_process.returncode if self.backend_process else None
+                self._write_gui_event(
+                    {
+                        "event_type": "process_crash",
+                        "severity": "critical",
+                        "affected_service": "backend",
+                        "error_summary": f"后端进程运行中退出 (exit={exit_code})",
+                        "error_details": {
+                            "exit_code": exit_code,
+                            "log_file": str(self.backend_log_path),
+                            "log_content": self._read_log_tail(self.backend_log_path),
+                        },
+                    }
+                )
+        if self._frontend_was_running and not frontend_running:
+            if self._expected_stops["frontend"]:
+                self._expected_stops["frontend"] = False
+            else:
+                exit_code = self.frontend_process.returncode if self.frontend_process else None
+                self._write_gui_event(
+                    {
+                        "event_type": "process_crash",
+                        "severity": "critical",
+                        "affected_service": "frontend",
+                        "error_summary": f"前端进程运行中退出 (exit={exit_code})",
+                        "error_details": {
+                            "exit_code": exit_code,
+                            "log_file": str(self.frontend_log_path),
+                            "log_content": self._read_log_tail(self.frontend_log_path),
+                        },
+                    }
+                )
+        self._backend_was_running = backend_running
+        self._frontend_was_running = frontend_running
+
         self._refresh_button_states(backend_running, frontend_running)
         self.root.after(2000, self._update_status_loop)
 
@@ -652,6 +750,7 @@ class DevServerLauncher:
             if process.poll() is not None:
                 exit_code = process.returncode
                 log_hint = ""
+                log_content = self._read_log_tail(log_file)
                 if log_file.exists():
                     try:
                         with open(log_file, "r", encoding="utf-8") as f:
@@ -667,6 +766,19 @@ class DevServerLauncher:
                             log_hint = f"，错误已写入 {log_file.name}"
                     except Exception:
                         log_hint = f"（日志文件读取失败）"
+                self._write_gui_event(
+                    {
+                        "event_type": "startup_failure",
+                        "severity": "critical",
+                        "affected_service": service_name,
+                        "error_summary": f"{service_name} 进程启动后立即退出 (exit={exit_code})",
+                        "error_details": {
+                            "exit_code": exit_code,
+                            "log_file": str(log_file),
+                            "log_content": log_content,
+                        },
+                    }
+                )
                 self._set_status(
                     f"{service_name}启动后快速退出（exit={exit_code}）{log_hint}"
                     if log_hint

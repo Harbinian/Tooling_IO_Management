@@ -21,12 +21,14 @@
 ## Architecture Layers
 
 ```
-web_server.py           → Flask routes and HTTP handling
-backend/services/*.py    → Business logic wrappers
-backend/routes/*.py      → API endpoints
-backend/database/*.py    → Database queries
-config/settings.py       → Centralized configuration
-utils/feishu_api.py     → Feishu webhook notifications
+web_server.py                    → Flask routes and HTTP handling
+backend/routes/*.py              → API endpoints
+backend/services/*.py           → Business logic
+backend/database/repositories/*.py → Data access layer
+backend/database/core/*.py      → Database core (connection pool, executor)
+backend/database/schema/*.py     → Schema management
+database.py                     → SQL Server direct access
+config/settings.py              → Centralized configuration
 ```
 
 ## Frontend Structure
@@ -39,12 +41,9 @@ frontend/src/
 │   ├── tool-io/        → OrderList, OrderDetail, OrderCreate, KeeperProcess
 │   └── admin/          → UserAdminPage
 ├── components/         → Reusable UI components
-│   ├── ui/            → Input, Button, Card, Select, Tabs
-│   └── tool-io/        → ToolSearchDialog, ToolSelectionTable, LogTimeline
+│   ├── tool-io/        → ToolSearchDialog, ToolSelectionTable, LogTimeline
 ├── api/               → API wrappers
 ├── store/             → Pinia state management
-├── directives/        → vDebugId directive
-├── debug/             → debugIds.js
 └── router/            → Vue Router configuration
 ```
 
@@ -60,8 +59,9 @@ frontend/src/
 | notification_service.py | Feishu notifications |
 | admin_user_service.py | User management |
 | org_service.py | Organization management |
-| tool_location_service.py | Tool location tracking |
-| audit_log_service.py | Operation audit logging |
+| rbac_data_scope_service.py | Data scope filtering |
+| feedback_service.py | User feedback handling |
+| transport_issue_service.py | Transport issue handling |
 
 ### Backend Routes
 
@@ -73,36 +73,45 @@ frontend/src/
 | dashboard_bp | /api/dashboard | Dashboard metrics |
 | org_bp | /api/orgs | Organization tree |
 | admin_user_bp | /api/admin | User management |
+| feedback_bp | /api/feedback | User feedback |
 | system_bp | /api/system | Health, diagnostics |
 
 ## Database Tables
 
 Created on first API call via `ensure_tool_io_tables()`:
 
-- `工装出入库单_主表` - Order master table
-- `工装出入库单_明细` - Order line items
-- `工装出入库单_操作日志` - Operation audit trail
-- `工装出入库单_通知记录` - Notification history
-- RBAC tables: `RBAC_角色`, `RBAC_权限`, `RBAC_角色权限`
+- `tool_io_order` - Order master table
+- `tool_io_order_item` - Order line items
+- `tool_io_operation_log` - Operation audit trail
+- `tool_io_notification` - Notification history
+- `tool_io_location` - Tool locations
+- `tool_io_transport_issue` - Transport issue records
+- `tool_status_change_history` - Tool status change history
+- `tool_io_feedback` - User feedback
+- `tool_io_feedback_reply` - Feedback replies
+- RBAC tables: `sys_org`, `sys_user`, `sys_role`, `sys_permission`, etc.
 
 ## Workflow States
 
-**出库 (Outbound)**: 草稿 → 已提交 → 保管员已确认 → 运输中 → 班组长最终确认 → 已完成
+**出库 (Outbound)**: 草稿 → 已提交 → 保管员已确认 → 运输通知 → 运输中 → 待最终确认 → 已完成
 
-**入库 (Inbound)**: 草稿 → 已提交 → 保管员已确认 → 运输中 → 保管员最终确认 → 已完成
+**入库 (Inbound)**: 草稿 → 已提交 → 保管员已确认 → 运输通知 → 运输中 → 待最终确认 → 已完成
 
 ## RBAC Roles
 
-| Role | Permissions |
+| Role | Description |
 |------|-------------|
 | team_leader | Create orders, final confirm outbound |
 | keeper | Confirm items, reject orders, final confirm inbound |
-| admin | Full access |
+| planner | Create and submit orders |
+| production_prep | Execute transport operations |
+| auditor | View logs and reports |
+| sys_admin | Full system access |
 
 ## API Base URL
 
-- Backend: `http://localhost:5000`
-- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8151`
+- Frontend: `http://localhost:8150`
 
 ## Entry Points
 
@@ -113,7 +122,7 @@ Created on first API call via `ensure_tool_io_tables()`:
 
 ```powershell
 # Backend syntax check
-python -m py_compile web_server.py database.py
+python -m py_compile web_server.py database.py backend/services/tool_io_service.py config/settings.py
 
 # Frontend build
 cd frontend && npm run build

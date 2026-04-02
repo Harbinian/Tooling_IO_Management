@@ -133,6 +133,35 @@
         </Card>
       </el-tab-pane>
 
+      <el-tab-pane v-if="session.hasPermission('admin:user_manage')" label="系统设置" name="system">
+        <Card class="border-border bg-card shadow-xl">
+          <CardHeader class="border-b border-border">
+            <div class="space-y-1">
+              <p class="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">系统能力</p>
+              <CardTitle class="text-lg text-foreground">MPL 功能开关</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent class="pt-6">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-6">
+                <div class="space-y-1">
+                  <p class="text-sm font-semibold text-foreground">启用 MPL 校验</p>
+                  <p class="text-sm text-muted-foreground">保管员确认时检查工装是否已维护可拆卸件清单。</p>
+                </div>
+                <el-switch v-model="systemConfig.mpl_enabled" :loading="systemConfigLoading" @change="(value) => updateMplConfig('mpl_enabled', value)" />
+              </div>
+              <div class="flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-6">
+                <div class="space-y-1">
+                  <p class="text-sm font-semibold text-foreground">严格模式</p>
+                  <p class="text-sm text-muted-foreground">缺少 MPL 时阻止保管员完成确认，而不是仅显示警告。</p>
+                </div>
+                <el-switch v-model="systemConfig.mpl_strict_mode" :loading="systemConfigLoading" @change="(value) => updateMplConfig('mpl_strict_mode', value)" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </el-tab-pane>
+
       <el-tab-pane label="问题反馈" name="feedback">
         <Card class="border-border bg-card shadow-xl">
           <CardHeader class="border-b border-border">
@@ -249,7 +278,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Trash2 } from 'lucide-vue-next'
 
@@ -265,6 +294,7 @@ import {
   FeedbackStatusLabels,
   validateFeedback
 } from '@/api/feedback'
+import { getSystemConfigs, updateSystemConfig } from '@/api/systemConfig'
 
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
@@ -351,8 +381,12 @@ async function handlePasswordChange() {
 
 // Theme
 const isDarkMode = ref(false)
+let userManualOverride = false
+let mediaQuery = null
+let mediaQueryHandler = null
 
 function toggleTheme(value) {
+  userManualOverride = true // 用户手动选择后不再响应系统
   const theme = value ? 'dark' : 'light'
   localStorage.setItem('theme', theme)
   applyTheme(value)
@@ -366,11 +400,27 @@ function initTheme() {
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) {
     isDarkMode.value = savedTheme === 'dark'
+    userManualOverride = true // 如果有保存的主题，视为已手动覆盖
   } else {
     // No saved preference, use system preference
     isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
   }
   applyTheme(isDarkMode.value)
+}
+
+function bindSystemThemeListener() {
+  mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQueryHandler = (event) => {
+    if (!userManualOverride) {
+      isDarkMode.value = event.matches
+      applyTheme(event.matches)
+    }
+  }
+  if (mediaQuery.addEventListener) {
+    mediaQuery.addEventListener('change', mediaQueryHandler)
+  } else if (mediaQuery.addListener) {
+    mediaQuery.addListener(mediaQueryHandler)
+  }
 }
 
 // Feedback
@@ -388,6 +438,11 @@ const feedbackForm = ref({
 })
 const feedbackLoading = ref(false)
 const userFeedbackList = ref([])
+const systemConfigLoading = ref(false)
+const systemConfig = ref({
+  mpl_enabled: false,
+  mpl_strict_mode: false
+})
 
 function getCategoryLabel(category) {
   return FeedbackCategoryLabels[category] || category
@@ -452,9 +507,51 @@ async function handleDeleteFeedback(id) {
   }
 }
 
+async function loadSystemConfig() {
+  if (!session.hasPermission('admin:user_manage')) return
+  systemConfigLoading.value = true
+  try {
+    const result = await getSystemConfigs()
+    const rows = Array.isArray(result.data) ? result.data : []
+    systemConfig.value = {
+      mpl_enabled: rows.find((item) => item.config_key === 'mpl_enabled')?.config_value === 'true',
+      mpl_strict_mode: rows.find((item) => item.config_key === 'mpl_strict_mode')?.config_value === 'true'
+    }
+  } finally {
+    systemConfigLoading.value = false
+  }
+}
+
+async function updateMplConfig(configKey, value) {
+  systemConfigLoading.value = true
+  try {
+    const result = await updateSystemConfig(configKey, { config_value: value ? 'true' : 'false' })
+    if (result.success) {
+      ElMessage.success('系统配置已更新')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '系统配置更新失败')
+    await loadSystemConfig()
+  } finally {
+    systemConfigLoading.value = false
+  }
+}
+
 onMounted(async () => {
   initTheme()
+  bindSystemThemeListener()
   await loadUserFeedback()
+  await loadSystemConfig()
+})
+
+onBeforeUnmount(() => {
+  if (mediaQuery && mediaQueryHandler) {
+    if (mediaQuery.removeEventListener) {
+      mediaQuery.removeEventListener('change', mediaQueryHandler)
+    } else if (mediaQuery.removeListener) {
+      mediaQuery.removeListener(mediaQueryHandler)
+    }
+  }
 })
 </script>
 

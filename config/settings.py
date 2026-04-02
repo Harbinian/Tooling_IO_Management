@@ -4,6 +4,8 @@ Configuration settings for Tooling IO Management System.
 """
 
 import os
+import logging
+import secrets
 from dataclasses import dataclass
 
 try:
@@ -13,6 +15,7 @@ except ImportError:  # pragma: no cover - optional dependency
         return False
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -77,6 +80,19 @@ def _get_bool(name: str, default: bool) -> bool:
     return os.getenv(name, str(default)).lower() == 'true'
 
 
+def _resolve_secret_key(flask_env: str) -> str:
+    secret_key = os.getenv('SECRET_KEY', '').strip()
+    if secret_key:
+        return secret_key
+
+    if flask_env == 'production':
+        raise ValueError('SECRET_KEY environment variable must be set in production')
+
+    generated_key = secrets.token_urlsafe(32)
+    logger.warning('SECRET_KEY not set; generated an ephemeral development key for the current process')
+    return generated_key
+
+
 def _build_settings() -> Settings:
     flask_env = os.getenv('FLASK_ENV', 'default').lower()
     flask_debug = _get_bool('FLASK_DEBUG', flask_env != 'production')
@@ -99,7 +115,7 @@ def _build_settings() -> Settings:
     )
 
     return Settings(
-        SECRET_KEY=os.getenv('SECRET_KEY', 'tooling-io-secret-key'),
+        SECRET_KEY=_resolve_secret_key(flask_env),
         FLASK_HOST=os.getenv('FLASK_HOST', '0.0.0.0'),
         FLASK_PORT=int(os.getenv('FLASK_PORT', '5000')),
         FLASK_DEBUG=flask_debug,

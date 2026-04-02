@@ -146,7 +146,7 @@
                 </div>
 
                 <!-- Transport Config -->
-                <div class="grid md:grid-cols-2 gap-6">
+                  <div class="grid md:grid-cols-2 gap-6">
                   <div class="space-y-2">
                     <label class="text-sm font-semibold text-foreground">运输类型</label>
                     <Input v-model="confirmForm.transportType" placeholder="如：人工 / 叉车 / 外协" />
@@ -159,6 +159,13 @@
                     <label class="text-sm font-semibold text-foreground">保管员备注</label>
                     <Textarea v-model="confirmForm.keeperRemark" placeholder="请输入确认时的备注信息..." />
                   </div>
+                </div>
+
+                <div v-if="mplWarnings.length" class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                  <p class="text-sm font-semibold text-amber-600">MPL 提示</p>
+                  <ul class="mt-2 space-y-1 text-sm text-amber-700">
+                    <li v-for="warning in mplWarnings" :key="warning">{{ warning }}</li>
+                  </ul>
                 </div>
 
                 <!-- Item Verification List -->
@@ -177,6 +184,7 @@
                           <th class="px-4 py-3 font-bold">工装信息</th>
                           <th class="px-4 py-3 font-bold">建议位置</th>
                           <th class="px-4 py-3 font-bold w-[180px]">确认位置</th>
+                          <th class="px-4 py-3 font-bold w-[120px]">MPL</th>
                           <th class="px-4 py-3 font-bold w-[120px]">状态</th>
                           <th class="px-4 py-3 font-bold w-[100px]">分体数量</th>
                         </tr>
@@ -192,6 +200,16 @@
                           </td>
                           <td class="px-4 py-4">
                             <Input v-model="item.locationText" placeholder="确认位置" class="h-8 text-xs border-border" />
+                          </td>
+                          <td class="px-4 py-4">
+                            <div class="flex flex-col gap-2">
+                              <Badge :variant="item.mplExists ? 'secondary' : 'outline'" :class="item.mplExists ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'">
+                                {{ item.mplExists ? '已配置' : '缺失' }}
+                              </Badge>
+                              <Button variant="outline" size="sm" class="h-8 px-2 text-xs" :disabled="!item.currentVersion" @click="openMplDetail(item)">
+                                查看
+                              </Button>
+                            </div>
                           </td>
                           <td class="px-4 py-4">
                             <Select v-model="item.status" class="h-8 text-xs border-border">
@@ -269,7 +287,7 @@
                   </div>
                   <Input
                     v-model="toolSearchKeyword"
-                    placeholder="输入工装编码后按回车搜索"
+                    placeholder="输入工装序列号后按回车搜索"
                     class="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all"
                     @keyup.enter="handleSearchTools(toolSearchKeyword)"
                     :disabled="searchLoading"
@@ -393,7 +411,7 @@
                     <table v-else class="w-full text-xs text-left border-collapse">
                       <thead class="bg-muted/50 border-b border-border text-muted-foreground font-bold uppercase tracking-wider">
                         <tr>
-                          <th class="px-4 py-3">工装编码</th>
+                          <th class="px-4 py-3">工装序列号</th>
                           <th class="px-4 py-3">变更轨迹</th>
                           <th class="px-4 py-3">操作信息</th>
                         </tr>
@@ -429,6 +447,48 @@
       </el-tab-pane>
     </el-tabs>
   </div>
+
+  <el-dialog v-model="mplDialogVisible" title="MPL 详情" width="780px">
+    <div v-if="selectedMplItem" class="space-y-4">
+      <div class="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 md:grid-cols-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">工装图号</p>
+          <p class="mt-1 text-sm font-semibold">{{ selectedMplItem.drawingNo || '-' }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">版次</p>
+          <p class="mt-1 text-sm font-semibold">{{ selectedMplItem.currentVersion || '-' }}</p>
+        </div>
+      </div>
+      <div v-if="selectedMplGroup?.items?.length" class="space-y-3">
+        <div
+          v-for="component in selectedMplGroup.items"
+          :key="`${component.component_no}-${component.id}`"
+          class="grid gap-4 rounded-xl border border-border bg-background/80 p-4 md:grid-cols-[1fr,1fr,120px]"
+        >
+          <div>
+            <p class="text-xs text-muted-foreground">组件号</p>
+            <p class="text-sm font-semibold">{{ component.component_no }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground">组件名称</p>
+            <p class="text-sm font-semibold">{{ component.component_name }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground">数量</p>
+            <p class="text-sm font-semibold">{{ component.quantity }}</p>
+          </div>
+          <div class="md:col-span-3 rounded-xl border border-dashed border-border bg-muted/20 p-3">
+            <img v-if="component.photo_data" :src="component.photo_data" alt="MPL" class="h-48 w-full rounded-lg object-contain" />
+            <p v-else class="text-sm text-muted-foreground">该组件未上传图片</p>
+          </div>
+        </div>
+      </div>
+      <div v-else class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700">
+        当前工装未维护 MPL。
+      </div>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -460,6 +520,7 @@ import {
   rejectOrder
 } from '@/api/orders'
 import { getFinalConfirmAvailability } from '@/api/orders'
+import { getMplByTool } from '@/api/mpl'
 import { searchTools, batchUpdateToolStatus, getToolStatusHistory } from '@/api/tools'
 import { useSessionStore } from '@/store/session'
 import { DEBUG_IDS } from '@/debug/debugIds'
@@ -485,6 +546,10 @@ const transportPreview = ref('')
 const wechatPreview = ref('')
 const loading = ref(false)
 const finalConfirmState = ref({ available: false, reason: '' })
+const mplWarnings = ref([])
+const mplDialogVisible = ref(false)
+const selectedMplItem = ref(null)
+const selectedMplGroup = ref(null)
 
 // Tool Status Management State
 const toolSearchKeyword = ref('')
@@ -637,9 +702,34 @@ function buildEditableItems(order) {
       ...item,
       locationText: item.keeperConfirmLocationText || item.currentLocationText || '',
       status: item.itemStatus === 'rejected' ? 'rejected' : 'approved',
-      checkRemark: item.checkRemark || ''
+      checkRemark: item.checkRemark || '',
+      mplExists: false
     }
   })
+}
+
+async function loadMplStatuses(items) {
+  const results = await Promise.all(
+    (items || []).map(async (item) => {
+      if (!item.drawingNo || !item.currentVersion) {
+        return { key: item.toolCode, exists: false, message: `工装 ${item.drawingNo || item.toolCode || '-'} 缺少版次，无法匹配 MPL`, group: null }
+      }
+      const result = await getMplByTool(item.drawingNo, item.currentVersion).catch(() => ({ success: false }))
+      return {
+        key: item.toolCode,
+        exists: !!result.success,
+        message: result.success ? '' : `工装 ${item.drawingNo} (版次 ${item.currentVersion}) 缺少可拆卸件清单`,
+        group: result.data || null
+      }
+    })
+  )
+
+  const groupMap = new Map(results.map((entry) => [entry.key, entry]))
+  confirmItems.value = confirmItems.value.map((item) => {
+    const match = groupMap.get(item.toolCode)
+    return { ...item, mplExists: !!match?.exists, mplGroup: match?.group || null }
+  })
+  mplWarnings.value = results.filter((entry) => !entry.exists && entry.message).map((entry) => entry.message)
 }
 
 async function loadPendingOrders() {
@@ -664,12 +754,20 @@ async function selectOrder(row) {
   confirmForm.transportAssigneeId = result.data.transportOperatorId || ''
   confirmForm.transportAssigneeName = result.data.transportOperatorName || ''
   confirmForm.keeperRemark = ''
+  mplWarnings.value = []
   const availability = await getFinalConfirmAvailability(row.orderNo, {
     operator_id: session.userId,
     operator_role: session.role
   }).catch(() => ({ success: false, available: false }))
   finalConfirmState.value = availability.success ? availability : { available: false, reason: '' }
+  await loadMplStatuses(confirmItems.value)
   resetPreview()
+}
+
+function openMplDetail(item) {
+  selectedMplItem.value = item
+  selectedMplGroup.value = item.mplGroup || null
+  mplDialogVisible.value = true
 }
 
 async function previewTransport() {
@@ -710,6 +808,10 @@ async function approveOrder() {
   const result = await keeperConfirmOrder(selectedOrder.value.orderNo, payload)
   if (!result.success) return
 
+  if (Array.isArray(result.mpl_warnings) && result.mpl_warnings.length) {
+    mplWarnings.value = result.mpl_warnings
+    ElMessage.warning('MPL 缺失，已按警告模式继续确认')
+  }
   ElMessage.success('保管确认已提交')
   await selectOrder(selectedOrder.value)
   await loadPendingOrders()

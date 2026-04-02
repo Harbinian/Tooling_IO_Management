@@ -1,5 +1,13 @@
 # RUNPROMPT / 运行提示词任务
 
+**规则约束**: 本技能执行提示词时，根据任务类型调用相应规则：
+- 功能任务 (00001-09999) → `.claude/rules/01_workflow.md` (ADP)
+- Bug修复任务 (10101-19999) → `.claude/rules/02_debug.md` (8D)
+- 重构任务 (20101-29999) → `.claude/rules/01_workflow.md` (ADP)
+- 测试任务 (30101-39999) → `.claude/rules/01_workflow.md` (ADP)
+- 生产环境紧急修复 → `.claude/rules/03_hotfix.md` (HOTFIX)
+- 编号约定 → `.claude/rules/05_task_convention.md`
+
 命令触发: RUNPROMPT / Command Trigger: RUNPROMPT
 
 ---
@@ -29,14 +37,14 @@
 当多个执行者（Claude Code、Codex、Gemini）可能并行执行任务时，必须：
 
 1. **先创建锁文件**: 在执行任何任务前创建 .lock 文件，防止重复执行
-2. **动态计算执行顺序号**: 使用 Step 7 的算法动态确定归档执行顺序号，而非假设序号顺序
-3. **先扫描再归档**: 在归档前必须扫描所有现有归档，确保执行顺序号未被占用
+2. **使用 .sequence 获取执行顺序号**: 从 `promptsRec/.sequence` 读取 `exec_next` 作为归档执行顺序号
+3. **后续任务合并**: 归档前扫描 archive 查找同编号的原始归档（用于追加后续工作）
 
 When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parallel, you must:
 
 1. **Create lock file first**: Create .lock file before executing any task to prevent duplicate execution
-2. **Dynamically calculate execution sequence number**: Use Step 7's algorithm to dynamically determine archive sequence number, not assume sequential order
-3. **Scan before archiving**: Must scan all existing archives before archiving to ensure sequence number is not occupied
+2. **Use .sequence for execution number**: Read `exec_next` from `promptsRec/.sequence` for archive sequence number
+3. **Detect follow-up tasks**: Scan archive to find same-numbered original archive for merging follow-up work
 
 ---
 
@@ -136,10 +144,18 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 
 | 任务类型 | 编号范围 | 默认调用规则 |
 |---------|---------|------------|
-| 功能任务 / Feature | 00001-09999 | `.claude\rules\03_hotfix.md` (热修复标准操作流程) |
+| 功能任务 / Feature | 00001-09999 | `.claude\rules\01_workflow.md` (ADP开发协议) |
 | Bug修复任务 / Bug Fix | 10101-19999 | `.claude\rules\02_debug.md` (8D问题解决协议) |
 | 重构任务 / Refactoring | 20101-29999 | `.claude\rules\01_workflow.md` (ADP开发协议) |
-| 测试任务 / Testing | 30101-39999 | `.claude\rules\02_debug.md` (8D问题解决协议) |
+| 测试任务 / Testing | 30101-39999 | `.claude\rules\01_workflow.md` (ADP开发协议) |
+
+**规则适用场景说明**：
+
+| 规则文件 | 适用场景 |
+|----------|---------|
+| `01_workflow.md` (ADP) | 功能开发、UI改进、架构重构、测试任务 — 严格按照四阶段顺序执行 |
+| `02_debug.md` (8D) | Bug修复、回归问题 — 仅用于调试或回归问题，必须深挖根因 |
+| `03_hotfix.md` | 热修复 — 仅用于生产环境紧急修复，强调最小变更和快速验证 |
 
 **规则调用方式**: 在执行任务前，先加载对应的规则文件，按照规则中定义的流程执行。规则文件内容作为执行者的必须遵守的约束条件。
 
@@ -177,11 +193,11 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 |---------|------|--------|
 | 重构任务 (20101-29999) | 始终 | Claude Code |
 | 测试任务 (30101-39999) | 始终 | Claude Code |
-| 恶性 Bug (P0/P1) | 始终 | Claude Code |
+| Bug 修复 (P0/P1 恶性) | 始终 | Claude Code |
 | 简化任务 | 始终 | Claude Code |
-| 功能任务/普通 Bug | 前端设计 | Gemini |
-| 功能任务/普通 Bug | 后端实现 | Codex |
-| 功能任务/普通 Bug | 前端实现 | Codex |
+| 功能任务 (00001-09999) | 前端设计大改 | Claude Code |
+| 功能任务 (00001-09999) | 后端/前端实现 | Codex |
+| Bug 修复 (普通) | 不涉及架构变更 | Codex |
 
 **简化任务判定**：以下情况视为"简化任务"：
 - 参数类型不匹配修复
@@ -194,6 +210,95 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 **恶性 Bug 判定**：
 - P0：系统无法运行、数据损坏风险
 - P1：核心功能损坏、API 不可用、工作流阻塞
+
+---
+
+### 5.1.2 依赖检查与中止规则 / Dependency Check and Abort Rules
+
+**关键规则：如果任务在执行过程中发现依赖的任务未完成，必须立即中止并删除锁。**
+
+在执行任何任务前，必须执行以下依赖检查：
+
+#### 依赖检查流程 / Dependency Check Flow
+
+1. **解析 Dependencies**: 从提示词 Header 中提取 `Dependencies` 字段
+2. **检查归档状态**: 扫描 `promptsRec/archive/` 目录，确认所有依赖任务已归档
+3. **检查执行状态**: 确认依赖任务不是当前正在执行的任务（带锁但未归档）
+
+#### 依赖未完成的判定 / Dependency Not Met Criteria
+
+满足以下任一条件视为"依赖未完成"：
+
+| 条件 | 说明 |
+|------|------|
+| 依赖任务无归档文件 | `promptsRec/archive/` 中不存在对应的 ✅/🔶 归档文件 |
+| 依赖任务有锁但无归档 | 依赖任务存在 .lock 文件但未归档 |
+| 循环依赖检测 | 当前任务间接依赖自己 |
+
+#### 中止执行与锁删除操作 / Abort Execution and Lock Removal
+
+如果检测到依赖未完成：
+
+```
+1. 立即停止执行（不继续下一步操作）
+2. 删除当前任务的 .lock 文件（如果存在）
+3. 生成中止报告到 logs/prompt_task_runs/
+4. 不归档提示词文件（保留在 active 目录）
+5. 输出警告信息
+```
+
+**中止报告格式**：
+```markdown
+# 任务中止报告 / Task Abort Report
+
+## 基本信息
+- 任务编号: <提示词编号>
+- 任务文件: <提示词文件名>
+- 中止时间: <时间戳>
+- 中止原因: 依赖任务未完成
+
+## 依赖检查结果
+- 依赖任务: <Dependencies 中列出的任务>
+- 检查结果: ❌ 未完成 / ✅ 已完成
+- 依赖归档文件: <无 / 存在>
+
+## 执行操作
+- [x] 停止任务执行
+- [x] 删除 .lock 文件
+- [ ] 归档提示词（未执行 - 依赖未满足）
+
+## 后续建议
+- 等待依赖任务完成后重新执行
+- 或确认依赖任务是否应该被标记为已完成
+```
+
+#### 依赖检查时机 / When to Check Dependencies
+
+| 时机 | 是否检查 |
+|------|---------|
+| 执行任务前（Step 3） | ✅ 必须检查 |
+| 发现新的依赖问题时 | ✅ 必须检查并中止 |
+| 任务执行中途 | ✅ 如果发现依赖问题立即中止 |
+
+#### 示例场景 / Example Scenarios
+
+**场景 1：前端任务依赖后端任务未完成**
+
+```
+提示词: 20111_refactor_tool_code_to_serial_no_frontend.md
+Dependencies: 20110（后端和数据库重构完成后）
+检查结果: 20110 未归档 → 依赖未完成
+操作: 中止执行，删除锁（如有），生成中止报告
+```
+
+**场景 2：Bug修复依赖之前的bug修复未完成**
+
+```
+提示词: 10115_bug_order_list_filter.md
+Dependencies: 10110, 10112
+检查结果: 10112 未归档 → 依赖未完成
+操作: 中止执行，删除锁（如有），生成中止报告
+```
 
 ---
 
@@ -271,10 +376,11 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 ```
 
 **执行顺序号分配规则**:
-1. **扫描所有归档**: 扫描 `promptsRec/archive/` 目录，查找所有以 `✅_` 或 `🔶_` 开头的文件
-2. **提取最大执行顺序号**: 从归档文件名中解析第一个5位数字（如 `✅_00029_...` → 29），找出最大值
-3. **确定新执行顺序号**: 新序号 = 最大序号 + 1，使用5位格式（如 29 → 00030）
-4. **验证未被占用**: 确认 `✅_00030_` 或 `🔶_00030_` 格式的文件名尚未存在
+为避免频繁扫描 archive 目录，使用 `promptsRec/.sequence` 文件维护执行顺序号计数器。
+
+1. **读取计数器**: 读取 `promptsRec/.sequence` 中的 `exec_next` 值
+2. **分配序号**: 使用当前值作为归档文件的执行顺序号
+3. **更新计数器**: 使用 replace_all 模式原子递增 `exec_next`
 
 **类型编号分配规则**:
 根据任务类型分配类型编号（第二个5位）：
@@ -286,9 +392,9 @@ When multiple executors (Claude Code, Codex, Gemini) may execute tasks in parall
 | 重构任务 | 20101-29999 | 20101-29999 (自增) | `20101`, `20102` |
 | 测试任务 | 30101-39999 | 30101-39999 (自增) | `30101`, `30102` |
 
-**并发保护**: 如果新序号已被占用（多执行者并行工作场景），重新扫描并使用更大序号。
+**并发保护**: `.sequence` 文件使用 replace_all 模式更新，具有原子性。如遇并发冲突，执行者应重试读取最新值。
 
-**禁止直接使用固定序号**: 严禁硬编码任何序号，必须基于现有归档动态计算。
+**注意**: `.sequence` 文件是执行顺序号的唯一真实来源。严禁扫描 archive 目录来确定顺序号。
 
 Archive format:
 
@@ -451,3 +557,93 @@ Archive format:
 - 严禁删除提示词文件 / never delete prompt files
 - 仅在完成后归档 / archive only after completion
 - 所有文件必须使用 UTF-8 编码 / all files must use UTF-8 encoding
+
+---
+
+# Advanced Topics / 高级主题
+
+## Executor Registry — 执行器注册表
+
+### 目的
+
+将执行器管理从硬编码规则改为注册表模式，便于扩展和维护。执行者只需查看注册表即可了解所有可用执行器的能力。
+
+### 预定义执行器
+
+| 执行器 | 能力范围 | 适用任务 |
+|--------|----------|----------|
+| Claude Code | 架构设计、重构、复杂Bug、测试、P0/P1 | P0/P1 Bug、重构、测试、架构相关、简化任务 |
+| Codex | 后端实现、前端实现 | 普通功能实现、简单Bug修复 |
+| Gemini | 前端UI设计 | 前端设计大改 |
+
+### 执行器能力矩阵
+
+| 能力 | Claude Code | Codex | Gemini |
+|------|-------------|-------|--------|
+| 架构设计 | ✅ | ❌ | ❌ |
+| 重构 | ✅ | ⚠️ | ❌ |
+| 后端实现 | ✅ | ✅ | ❌ |
+| 前端实现 | ✅ | ✅ | ⚠️ |
+| UI设计 | ⚠️ | ❌ | ✅ |
+| 测试编写 | ✅ | ⚠️ | ❌ |
+
+- ✅ = 主力能力
+- ⚠️ = 可辅助
+
+### 选择算法
+
+给定任务时，按以下算法选择执行器：
+
+```
+输入: task_type, complexity, task_description
+
+Step 1: 根据 task_type 确定候选执行器列表
+  - 功能任务 (00001-09999) → [Claude Code, Codex]
+  - Bug修复 (10101-19999) → [Claude Code, Codex]
+  - 重构任务 (20101-29999) → [Claude Code]
+  - 测试任务 (30101-39999) → [Claude Code]
+
+Step 2: 根据 complexity 调整优先级
+  - P0/P1 (高) → 强制 Claude Code
+  - 涉及多文件/多模块 → 优先 Claude Code
+  - 单文件/简单修复 (低) → 优先 Codex
+
+Step 3: 根据 task_description 二次筛选
+  - 包含"架构"、"重构"、"测试" → Claude Code
+  - 包含"前端设计"、"UI" → 考虑 Gemini
+  - 包含"API"、"数据库"、"后端" → 优先 Codex
+
+Step 4: 返回最优执行器
+```
+
+### 执行器能力说明
+
+**Claude Code**:
+- 优势: 全栈能力，架构设计，复杂问题分析
+- 工具: Read, Edit, Bash, Agent, Glob, Grep
+- 适用复杂度: 中高
+- 限制: 无
+
+**Codex**:
+- 优势: 专注实现，代码生成速度快
+- 工具: 代码生成/修改
+- 适用复杂度: 低中
+- 限制: 不擅长架构设计
+
+**Gemini**:
+- 优势: UI设计，创意生成
+- 工具: UI组件生成
+- 适用复杂度: 中
+- 限制: 不擅长后端逻辑
+
+### 注册表扩展指南
+
+新增执行器时，需在注册表中添加：
+
+```markdown
+| 新执行器名 | 能力范围 | 适用任务 |
+|------------|----------|----------|
+| ... | ... | ... |
+```
+
+并更新能力矩阵。

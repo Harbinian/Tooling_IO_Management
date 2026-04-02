@@ -20,6 +20,6 @@ __all__ = [
 ]
 
 
-def get_tool_lock_conflicts(tool_codes: List[str], exclude_order_no: Optional[str] = None) -> Dict[str, Any]:
+def get_tool_lock_conflicts(serial_nos: List[str], exclude_order_no: Optional[str] = None) -> Dict[str, Any]:
     """Backward-compatible alias for tool occupancy checks."""
-    return check_tools_available(tool_codes, exclude_order_no=exclude_order_no)
+    return check_tools_available(serial_nos, exclude_order_no=exclude_order_no)

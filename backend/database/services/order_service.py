@@ -314,14 +314,14 @@ class OrderService:
 
     def check_tools_available(
         self,
-        tool_codes: list,
+        serial_nos: list,
         exclude_order_no: str = None
     ) -> dict:
         """
         Check if tools are available.
 
         Args:
-            tool_codes: List of tool codes
+            serial_nos: List of tool serial numbers
             exclude_order_no: Order to exclude
 
         Returns:
@@ -329,4 +329,4 @@ class OrderService:
         """
         from backend.database.repositories.tool_repository import ToolRepository
         repo = ToolRepository(self._db)
-        return repo.check_tools_available(tool_codes, exclude_order_no)
+        return repo.check_tools_available(serial_nos, exclude_order_no)

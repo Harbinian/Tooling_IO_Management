@@ -6,8 +6,6 @@ Schema management for Tool IO tables.
 import logging
 from typing import List
 
-from backend.database.core.database_manager import DatabaseManager, ORDER_NO_SEQUENCE_TABLE
-
 logger = logging.getLogger(__name__)
 
 # Schema alignment indexes - using English table/column names
@@ -18,7 +16,7 @@ SCHEMA_ALIGNMENT_INDEXES = (
     ("tool_io_order", "IX_tool_io_order_keeper_id", "keeper_id"),
     ("tool_io_order", "IX_tool_io_order_created_at", "created_at"),
     ("tool_io_order_item", "IX_tool_io_order_item_order_no", "order_no"),
-    ("tool_io_order_item", "IX_tool_io_order_item_tool_code", "tool_code"),
+    ("tool_io_order_item", "IX_tool_io_order_item_serial_no", "serial_no"),
     ("tool_io_order_item", "IX_tool_io_order_item_item_status", "item_status"),
     ("tool_io_operation_log", "IX_tool_io_operation_log_order_no", "order_no"),
     ("tool_io_operation_log", "IX_tool_io_operation_log_operation_time", "operation_time"),
@@ -33,6 +31,8 @@ SCHEMA_ALIGNMENT_INDEXES = (
 
 def _execute_statements_in_transaction(sql_statements: List[str], success_message: str) -> bool:
     """Execute schema DDL statements atomically."""
+    from backend.database.core.database_manager import DatabaseManager
+
     db = DatabaseManager()
     conn = None
     cursor = None
@@ -157,7 +157,7 @@ def ensure_tool_status_change_history_table() -> bool:
         IF OBJECT_ID(N'tool_status_change_history', N'U') IS NULL
         CREATE TABLE [tool_status_change_history] (
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-            [tool_code] NVARCHAR(100) NOT NULL,
+            [serial_no] NVARCHAR(100) NOT NULL,
             [old_status] NVARCHAR(50) NOT NULL,
             [new_status] NVARCHAR(50) NOT NULL,
             [remark] NVARCHAR(500) NULL,
@@ -167,7 +167,7 @@ def ensure_tool_status_change_history_table() -> bool:
             [client_ip] NVARCHAR(64) NULL
         )
         """,
-        build_add_column_sql("tool_status_change_history", "tool_code", "NVARCHAR(100) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_status_change_history", "serial_no", "NVARCHAR(100) NOT NULL DEFAULT ''"),
         build_add_column_sql("tool_status_change_history", "old_status", "NVARCHAR(50) NOT NULL DEFAULT ''"),
         build_add_column_sql("tool_status_change_history", "new_status", "NVARCHAR(50) NOT NULL DEFAULT ''"),
         build_add_column_sql("tool_status_change_history", "remark", "NVARCHAR(500) NULL"),
@@ -177,8 +177,8 @@ def ensure_tool_status_change_history_table() -> bool:
         build_add_column_sql("tool_status_change_history", "client_ip", "NVARCHAR(64) NULL"),
         build_create_index_sql(
             "tool_status_change_history",
-            "IX_tool_status_change_history_tool_code_time",
-            "tool_code, change_time",
+            "IX_tool_status_change_history_serial_no_time",
+            "serial_no, change_time",
         ),
     ]
     return _execute_statements_in_transaction(sql_statements, "Tool status change history table ensured")
@@ -228,6 +228,87 @@ def ensure_transport_issue_table() -> bool:
     return _execute_statements_in_transaction(sql_statements, "Transport issue table ensured")
 
 
+def ensure_system_config_table() -> bool:
+    """Create or align system configuration table and seed default values."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'sys_system_config', N'U') IS NULL
+        CREATE TABLE [sys_system_config] (
+            [config_key] VARCHAR(128) PRIMARY KEY,
+            [config_value] NVARCHAR(256) NULL,
+            [description] NVARCHAR(512) NULL,
+            [updated_by] VARCHAR(64) NULL,
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+        )
+        """,
+        build_add_column_sql("sys_system_config", "config_value", "NVARCHAR(256) NULL"),
+        build_add_column_sql("sys_system_config", "description", "NVARCHAR(512) NULL"),
+        build_add_column_sql("sys_system_config", "updated_by", "VARCHAR(64) NULL"),
+        build_add_column_sql("sys_system_config", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        """
+        IF NOT EXISTS (SELECT 1 FROM [sys_system_config] WHERE [config_key] = 'mpl_enabled')
+        INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
+        VALUES ('mpl_enabled', N'false', N'Enable MPL validation during keeper confirmation', 'system', SYSDATETIME())
+        """,
+        """
+        IF NOT EXISTS (SELECT 1 FROM [sys_system_config] WHERE [config_key] = 'mpl_strict_mode')
+        INSERT INTO [sys_system_config] ([config_key], [config_value], [description], [updated_by], [updated_at])
+        VALUES ('mpl_strict_mode', N'false', N'Block keeper confirmation when MPL is missing', 'system', SYSDATETIME())
+        """,
+        build_create_index_sql("sys_system_config", "IX_sys_system_config_updated_at", "updated_at"),
+    ]
+    return _execute_statements_in_transaction(sql_statements, "System config table ensured")
+
+
+def ensure_mpl_table() -> bool:
+    """Create or align MPL persistence table."""
+    from backend.database.utils.sql_utils import build_add_column_sql, build_create_index_sql
+
+    sql_statements = [
+        """
+        IF OBJECT_ID(N'tool_io_mpl', N'U') IS NULL
+        CREATE TABLE [tool_io_mpl] (
+            [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [mpl_no] VARCHAR(128) NOT NULL,
+            [tool_drawing_no] VARCHAR(64) NOT NULL,
+            [tool_revision] VARCHAR(32) NOT NULL,
+            [component_no] VARCHAR(64) NOT NULL,
+            [component_name] NVARCHAR(256) NOT NULL,
+            [quantity] INT NOT NULL DEFAULT 1,
+            [photo_data] NVARCHAR(MAX) NULL,
+            [created_by] VARCHAR(64) NULL,
+            [created_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            [updated_at] DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+        )
+        """,
+        build_add_column_sql("tool_io_mpl", "mpl_no", "VARCHAR(128) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_mpl", "tool_drawing_no", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_mpl", "tool_revision", "VARCHAR(32) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_mpl", "component_no", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_mpl", "component_name", "NVARCHAR(256) NOT NULL DEFAULT ''"),
+        build_add_column_sql("tool_io_mpl", "quantity", "INT NOT NULL DEFAULT 1"),
+        build_add_column_sql("tool_io_mpl", "photo_data", "NVARCHAR(MAX) NULL"),
+        build_add_column_sql("tool_io_mpl", "created_by", "VARCHAR(64) NULL"),
+        build_add_column_sql("tool_io_mpl", "created_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_add_column_sql("tool_io_mpl", "updated_at", "DATETIME2 NOT NULL DEFAULT SYSDATETIME()"),
+        build_create_index_sql("tool_io_mpl", "IX_tool_io_mpl_tool", "tool_drawing_no, tool_revision"),
+        build_create_index_sql("tool_io_mpl", "IX_tool_io_mpl_mpl_no", "mpl_no"),
+        """
+        IF NOT EXISTS (
+            SELECT 1
+            FROM sys.indexes
+            WHERE name = N'UX_tool_io_mpl_tool_component'
+              AND object_id = OBJECT_ID(N'tool_io_mpl')
+        )
+        CREATE UNIQUE INDEX [UX_tool_io_mpl_tool_component]
+        ON [tool_io_mpl]([tool_drawing_no], [tool_revision], [component_no])
+        """,
+    ]
+    return _execute_statements_in_transaction(sql_statements, "MPL table ensured")
+
+
 def ensure_tool_io_tables() -> bool:
     """
     Create the Tool IO tables required by the runtime if they do not exist.
@@ -235,6 +316,8 @@ def ensure_tool_io_tables() -> bool:
     Returns:
         True if successful, False otherwise
     """
+    from backend.database.core.database_manager import ORDER_NO_SEQUENCE_TABLE
+
     create_statements = [
         """
         IF OBJECT_ID(N'tool_io_order', N'U') IS NULL
@@ -280,7 +363,7 @@ def ensure_tool_io_tables() -> bool:
             [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
             [order_no] VARCHAR(64) NOT NULL,
             [tool_id] BIGINT NULL,
-            [tool_code] VARCHAR(64) NOT NULL,
+            [serial_no] VARCHAR(64) NOT NULL,
             [tool_name] VARCHAR(255) NULL,
             [drawing_no] VARCHAR(255) NULL,
             [spec_model] VARCHAR(255) NULL,
@@ -380,7 +463,11 @@ def ensure_tool_io_tables() -> bool:
         return False
     if not ensure_tool_status_change_history_table():
         return False
-    return ensure_transport_issue_table()
+    if not ensure_transport_issue_table():
+        return False
+    if not ensure_system_config_table():
+        return False
+    return ensure_mpl_table()
 
 
 def ensure_schema_alignment() -> bool:

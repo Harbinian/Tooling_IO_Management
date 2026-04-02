@@ -35,7 +35,13 @@
 logs/
 docs/RELEASE_PRECHECK_REPORT.md
 incidents/
+incidents/gui_events/   # GUI Launcher 生成的事件文件 (GUI_EVENT_*.json)
 ```
+
+当发现新的 `GUI_EVENT_*.json` 文件时：
+1. 读取事件内容
+2. 在 `INCIDENT_MONITOR_REPORT.md` 中建议运行 `incident-capture`
+3. 将事件文件路径作为 incident-capture 的输入
 
 如果来源不存在，则跳过。 / If a source does not exist, skip it.
 

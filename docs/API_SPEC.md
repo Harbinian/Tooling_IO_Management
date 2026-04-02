@@ -17,6 +17,10 @@
 
 **POST** `/api/auth/login`
 
+**安全约束：**
+- 登录接口启用速率限制：每个客户端 IP 每分钟最多 5 次请求
+- 全局 API 默认速率限制：每个客户端 IP 每分钟最多 100 次请求
+
 **请求参数：**
 
 | 字段名 | 类型 | 必填 | 说明 |
@@ -122,7 +126,7 @@
 | remark | string | 否 | 备注 |
 | items | array | 是 | 工装明细列表 |
 | items[].tool_id | int | 否 | 工装ID |
-| items[].tool_code | string | 是 | 工装编码 |
+| items[].serial_no | string | 是 | 工装序列号 |
 | items[].tool_name | string | 是 | 工装名称 |
 | items[].drawing_no | string | 否 | 工装图号 |
 | items[].spec_model | string | 否 | 规格型号 |
@@ -234,7 +238,7 @@
 | transport_assignee_id | string | 否 | 运输人ID |
 | transport_assignee_name | string | 否 | 运输人姓名 |
 | items | array | 是 | 明细确认列表 |
-| items[].tool_code | string | 是 | 工装编码 |
+| items[].serial_no | string | 是 | 工装序列号 |
 | items[].location_id | int | 否 | 确认位置ID |
 | items[].location_text | string | 否 | 确认位置文本 |
 | items[].check_result | string | 是 | 检查结果 |
@@ -451,7 +455,7 @@
 
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| tool_codes | array | 是 | 工装编码列表 |
+| tool_codes | array | 是 | 工装序列号列表 |
 | new_status | string | 是 | 新状态 |
 | remark | string | 否 | 备注 |
 | operator | object | 是 | 操作人信息 {user_id, display_name} |
@@ -460,7 +464,7 @@
 
 ### 1.13 获取工装状态变更历史
 
-**GET** `/api/tools/status-history/{tool_code}`
+**GET** `/api/tools/status-history/{serial_no}`
 
 **实现说明：** 调用 `tool_io_service.get_tool_status_history()`
 
@@ -505,7 +509,7 @@
 |--------|------|------|
 | success | boolean | 是否成功 |
 | data | array | 工装列表 |
-| data[].tool_code | string/null | 工装序列号 |
+| data[].serial_no | string/null | 工装序列号 |
 | data[].tool_name | string | 工装名称 |
 | data[].spec_model | string | 机型 |
 | data[].current_location_text | string | 当前库位 |
@@ -532,7 +536,7 @@
   "success": true,
   "data": [
     {
-      "tool_code": "T001",
+      "serial_no": "T001",
       "tool_name": "扳手",
       "spec_model": "规格A",
       "current_location_text": "仓库A-1",
@@ -541,7 +545,7 @@
       "disabled_reason": null
     },
     {
-      "tool_code": "T003",
+      "serial_no": "T003",
       "tool_name": "钻头",
       "spec_model": "规格C",
       "current_location_text": "仓库B-2",
@@ -568,7 +572,107 @@
 
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| tool_codes | array | 是 | 工装编码列表 |
+| tool_codes | array | 是 | 工装序列号列表 |
+
+---
+
+## 2.3 MPL API (2026-04-01)
+
+### 2.3.1 查询 MPL 分组列表
+
+**GET** `/api/mpl`
+
+**权限**: `tool:view`
+
+**查询参数**
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| page_no | int | 否 | 页码，默认 `1` |
+| page_size | int | 否 | 每页数量，默认 `20` |
+| drawing_no | string | 否 | 工装图号模糊筛选 |
+| keyword | string | 否 | 图号 / 版次 / 组件号 / 组件名 模糊筛选 |
+
+### 2.3.2 创建 MPL 分组
+
+**POST** `/api/mpl`
+
+**权限**: `tool:view`
+
+**请求体**
+
+```json
+{
+  "tool_drawing_no": "DJ-1001",
+  "tool_revision": "A",
+  "items": [
+    {
+      "component_no": "CB-01",
+      "component_name": "卡板",
+      "quantity": 2,
+      "photo_data": "data:image/png;base64,..."
+    }
+  ]
+}
+```
+
+**说明**
+
+- 一个 MPL 分组对应一套 `tool_drawing_no + tool_revision`
+- `photo_data` 使用 Base64 Data URL，前端限制 2MB
+
+### 2.3.3 获取 MPL 详情
+
+**GET** `/api/mpl/{mpl_no}`
+
+**权限**: `tool:view`
+
+### 2.3.4 更新 MPL 分组
+
+**PUT** `/api/mpl/{mpl_no}`
+
+**权限**: `tool:view`
+
+**说明**: 使用请求体中的 `items` 全量替换该分组组件列表
+
+### 2.3.5 删除 MPL 分组
+
+**DELETE** `/api/mpl/{mpl_no}`
+
+**权限**: `tool:view`
+
+### 2.3.6 按工装图号和版次查询 MPL
+
+**GET** `/api/mpl/by-tool?drawing_no=xxx&revision=xxx`
+
+**权限**: `tool:view`
+
+---
+
+## 3.4 系统配置 API (2026-04-01)
+
+### 3.4.1 查询系统配置
+
+**GET** `/api/admin/system-config`
+
+**权限**: `admin:user_manage`
+
+### 3.4.2 查询单个配置
+
+**GET** `/api/admin/system-config/{config_key}`
+
+**权限**: `admin:user_manage`
+
+### 3.4.3 更新系统配置
+
+**PUT** `/api/admin/system-config/{config_key}`
+
+**权限**: `admin:user_manage`
+
+**初始配置项**
+
+- `mpl_enabled`: 是否启用保管员确认前的 MPL 检查
+- `mpl_strict_mode`: 缺少 MPL 时是否阻止确认
 
 ---
 
@@ -1016,7 +1120,7 @@ When the current feedback status is `pending`, adding a reply auto-updates it to
 
 ### 9.2 Query Tool Status Change History
 
-**GET** `/api/tools/status-history/{tool_code}`
+**GET** `/api/tools/status-history/{serial_no}`
 
 **Permission:** `tool:view`
 

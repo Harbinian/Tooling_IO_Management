@@ -1,6 +1,6 @@
 # RBAC 权限矩阵 / RBAC Permission Matrix
 
-> **最后更新**: 2026-03-27
+> **最后更新**: 2026-04-01
 > **维护者**: 每次新增 API 权限注解时必须同步更新此文档
 > **权威来源**: `docs/RBAC_INIT_DATA.md`
 
@@ -131,6 +131,12 @@
 | `/api/tools/batch-query` | POST | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
 | `/api/tools/batch-status` | PATCH | `tool:status_update` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `/api/tools/status-history/<code>` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl` | POST | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl/<mpl_no>` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl/<mpl_no>` | PUT | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl/<mpl_no>` | DELETE | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `/api/mpl/by-tool` | GET | `tool:view` | ✅ | ✅ | ✅ | ✅ | ❌ |
 
 ### 组织路由 (org_routes.py)
 
@@ -162,6 +168,9 @@
 | `/api/admin/users/<id>/roles` | PUT | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `/api/admin/users/<id>/status` | PUT | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `/api/admin/users/<id>/password-reset` | PUT | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/system-config` | GET | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/system-config/<config_key>` | GET | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/system-config/<config_key>` | PUT | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### 反馈路由 (feedback_routes.py)
 
@@ -184,6 +193,7 @@
 
 | 日期 | 变更内容 | 变更人 |
 |------|---------|--------|
+| 2026-04-01 | 新增 MPL API 与系统配置 API 权限映射；当前 MPL 管理复用 `tool:view`，系统配置使用 `admin:user_manage` | Codex |
 | 2026-04-01 | 修正 `cancel_order` 取消订单业务规则：只允许 `draft` 和 `submitted` 状态取消，`keeper_confirmed` 及之后状态不允许取消 | Claude Code |
 | 2026-03-27 | 移除 KEEPER 的 `order:transport_execute` 权限，修复保管员能看到预知运输菜单但无权限访问的问题 | Claude Code |
 | 2026-03-27 | 调整 `GET /api/tool-io-orders/<order_no>/transport-issues` 权限为 `order:view`，修复 OrderDetail 页面非保管员角色加载 403 | Codex |

@@ -1,5 +1,7 @@
 # 开发检查器 / Dev Inspector Skill
 
+**规则约束**: 本技能在生成任务时，必须遵循 `.claude/rules/05_task_convention.md` 中的提示词编号约定（00001-09999 功能、10101-19999 Bug、20101-29999 重构、30101-39999 测试）。
+
 ---
 
 ## 目的 / Purpose
@@ -181,7 +183,7 @@ Bug 任务必须在范围内生成：
 
 Bug tasks must be generated in range:
 
-10001–19999
+10101–19999
 
 执行器：
 
@@ -237,7 +239,7 @@ Examples:
 
 Refactoring tasks must be generated in range (must use 5-digit numbering):
 
-20001–29999
+20101–29999
 
 执行器：
 
@@ -245,7 +247,7 @@ Executor:
 
 | 执行器 | 职责范围 |
 |--------|---------|
-| Claude Code | 重构任务 / Refactoring tasks |
+| Claude Code | 重构任务、测试任务 / Refactoring tasks, Testing tasks |
 
 ---
 
@@ -263,7 +265,7 @@ Examples:
 
 Testing tasks must be generated in range (must use 5-digit numbering):
 
-30001–39999
+30101–39999
 
 执行器：
 

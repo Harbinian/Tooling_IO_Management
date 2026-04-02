@@ -29,7 +29,7 @@
           <Button
             v-if="canSubmit"
             v-debug-id="DEBUG_IDS.ORDER_DETAIL.SUBMIT_ORDER_BTN"
-            class="bg-amber-500 font-bold text-slate-950 hover:bg-amber-400 border-none"
+            class="bg-warning font-bold text-primary-foreground hover:bg-warning/90 border-none"
             @click="submitCurrentOrder"
           >
             提交单据
@@ -37,7 +37,7 @@
           <Button
             v-if="canResetToDraft"
             v-debug-id="DEBUG_IDS.ORDER_DETAIL.RESET_TO_DRAFT_BTN"
-            class="bg-amber-500 font-bold text-slate-950 hover:bg-amber-400 border-none"
+            class="bg-warning font-bold text-primary-foreground hover:bg-warning/90 border-none"
             @click="resetToDraftCurrentOrder"
           >
             重置为草稿
@@ -45,7 +45,7 @@
           <Button
             v-if="canCancel"
             v-debug-id="DEBUG_IDS.ORDER_DETAIL.CANCEL_ORDER_BTN"
-            class="bg-rose-500 font-bold text-white hover:bg-rose-400 border-none"
+            class="bg-destructive font-bold text-primary-foreground hover:bg-destructive/90 border-none"
             @click="cancelCurrentOrder"
           >
             取消单据
@@ -53,7 +53,7 @@
           <Button
             v-if="canFinalConfirm"
             v-debug-id="DEBUG_IDS.ORDER_DETAIL.FINAL_CONFIRM_BTN"
-            class="bg-emerald-500 font-bold text-slate-950 shadow-lg hover:bg-emerald-400 border-none"
+            class="bg-primary font-bold text-primary-foreground shadow-lg hover:bg-primary/90 border-none"
             @click="finalConfirmCurrentOrder"
           >
             最终确认
@@ -61,7 +61,7 @@
           <Button
             v-if="canDelete"
             variant="destructive"
-            class="bg-rose-600 font-bold text-white shadow-lg hover:bg-rose-500 border-none"
+            class="bg-destructive font-bold text-primary-foreground shadow-lg hover:bg-destructive/90 border-none"
             @click="deleteCurrentOrder"
           >
             删除订单
@@ -69,7 +69,7 @@
           <Button
             v-if="canReportIssue"
             variant="default"
-            class="bg-amber-500 font-bold text-slate-950 shadow-lg hover:bg-amber-400 border-none"
+            class="bg-warning font-bold text-primary-foreground shadow-lg hover:bg-warning/90 border-none"
             @click="reportIssueVisible = true"
           >
             <AlertTriangle class="mr-2 h-4 w-4" />
@@ -361,7 +361,7 @@
                 </div>
                 
                 <div v-if="canManageIssues && issue.status === 'pending'" class="shrink-0">
-                  <Button size="sm" class="bg-emerald-500 hover:bg-emerald-400 text-white border-none" @click="handleResolveIssue(issue)">
+                  <Button size="sm" class="bg-primary hover:bg-primary/90 text-primary-foreground border-none" @click="handleResolveIssue(issue)">
                     处理异常
                   </Button>
                 </div>
@@ -655,13 +655,13 @@ async function finalConfirmCurrentOrder() {
 async function deleteCurrentOrder() {
   try {
     await ElMessageBox.confirm(
-      '确定要删除此订单吗？此操作不可恢复。',
+      `确认删除单据 ${props.orderNo} 吗？删除后不可恢复。`,
       '删除确认',
       {
         confirmButtonText: '确定删除',
         cancelButtonText: '取消',
         type: 'warning',
-        confirmButtonClass: 'bg-rose-600 border-rose-600 hover:bg-rose-50'
+        confirmButtonClass: 'bg-destructive border-destructive hover:bg-destructive/90'
       }
     )
     

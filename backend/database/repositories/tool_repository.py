@@ -81,7 +81,7 @@ class ToolRepository:
         Returns:
             Dictionary with data, total, page info
         """
-        tool_code_col = f"[{TOOL_MASTER_COLUMNS['tool_code']}]"
+        serial_no_col = f"[{TOOL_MASTER_COLUMNS['tool_code']}]"
         spec_model_col = f"[{TOOL_MASTER_COLUMNS['spec_model']}]"
         tool_name_col = f"[{TOOL_MASTER_COLUMNS['tool_name']}]"
         drawing_no_col = f"[{TOOL_MASTER_COLUMNS['drawing_no']}]"
@@ -103,7 +103,7 @@ class ToolRepository:
         probe = self._db.execute_query(probe_sql)
         if probe:
             if not probe[0].get('has_serial'):
-                tool_code_col = f"[{TOOL_MASTER_COLUMNS['tool_code']}]"
+                serial_no_col = f"[{TOOL_MASTER_COLUMNS['tool_code']}]"
             if probe[0].get('has_spec_model'):
                 spec_model_col = f"[{TOOL_MASTER_COLUMNS['spec_model']}]"
 
@@ -115,7 +115,7 @@ class ToolRepository:
             conditions.append(
                 f"""
                 (
-                    {tool_code_col} LIKE ?
+                    {serial_no_col} LIKE ?
                     OR {drawing_no_col} LIKE ?
                     OR {tool_name_col} LIKE ?
                     OR {spec_model_col} LIKE ?
@@ -153,8 +153,8 @@ class ToolRepository:
         offset = max(page_no - 1, 0) * page_size
         list_sql = f"""
         SELECT
-            m.{tool_code_col} AS tool_code,
-            m.{tool_code_col} AS tool_id,
+            m.{serial_no_col} AS serial_no,
+            m.{serial_no_col} AS tool_id,
             m.{drawing_no_col} AS drawing_no,
             m.{tool_name_col} AS tool_name,
             m.{spec_model_col} AS spec_model,
@@ -179,7 +179,7 @@ class ToolRepository:
         CROSS APPLY (
             SELECT
                 CASE
-                    WHEN m.{tool_code_col} IS NULL OR LTRIM(RTRIM(CAST(m.{tool_code_col} AS NVARCHAR(255)))) = '' THEN N'工装无合格证，不具备验收条件'
+                    WHEN m.{serial_no_col} IS NULL OR LTRIM(RTRIM(CAST(m.{serial_no_col} AS NVARCHAR(255)))) = '' THEN N'工装无合格证，不具备验收条件'
                     WHEN ISDATE(m.{inspection_expiry_date_col}) = 1
                          AND CAST(m.{inspection_expiry_date_col} AS DATE) < CAST(GETDATE() AS DATE) THEN N'定检超期，工装不具备使用条件'
                     WHEN LTRIM(RTRIM(COALESCE(CAST(m.{inspection_dispatch_status_col} AS NVARCHAR(100)), ''))) = N'定检中' THEN N'工装正在定检中，不可使用'
@@ -189,20 +189,20 @@ class ToolRepository:
                 END AS disabled_reason
         ) AS validity
         WHERE {where_clause}
-        ORDER BY m.{tool_code_col}
+        ORDER BY m.{serial_no_col}
         OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
         """
         rows = self._db.execute_query(list_sql, tuple(params))
 
         # Check for draft order conflicts and mark tools as disabled
-        tool_codes = [str(row.get("tool_code", "")).strip() for row in rows if str(row.get("tool_code", "")).strip()]
-        if tool_codes:
-            draft_result = self.check_tools_in_draft_orders(tool_codes)
-            draft_conflict_map = {str(t["tool_code"]).strip(): t for t in draft_result.get("draft_tools", [])}
+        serial_nos = [str(row.get("serial_no", "")).strip() for row in rows if str(row.get("serial_no", "")).strip()]
+        if serial_nos:
+            draft_result = self.check_tools_in_draft_orders(serial_nos)
+            draft_conflict_map = {str(t["serial_no"]).strip(): t for t in draft_result.get("draft_tools", [])}
             for row in rows:
-                tool_code = str(row.get("tool_code", "")).strip()
-                if tool_code in draft_conflict_map:
-                    draft_info = draft_conflict_map[tool_code]
+                serial_no = str(row.get("serial_no", "")).strip()
+                if serial_no in draft_conflict_map:
+                    draft_info = draft_conflict_map[serial_no]
                     if not row.get("disabled"):
                         row["disabled"] = True
                         row["disabled_reason"] = f"工装已在草稿单据 {draft_info['order_no']} 中"
@@ -257,7 +257,7 @@ class ToolRepository:
 
         sql = f"""
         SELECT
-            detail.[{ITEM_COLUMNS['tool_code']}] AS tool_code,
+            detail.[{ITEM_COLUMNS['serial_no']}] AS serial_no,
             detail.[{ITEM_COLUMNS['tool_name']}] AS tool_name,
             main.[{ORDER_COLUMNS['order_no']}] AS order_no,
             main.[{ORDER_COLUMNS['order_type']}] AS order_type,
@@ -267,7 +267,7 @@ class ToolRepository:
         FROM [{TABLE_NAMES['ORDER_ITEM']}] AS detail
         INNER JOIN [{TABLE_NAMES['ORDER']}] AS main
             ON main.[{ORDER_COLUMNS['order_no']}] = detail.[{ITEM_COLUMNS['order_no']}]
-        WHERE detail.[{ITEM_COLUMNS['tool_code']}] IN ({code_placeholders})
+        WHERE detail.[{ITEM_COLUMNS['serial_no']}] IN ({code_placeholders})
           AND main.[{ORDER_COLUMNS['is_deleted']}] = 0
           AND main.[{ORDER_COLUMNS['order_status']}] IN ({status_placeholders})
         """
@@ -283,7 +283,7 @@ class ToolRepository:
 
         occupied_tools = [
             {
-                "tool_code": str(row.get("tool_code", "")).strip(),
+                "serial_no": str(row.get("serial_no", "")).strip(),
                 "tool_name": row.get("tool_name", ""),
                 "order_no": row.get("order_no", ""),
                 "order_type": row.get("order_type", ""),
@@ -292,7 +292,7 @@ class ToolRepository:
                 "created_at": row.get("created_at"),
             }
             for row in rows
-            if str(row.get("tool_code", "")).strip()
+            if str(row.get("serial_no", "")).strip()
         ]
 
         return {
@@ -326,7 +326,7 @@ class ToolRepository:
         code_placeholders = ",".join(["?"] * len(cleaned_codes))
         sql = f"""
         SELECT
-            detail.[{ITEM_COLUMNS['tool_code']}] AS tool_code,
+            detail.[{ITEM_COLUMNS['serial_no']}] AS serial_no,
             detail.[{ITEM_COLUMNS['tool_name']}] AS tool_name,
             main.[{ORDER_COLUMNS['order_no']}] AS order_no,
             main.[{ORDER_COLUMNS['initiator_name']}] AS initiator_name,
@@ -334,7 +334,7 @@ class ToolRepository:
         FROM [{TABLE_NAMES['ORDER_ITEM']}] AS detail
         INNER JOIN [{TABLE_NAMES['ORDER']}] AS main
             ON main.[{ORDER_COLUMNS['order_no']}] = detail.[{ITEM_COLUMNS['order_no']}]
-        WHERE detail.[{ITEM_COLUMNS['tool_code']}] IN ({code_placeholders})
+        WHERE detail.[{ITEM_COLUMNS['serial_no']}] IN ({code_placeholders})
           AND main.[{ORDER_COLUMNS['is_deleted']}] = 0
           AND main.[{ORDER_COLUMNS['order_status']}] = 'draft'
         ORDER BY main.[{ORDER_COLUMNS['created_at']}] DESC, main.[{ORDER_COLUMNS['order_no']}] DESC
@@ -344,17 +344,17 @@ class ToolRepository:
         draft_tools = []
         seen_pairs = set()
         for row in rows:
-            tool_code = str(row.get("tool_code", "")).strip()
+            serial_no = str(row.get("serial_no", "")).strip()
             order_no = str(row.get("order_no", "")).strip()
-            if not tool_code or not order_no:
+            if not serial_no or not order_no:
                 continue
-            pair = (tool_code, order_no)
+            pair = (serial_no, order_no)
             if pair in seen_pairs:
                 continue
             seen_pairs.add(pair)
             draft_tools.append(
                 {
-                    "tool_code": tool_code,
+                    "serial_no": serial_no,
                     "tool_name": row.get("tool_name", ""),
                     "order_no": order_no,
                     "initiator_name": row.get("initiator_name", ""),
@@ -366,13 +366,13 @@ class ToolRepository:
 
     def load_tool_master_map(self, tool_codes: List[str]) -> Dict[str, Dict]:
         """
-        Load tool master rows from tool master table keyed by tool_code.
+        Load tool master rows from tool master table keyed by serial number.
 
         Args:
             tool_codes: List of tool serial numbers
 
         Returns:
-            Dictionary mapping tool_code to tool row
+            Dictionary mapping serial_no to tool row
         """
         cleaned_codes = [str(code).strip() for code in tool_codes if str(code).strip()]
         if not cleaned_codes:
@@ -381,7 +381,7 @@ class ToolRepository:
         placeholders = ",".join(["?"] * len(cleaned_codes))
         sql = f"""
         SELECT
-            [{TOOL_MASTER_COLUMNS['tool_code']}] AS tool_code,
+            [{TOOL_MASTER_COLUMNS['tool_code']}] AS serial_no,
             [{TOOL_MASTER_COLUMNS['tool_name']}] AS tool_name,
             [{TOOL_MASTER_COLUMNS['drawing_no']}] AS drawing_no,
             [{TOOL_MASTER_COLUMNS['spec_model']}] AS spec_model,
@@ -392,7 +392,7 @@ class ToolRepository:
         WHERE [{TOOL_MASTER_COLUMNS['tool_code']}] IN ({placeholders})
         """
         rows = self._db.execute_query(sql, tuple(cleaned_codes))
-        return {str(row.get("tool_code", "")).strip(): row for row in rows}
+        return {str(row.get("serial_no", "")).strip(): row for row in rows}
 
     def _ensure_tool_status_history_table(self) -> None:
         """Create or align tool status change history table."""
@@ -402,7 +402,7 @@ class ToolRepository:
             BEGIN
                 CREATE TABLE [{TOOL_STATUS_HISTORY_TABLE}] (
                     [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-                    [tool_code] NVARCHAR(100) NOT NULL,
+                    [serial_no] NVARCHAR(100) NOT NULL,
                     [old_status] NVARCHAR(50) NOT NULL,
                     [new_status] NVARCHAR(50) NOT NULL,
                     [remark] NVARCHAR(500) NULL,
@@ -419,12 +419,12 @@ class ToolRepository:
             f"""
             IF NOT EXISTS (
                 SELECT 1 FROM sys.indexes
-                WHERE name = N'IX_{TOOL_STATUS_HISTORY_TABLE}_tool_code_time'
+                WHERE name = N'IX_{TOOL_STATUS_HISTORY_TABLE}_serial_no_time'
                   AND object_id = OBJECT_ID(N'{TOOL_STATUS_HISTORY_TABLE}')
             )
             BEGIN
-                CREATE INDEX [IX_{TOOL_STATUS_HISTORY_TABLE}_tool_code_time]
-                ON [{TOOL_STATUS_HISTORY_TABLE}]([tool_code], [change_time] DESC)
+                CREATE INDEX [IX_{TOOL_STATUS_HISTORY_TABLE}_serial_no_time]
+                ON [{TOOL_STATUS_HISTORY_TABLE}]([serial_no], [change_time] DESC)
             END
             """,
             fetch=False,
@@ -473,7 +473,7 @@ class ToolRepository:
 
             history_sql = f"""
             INSERT INTO [{TOOL_STATUS_HISTORY_TABLE}]
-            ([tool_code], [old_status], [new_status], [remark], [operator_id], [operator_name], [client_ip])
+            ([serial_no], [old_status], [new_status], [remark], [operator_id], [operator_name], [client_ip])
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             update_sql_candidates = (
@@ -509,7 +509,7 @@ class ToolRepository:
                 )
                 records.append(
                     {
-                        "tool_code": code,
+                        "serial_no": code,
                         "old_status": old_status,
                         "new_status": normalized_status,
                     }
@@ -535,16 +535,16 @@ class ToolRepository:
 
     def get_tool_status_history(
         self,
-        tool_code: str,
+        serial_no: str,
         page_no: int = 1,
         page_size: int = 20,
     ) -> Dict:
         """
         Query one tool status change history with pagination.
         """
-        normalized_code = str(tool_code or "").strip()
+        normalized_code = str(serial_no or "").strip()
         if not normalized_code:
-            return {"success": False, "error": "tool_code is required"}
+            return {"success": False, "error": "serial_no is required"}
 
         page_no = max(int(page_no or 1), 1)
         page_size = max(int(page_size or 20), 1)
@@ -552,7 +552,7 @@ class ToolRepository:
 
         self._ensure_tool_status_history_table()
         total_rows = self._db.execute_query(
-            f"SELECT COUNT(1) AS total FROM [{TOOL_STATUS_HISTORY_TABLE}] WHERE [tool_code] = ?",
+            f"SELECT COUNT(1) AS total FROM [{TOOL_STATUS_HISTORY_TABLE}] WHERE [serial_no] = ?",
             (normalized_code,),
         )
         total = int((total_rows[0] if total_rows else {}).get("total", 0))
@@ -567,7 +567,7 @@ class ToolRepository:
                 [change_time] AS change_time,
                 [client_ip] AS client_ip
             FROM [{TOOL_STATUS_HISTORY_TABLE}]
-            WHERE [tool_code] = ?
+            WHERE [serial_no] = ?
             ORDER BY [change_time] DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
             """,

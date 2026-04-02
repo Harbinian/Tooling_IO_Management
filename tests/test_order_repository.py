@@ -51,10 +51,10 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS tool_code" in sql_text and "Tooling_ID_Main" in sql_text:
+            if "AS serial_no" in sql_text and "Tooling_ID_Main" in sql_text:
                 return [
                     {
-                        "tool_code": "T000001",
+                        "serial_no": "T000001",
                         "tool_name": "Tool A",
                         "drawing_no": "D-01",
                         "spec_model": "M1",
@@ -63,7 +63,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
                     }
                 ]
             if "= 'draft'" in sql_text:
-                return [{"tool_code": "T000001", "order_no": "TO-OUT-20260322-009"}]
+                return [{"serial_no": "T000001", "order_no": "TO-OUT-20260322-009"}]
             if "IN (" in sql_text and "main.[单据状态] IN" in sql_text:
                 return []
             return []
@@ -78,7 +78,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
                 "initiator_id": "U001",
                 "initiator_name": "Alice",
                 "initiator_role": "team_leader",
-                "items": [{"tool_id": "1", "tool_code": "T000001", "apply_qty": 1}],
+                "items": [{"tool_id": "1", "serial_no": "T000001", "apply_qty": 1}],
             }
         )
 
@@ -97,10 +97,10 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS tool_code" in sql_text and "Tooling_ID_Main" in sql_text:
+            if "AS serial_no" in sql_text and "Tooling_ID_Main" in sql_text:
                 return [
                     {
-                        "tool_code": "T000001",
+                        "serial_no": "T000001",
                         "tool_name": "Tool A",
                         "drawing_no": "D-01",
                         "spec_model": "M1",
@@ -124,7 +124,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
                 "initiator_id": "U001",
                 "initiator_name": "Alice",
                 "initiator_role": "team_leader",
-                "items": [{"tool_id": "1", "tool_code": "T000001", "apply_qty": 1}],
+                "items": [{"tool_id": "1", "serial_no": "T000001", "apply_qty": 1}],
             }
         )
 

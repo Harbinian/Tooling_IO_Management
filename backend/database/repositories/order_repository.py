@@ -15,12 +15,11 @@ from backend.database.schema.column_names import (
     NOTIFY_COLUMNS,
     TABLE_NAMES,
     TOOL_MASTER_COLUMNS,
+    TOOL_MASTER_TABLE,
 )
 from backend.database.utils.sql_utils import safe_bigint
 
 logger = logging.getLogger(__name__)
-
-TOOL_MASTER_TABLE = "Tooling_ID_Main"
 
 
 # Tool action types
@@ -34,6 +33,11 @@ class ToolIOAction:
     CANCEL = "cancel"
     DELETE = "delete"
     EDIT = "edit"
+
+
+def _get_serial_no(item: Dict[str, Any]) -> str:
+    """Read serial number from new or legacy payload fields."""
+    return str(item.get("serial_no") or item.get("tool_code") or "").strip()
 
 
 class OrderRepository:
@@ -64,26 +68,26 @@ class OrderRepository:
             if order_type not in {"outbound", "inbound"}:
                 return {"success": False, "error": "单据类型不正确"}
 
-            tool_codes = [str(item.get("tool_code", "")).strip() for item in items if str(item.get("tool_code", "")).strip()]
-            if len(tool_codes) != len(items):
+            serial_nos = [_get_serial_no(item) for item in items if _get_serial_no(item)]
+            if len(serial_nos) != len(items):
                 return {"success": False, "error": "每条明细都必须包含序列号"}
-            if len(set(tool_codes)) != len(tool_codes):
+            if len(set(serial_nos)) != len(serial_nos):
                 return {"success": False, "error": "同一张单据内不能重复选择相同序列号"}
 
             # Check tool availability
             tool_repo = ToolRepository(self._db)
             try:
-                tool_master_map = tool_repo.load_tool_master_map(tool_codes)
+                tool_master_map = tool_repo.load_tool_master_map(serial_nos)
             except Exception as exc:
                 logger.warning("加载工装主表失败，创建单据时回退到请求快照: %s", exc)
                 tool_master_map = {}
 
-            missing_codes = [code for code in tool_codes if code not in tool_master_map]
+            missing_codes = [code for code in serial_nos if code not in tool_master_map]
             for item in items:
-                tool_code = str(item.get("tool_code", "")).strip()
-                if tool_code in missing_codes:
-                    tool_master_map[tool_code] = {
-                        "tool_code": tool_code,
+                serial_no = _get_serial_no(item)
+                if serial_no in missing_codes:
+                    tool_master_map[serial_no] = {
+                        "serial_no": serial_no,
                         "tool_name": item.get("tool_name", ""),
                         "drawing_no": item.get("drawing_no", ""),
                         "spec_model": item.get("spec_model", ""),
@@ -91,92 +95,94 @@ class OrderRepository:
                         "status_text": item.get("status_text", ""),
                     }
 
-            missing_codes = [code for code in tool_codes if code not in tool_master_map]
+            missing_codes = [code for code in serial_nos if code not in tool_master_map]
             if missing_codes:
                 return {"success": False, "error": f"以下工装不存在：{', '.join(missing_codes)}"}
 
-            occupied = tool_repo.check_tools_available(tool_codes)
+            occupied = tool_repo.check_tools_available(serial_nos)
             if not occupied.get("available", True):
                 return {"success": False, "error": self._build_tool_occupied_error(occupied.get("occupied_tools", [])), "occupied_tools": occupied.get("occupied_tools", [])}
-            draft_conflicts = tool_repo.check_tools_in_draft_orders(tool_codes)
+            draft_conflicts = tool_repo.check_tools_in_draft_orders(serial_nos)
             warning_message = self._build_tool_draft_warning(draft_conflicts.get("draft_tools", []))
 
             order_no = generate_order_no_atomic(order_type)
 
-            # Insert order header
-            insert_order_sql = f"""
-            INSERT INTO [tool_io_order] (
-                [order_no], [order_type], [order_status], [initiator_id], [initiator_name], [initiator_role],
-                [department], [project_code], [usage_purpose], [planned_use_time], [planned_return_time],
-                [target_location_id], [target_location_text], [remark], [tool_quantity], [confirmed_count], [org_id],
-                [{ORDER_COLUMNS['created_at']}], [{ORDER_COLUMNS['updated_at']}], [{ORDER_COLUMNS['created_by']}], [{ORDER_COLUMNS['updated_by']}], [{ORDER_COLUMNS['is_deleted']}]
-            ) VALUES (?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE(), ?, ?, 0)
-            """
-            self._db.execute_query(
-                insert_order_sql,
-                (
-                    order_no,
-                    order_type,
-                    order_data.get("initiator_id"),
-                    order_data.get("initiator_name"),
-                    order_data.get("initiator_role"),
-                    order_data.get("department"),
-                    order_data.get("project_code"),
-                    order_data.get("usage_purpose"),
-                    order_data.get("planned_use_time"),
-                    order_data.get("planned_return_time"),
-                    order_data.get("target_location_id"),
-                    order_data.get("target_location_text"),
-                    order_data.get("remark"),
-                    len(items),
-                    0,
-                    order_data.get("org_id"),
-                    order_data.get("initiator_name"),
-                    order_data.get("initiator_name"),
-                ),
-                fetch=False,
-            )
-
-            # Insert order items
-            insert_item_sql = """
-            INSERT INTO [tool_io_order_item] (
-                [order_no], [tool_id], [tool_code], [tool_name], [drawing_no], [spec_model],
-                [apply_qty], [confirmed_qty], [item_status], [tool_snapshot_status], [tool_snapshot_location_text],
-                [sort_order], [created_at], [updated_at]
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_check', ?, ?, ?, GETDATE(), GETDATE())
-            """
-            for idx, item in enumerate(items, start=1):
-                tool_code = str(item.get("tool_code", "")).strip()
-                tool_row = tool_master_map[tool_code]
+            def _create_order_tx(conn: Any) -> None:
+                insert_order_sql = f"""
+                INSERT INTO [tool_io_order] (
+                    [order_no], [order_type], [order_status], [initiator_id], [initiator_name], [initiator_role],
+                    [department], [project_code], [usage_purpose], [planned_use_time], [planned_return_time],
+                    [target_location_id], [target_location_text], [remark], [tool_quantity], [confirmed_count], [org_id],
+                    [{ORDER_COLUMNS['created_at']}], [{ORDER_COLUMNS['updated_at']}], [{ORDER_COLUMNS['created_by']}], [{ORDER_COLUMNS['updated_by']}], [{ORDER_COLUMNS['is_deleted']}]
+                ) VALUES (?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE(), ?, ?, 0)
+                """
                 self._db.execute_query(
-                    insert_item_sql,
+                    insert_order_sql,
                     (
                         order_no,
-                        safe_bigint(item.get("tool_id")),
-                        tool_code,
-                        item.get("tool_name") or tool_row.get("tool_name"),
-                        item.get("drawing_no") or tool_row.get("drawing_no"),
-                        item.get("spec_model") or tool_row.get("spec_model"),
-                        item.get("apply_qty") or 1,
+                        order_type,
+                        order_data.get("initiator_id"),
+                        order_data.get("initiator_name"),
+                        order_data.get("initiator_role"),
+                        order_data.get("department"),
+                        order_data.get("project_code"),
+                        order_data.get("usage_purpose"),
+                        order_data.get("planned_use_time"),
+                        order_data.get("planned_return_time"),
+                        order_data.get("target_location_id"),
+                        order_data.get("target_location_text"),
+                        order_data.get("remark"),
+                        len(items),
                         0,
-                        tool_row.get("status_text"),
-                        tool_row.get("current_location_text"),
-                        idx,
+                        order_data.get("org_id"),
+                        order_data.get("initiator_name"),
+                        order_data.get("initiator_name"),
                     ),
                     fetch=False,
+                    conn=conn,
                 )
 
-            # Log the creation
-            self.add_tool_io_log({
-                "order_no": order_no,
-                "action_type": ToolIOAction.CREATE,
-                "operator_id": order_data.get("initiator_id"),
-                "operator_name": order_data.get("initiator_name"),
-                "operator_role": order_data.get("initiator_role"),
-                "before_status": "",
-                "after_status": "draft",
-                "content": f"创建出入库单，单号：{order_no}",
-            })
+                insert_item_sql = """
+                INSERT INTO [tool_io_order_item] (
+                    [order_no], [tool_id], [serial_no], [tool_name], [drawing_no], [spec_model],
+                    [apply_qty], [confirmed_qty], [item_status], [tool_snapshot_status], [tool_snapshot_location_text],
+                    [sort_order], [created_at], [updated_at]
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_check', ?, ?, ?, GETDATE(), GETDATE())
+                """
+                for idx, item in enumerate(items, start=1):
+                    serial_no = _get_serial_no(item)
+                    tool_row = tool_master_map[serial_no]
+                    self._db.execute_query(
+                        insert_item_sql,
+                        (
+                            order_no,
+                            safe_bigint(item.get("tool_id")),
+                            serial_no,
+                            item.get("tool_name") or tool_row.get("tool_name"),
+                            item.get("drawing_no") or tool_row.get("drawing_no"),
+                            item.get("spec_model") or tool_row.get("spec_model"),
+                            item.get("apply_qty") or 1,
+                            0,
+                            tool_row.get("status_text"),
+                            tool_row.get("current_location_text"),
+                            idx,
+                        ),
+                        fetch=False,
+                        conn=conn,
+                    )
+
+                self.add_tool_io_log({
+                    "order_no": order_no,
+                    "action_type": ToolIOAction.CREATE,
+                    "operator_id": order_data.get("initiator_id"),
+                    "operator_name": order_data.get("initiator_name"),
+                    "operator_role": order_data.get("initiator_role"),
+                    "before_status": "",
+                    "after_status": "draft",
+                    "content": f"创建出入库单，单号：{order_no}",
+                }, conn=conn)
+
+            self._db.execute_with_transaction(_create_order_tx)
 
             result = {"success": True, "order_no": order_no}
             if warning_message:
@@ -243,31 +249,31 @@ class OrderRepository:
                 self._db.execute_query(delete_items_sql, (order_no,), fetch=False)
 
                 # Re-fetch tool master data for validation
-                tool_codes = [str(item.get("tool_code", "")).strip() for item in items if str(item.get("tool_code", "")).strip()]
-                if tool_codes:
+                serial_nos = [_get_serial_no(item) for item in items if _get_serial_no(item)]
+                if serial_nos:
                     from backend.database.repositories.tool_repository import ToolRepository
                     tool_repo = ToolRepository(self._db)
-                    tool_master_map = tool_repo.load_tool_master_map(tool_codes)
+                    tool_master_map = tool_repo.load_tool_master_map(serial_nos)
 
                     # Insert new items
                     insert_item_sql = f"""
                     INSERT INTO [{TABLE_NAMES['ITEM']}] (
-                        [{ORDER_COLUMNS['order_no']}], [{ORDER_COLUMNS['tool_id']}], [{ORDER_COLUMNS['tool_code']}],
-                        [{ORDER_COLUMNS['tool_name']}], [{ORDER_COLUMNS['drawing_no']}], [{ORDER_COLUMNS['spec_model']}],
-                        [{ORDER_COLUMNS['apply_qty']}], [{ORDER_COLUMNS['confirmed_qty']}], [{ORDER_COLUMNS['item_status']}],
-                        [{ORDER_COLUMNS['tool_snapshot_status']}], [{ORDER_COLUMNS['tool_snapshot_location_text']}],
-                        [{ORDER_COLUMNS['sort_order']}], [{ORDER_COLUMNS['created_at']}], [{ORDER_COLUMNS['updated_at']}]
+                        [{ITEM_COLUMNS['order_no']}], [{ITEM_COLUMNS['tool_id']}], [{ITEM_COLUMNS['serial_no']}],
+                        [{ITEM_COLUMNS['tool_name']}], [{ITEM_COLUMNS['drawing_no']}], [{ITEM_COLUMNS['spec_model']}],
+                        [{ITEM_COLUMNS['apply_qty']}], [{ITEM_COLUMNS['confirmed_qty']}], [{ITEM_COLUMNS['item_status']}],
+                        [{ITEM_COLUMNS['tool_snapshot_status']}], [{ITEM_COLUMNS['tool_snapshot_location_text']}],
+                        [{ITEM_COLUMNS['sort_order']}], [{ITEM_COLUMNS['created_at']}], [{ITEM_COLUMNS['updated_at']}]
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'pending_check', ?, ?, ?, GETDATE(), GETDATE())
                     """
                     for idx, item in enumerate(items, start=1):
-                        tool_code = str(item.get("tool_code", "")).strip()
-                        tool_row = tool_master_map.get(tool_code, {})
+                        serial_no = _get_serial_no(item)
+                        tool_row = tool_master_map.get(serial_no, {})
                         self._db.execute_query(
                             insert_item_sql,
                             (
                                 order_no,
                                 safe_bigint(item.get("tool_id")),
-                                tool_code,
+                                serial_no,
                                 item.get("tool_name") or tool_row.get("tool_name"),
                                 item.get("drawing_no") or tool_row.get("drawing_no"),
                                 item.get("spec_model") or tool_row.get("spec_model"),
@@ -313,56 +319,57 @@ class OrderRepository:
         try:
             from backend.database.repositories.tool_repository import ToolRepository
 
-            check_sql = """
-            SELECT [order_status]
-            FROM [tool_io_order]
-            WHERE [order_no] = ? AND [IS_DELETED] = 0
-            """
-            result = self._db.execute_query(check_sql, (order_no,))
-            if not result:
-                return {"success": False, "error": "单据不存在"}
-
-            current_status = result[0].get("order_status")
-            if current_status != "draft":
-                return {"success": False, "error": f"当前状态不允许提交：{current_status}"}
-
             # Check items exist
             detail_rows = self._db.execute_query(
-                "SELECT [tool_code] AS tool_code FROM [tool_io_order_item] WHERE [order_no] = ?",
+                "SELECT [serial_no] AS serial_no FROM [tool_io_order_item] WHERE [order_no] = ?",
                 (order_no,),
             )
             if not detail_rows:
                 return {"success": False, "error": "单据没有工装明细"}
 
-            tool_codes = [str(row.get("tool_code", "")).strip() for row in detail_rows if str(row.get("tool_code", "")).strip()]
+            serial_nos = [str(row.get("serial_no", "")).strip() for row in detail_rows if str(row.get("serial_no", "")).strip()]
 
             # Check tool availability
             tool_repo = ToolRepository(self._db)
-            occupied = tool_repo.check_tools_available(tool_codes, exclude_order_no=order_no)
+            occupied = tool_repo.check_tools_available(serial_nos, exclude_order_no=order_no)
             if not occupied.get("available", True):
                 return {"success": False, "error": self._build_tool_occupied_error(occupied.get("occupied_tools", [])), "occupied_tools": occupied.get("occupied_tools", [])}
 
-            # Update status
-            update_sql = """
-            UPDATE [tool_io_order]
-            SET [order_status] = 'submitted',
-                [updated_at] = GETDATE(),
-                [updated_by] = ?
-            WHERE [order_no] = ?
-            """
-            self._db.execute_query(update_sql, (operator_name, order_no), fetch=False)
+            def _submit_order_tx(conn: Any) -> None:
+                check_sql = """
+                SELECT [order_status]
+                FROM [tool_io_order]
+                WHERE [order_no] = ? AND [IS_DELETED] = 0
+                """
+                result = self._db.execute_query(check_sql, (order_no,), conn=conn)
+                if not result:
+                    raise ValueError("单据不存在")
 
-            # Log
-            self.add_tool_io_log({
-                "order_no": order_no,
-                "action_type": ToolIOAction.SUBMIT,
-                "operator_id": operator_id,
-                "operator_name": operator_name,
-                "operator_role": operator_role,
-                "before_status": "draft",
-                "after_status": "submitted",
-                "content": "提交单据，等待保管员确认",
-            })
+                current_status = result[0].get("order_status")
+                if current_status != "draft":
+                    raise ValueError(f"当前状态不允许提交：{current_status}")
+
+                update_sql = """
+                UPDATE [tool_io_order]
+                SET [order_status] = 'submitted',
+                    [updated_at] = GETDATE(),
+                    [updated_by] = ?
+                WHERE [order_no] = ?
+                """
+                self._db.execute_query(update_sql, (operator_name, order_no), fetch=False, conn=conn)
+
+                self.add_tool_io_log({
+                    "order_no": order_no,
+                    "action_type": ToolIOAction.SUBMIT,
+                    "operator_id": operator_id,
+                    "operator_name": operator_name,
+                    "operator_role": operator_role,
+                    "before_status": "draft",
+                    "after_status": "submitted",
+                    "content": "提交单据，等待保管员确认",
+                }, conn=conn)
+
+            self._db.execute_with_transaction(_submit_order_tx)
 
             return {"success": True, "order_no": order_no, "status": "submitted"}
 
@@ -395,7 +402,7 @@ class OrderRepository:
                 m.[{TOOL_MASTER_COLUMNS['split_quantity']}] AS split_quantity
             FROM [{TABLE_NAMES['ORDER_ITEM']}] i
             LEFT JOIN [{TOOL_MASTER_TABLE}] m
-                ON i.[{ITEM_COLUMNS['tool_code']}] = m.[{TOOL_MASTER_COLUMNS['tool_code']}]
+                ON i.[{ITEM_COLUMNS['serial_no']}] = m.[{TOOL_MASTER_COLUMNS['tool_code']}]
             WHERE i.[{ITEM_COLUMNS['order_no']}] = ?
             ORDER BY i.[{ITEM_COLUMNS['sort_order']}]
             """
@@ -562,99 +569,101 @@ class OrderRepository:
             if not isinstance(items, list) or not items:
                 return {'success': False, 'error': 'confirm_data.items must contain at least one item'}
 
-            # Check order status
-            check_sql = f"SELECT [{ORDER_COLUMNS['order_type']}], [{ORDER_COLUMNS['order_status']}] FROM [{TABLE_NAMES['ORDER']}] WHERE [{ORDER_COLUMNS['order_no']}] = ?"
-            result = self._db.execute_query(check_sql, (order_no,))
-            if not result:
-                return {'success': False, 'error': '单据不存在'}
+            tx_result = {"approved_count": 0, "status": ""}
 
-            current_status = result[0].get('order_status')
-            if current_status not in ['submitted', 'partially_confirmed']:
-                return {'success': False, 'error': f'当前状态不允许确认，当前状态：{current_status}'}
+            def _keeper_confirm_tx(conn: Any) -> None:
+                check_sql = f"SELECT [{ORDER_COLUMNS['order_type']}], [{ORDER_COLUMNS['order_status']}] FROM [{TABLE_NAMES['ORDER']}] WHERE [{ORDER_COLUMNS['order_no']}] = ?"
+                result = self._db.execute_query(check_sql, (order_no,), conn=conn)
+                if not result:
+                    raise ValueError('单据不存在')
 
-            # Update items
-            approved_count = 0
-            updated_items_count = 0
-            for item in items:
-                # Validate item_id is present (primary key for precise row targeting)
-                item_id = item.get('item_id')
-                if not item_id:
-                    logger.warning(f"keeper_confirm: item_id missing for order {order_no}, skipping item update")
-                    continue
+                current_status = result[0].get('order_status')
+                if current_status not in ['submitted', 'partially_confirmed']:
+                    raise ValueError(f'当前状态不允许确认，当前状态：{current_status}')
 
-                item_sql = f"""
-                UPDATE [{TABLE_NAMES['ORDER_ITEM']}] SET
-                    [{ITEM_COLUMNS['confirm_by_id']}] = ?,
-                    [{ITEM_COLUMNS['confirm_by_name']}] = ?,
-                    [{ITEM_COLUMNS['confirm_time']}] = GETDATE(),
-                    [{ITEM_COLUMNS['confirmed_qty']}] = ?,
-                    [{ITEM_COLUMNS['item_status']}] = ?,
-                    [{ITEM_COLUMNS['reject_reason']}] = ?,
-                    [{ITEM_COLUMNS['updated_at']}] = GETDATE()
-                WHERE [{ITEM_COLUMNS['order_no']}] = ? AND id = ?
+                approved_count = 0
+                updated_items_count = 0
+                for item in items:
+                    item_id = item.get('item_id')
+                    if not item_id:
+                        logger.warning(f"keeper_confirm: item_id missing for order {order_no}, skipping item update")
+                        continue
+
+                    item_sql = f"""
+                    UPDATE [{TABLE_NAMES['ORDER_ITEM']}] SET
+                        [{ITEM_COLUMNS['confirm_by_id']}] = ?,
+                        [{ITEM_COLUMNS['confirm_by_name']}] = ?,
+                        [{ITEM_COLUMNS['confirm_time']}] = GETDATE(),
+                        [{ITEM_COLUMNS['confirmed_qty']}] = ?,
+                        [{ITEM_COLUMNS['item_status']}] = ?,
+                        [{ITEM_COLUMNS['reject_reason']}] = ?,
+                        [{ITEM_COLUMNS['updated_at']}] = GETDATE()
+                    WHERE [{ITEM_COLUMNS['order_no']}] = ? AND id = ?
+                    """
+                    status = item.get('status', 'approved')
+                    if status == 'approved':
+                        approved_count += 1
+                    reject_reason = ''
+                    if status != 'approved':
+                        reject_reason = str(item.get('reject_reason') or item.get('check_remark') or '').strip()
+
+                    self._db.execute_query(item_sql, (
+                        item.get('keeper_confirm_location_id') or item.get('location_id'),
+                        keeper_name,
+                        item.get('confirmed_qty', item.get('approved_qty', 1)),
+                        status,
+                        reject_reason or None,
+                        order_no,
+                        item_id
+                    ), fetch=False, conn=conn)
+                    updated_items_count += 1
+
+                if updated_items_count == 0:
+                    logger.error(f"keeper_confirm: no items were updated for order {order_no}")
+                    raise ValueError('no items were updated - check item identifiers')
+
+                new_status = 'keeper_confirmed' if approved_count == len(items) else 'partially_confirmed'
+                update_sql = f"""
+                UPDATE [{TABLE_NAMES['ORDER']}] SET
+                    [{ORDER_COLUMNS['order_status']}] = ?,
+                    [{ORDER_COLUMNS['keeper_id']}] = ?,
+                    [{ORDER_COLUMNS['keeper_name']}] = ?,
+                    [{ORDER_COLUMNS['transport_type']}] = ?,
+                    [{ORDER_COLUMNS['transport_operator_id']}] = ?,
+                    [{ORDER_COLUMNS['transport_operator_name']}] = ?,
+                    [{ORDER_COLUMNS['keeper_confirm_time']}] = GETDATE(),
+                    [{ORDER_COLUMNS['confirmed_count']}] = ?,
+                    [{ORDER_COLUMNS['updated_at']}] = GETDATE()
+                WHERE [{ORDER_COLUMNS['order_no']}] = ?
                 """
-                status = item.get('status', 'approved')
-                if status == 'approved':
-                    approved_count += 1
-                reject_reason = ''
-                if status != 'approved':
-                    reject_reason = str(item.get('reject_reason') or item.get('check_remark') or '').strip()
-
-                self._db.execute_query(item_sql, (
-                    item.get('keeper_confirm_location_id') or item.get('location_id'),
+                self._db.execute_query(update_sql, (
+                    new_status,
+                    keeper_id,
                     keeper_name,
-                    item.get('confirmed_qty', item.get('approved_qty', 1)),
-                    status,
-                    reject_reason or None,
-                    order_no,
-                    item_id
-                ), fetch=False)
-                updated_items_count += 1
+                    confirm_data.get('transport_type'),
+                    confirm_data.get('transport_assignee_id'),
+                    confirm_data.get('transport_assignee_name'),
+                    approved_count,
+                    order_no
+                ), fetch=False, conn=conn)
 
-            # Verify at least one item was updated
-            if updated_items_count == 0:
-                logger.error(f"keeper_confirm: no items were updated for order {order_no}")
-                return {'success': False, 'error': 'no items were updated - check item identifiers'}
+                self.add_tool_io_log({
+                    'order_no': order_no,
+                    'action_type': ToolIOAction.KEEPER_CONFIRM,
+                    'operator_id': operator_id,
+                    'operator_name': operator_name,
+                    'operator_role': operator_role,
+                    'before_status': current_status,
+                    'after_status': new_status,
+                    'content': f'保管员确认，通过 {approved_count}/{len(items)} 项'
+                }, conn=conn)
 
-            # Update order status
-            new_status = 'keeper_confirmed' if approved_count == len(items) else 'partially_confirmed'
-            update_sql = f"""
-            UPDATE [{TABLE_NAMES['ORDER']}] SET
-                [{ORDER_COLUMNS['order_status']}] = ?,
-                [{ORDER_COLUMNS['keeper_id']}] = ?,
-                [{ORDER_COLUMNS['keeper_name']}] = ?,
-                [{ORDER_COLUMNS['transport_type']}] = ?,
-                [{ORDER_COLUMNS['transport_operator_id']}] = ?,
-                [{ORDER_COLUMNS['transport_operator_name']}] = ?,
-                [{ORDER_COLUMNS['keeper_confirm_time']}] = GETDATE(),
-                [{ORDER_COLUMNS['confirmed_count']}] = ?,
-                [{ORDER_COLUMNS['updated_at']}] = GETDATE()
-            WHERE [{ORDER_COLUMNS['order_no']}] = ?
-            """
-            self._db.execute_query(update_sql, (
-                new_status,
-                keeper_id,
-                keeper_name,
-                confirm_data.get('transport_type'),
-                confirm_data.get('transport_assignee_id'),
-                confirm_data.get('transport_assignee_name'),
-                approved_count,
-                order_no
-            ), fetch=False)
+                tx_result["approved_count"] = approved_count
+                tx_result["status"] = new_status
 
-            # Log
-            self.add_tool_io_log({
-                'order_no': order_no,
-                'action_type': ToolIOAction.KEEPER_CONFIRM,
-                'operator_id': operator_id,
-                'operator_name': operator_name,
-                'operator_role': operator_role,
-                'before_status': current_status,
-                'after_status': new_status,
-                'content': f'保管员确认，通过 {approved_count}/{len(items)} 项'
-            })
+            self._db.execute_with_transaction(_keeper_confirm_tx)
 
-            return {'success': True, 'status': new_status, 'approved_count': approved_count}
+            return {'success': True, 'status': tx_result["status"], 'approved_count': tx_result["approved_count"]}
 
         except Exception as e:
             logger.error(f"保管员确认失败: {e}")
@@ -680,49 +689,49 @@ class OrderRepository:
             Result dictionary
         """
         try:
-            check_sql = f"SELECT [{ORDER_COLUMNS['order_type']}], [{ORDER_COLUMNS['order_status']}] FROM [{TABLE_NAMES['ORDER']}] WHERE [{ORDER_COLUMNS['order_no']}] = ?"
-            result = self._db.execute_query(check_sql, (order_no,))
-            if not result:
-                return {'success': False, 'error': '单据不存在'}
+            def _final_confirm_tx(conn: Any) -> None:
+                check_sql = f"SELECT [{ORDER_COLUMNS['order_type']}], [{ORDER_COLUMNS['order_status']}] FROM [{TABLE_NAMES['ORDER']}] WHERE [{ORDER_COLUMNS['order_no']}] = ?"
+                result = self._db.execute_query(check_sql, (order_no,), conn=conn)
+                if not result:
+                    raise ValueError('单据不存在')
 
-            order_type = result[0].get('order_type')
-            current_status = result[0].get('order_status')
+                order_type = result[0].get('order_type')
+                current_status = result[0].get('order_status')
 
-            if current_status not in ['keeper_confirmed', 'partially_confirmed', 'transport_notified', 'transport_completed', 'final_confirmation_pending']:
-                return {'success': False, 'error': f'当前状态不允许最终确认，当前状态：{current_status}'}
+                if current_status not in ['keeper_confirmed', 'partially_confirmed', 'transport_notified', 'transport_completed', 'final_confirmation_pending']:
+                    raise ValueError(f'当前状态不允许最终确认，当前状态：{current_status}')
 
-            # Update order status
-            sql = f"""
-            UPDATE [{TABLE_NAMES['ORDER']}] SET
-                [{ORDER_COLUMNS['order_status']}] = 'completed',
-                [{ORDER_COLUMNS['final_confirm_by']}] = ?,
-                [{ORDER_COLUMNS['final_confirm_time']}] = GETDATE(),
-                [{ORDER_COLUMNS['updated_at']}] = GETDATE()
-            WHERE [{ORDER_COLUMNS['order_no']}] = ?
-            """
-            self._db.execute_query(sql, (operator_name, order_no), fetch=False)
+                sql = f"""
+                UPDATE [{TABLE_NAMES['ORDER']}] SET
+                    [{ORDER_COLUMNS['order_status']}] = 'completed',
+                    [{ORDER_COLUMNS['final_confirm_by']}] = ?,
+                    [{ORDER_COLUMNS['final_confirm_time']}] = GETDATE(),
+                    [{ORDER_COLUMNS['updated_at']}] = GETDATE()
+                WHERE [{ORDER_COLUMNS['order_no']}] = ?
+                """
+                self._db.execute_query(sql, (operator_name, order_no), fetch=False, conn=conn)
 
-            # Update items
-            update_items_sql = f"""
-            UPDATE [{TABLE_NAMES['ORDER_ITEM']}] SET
-                [{ITEM_COLUMNS['item_status']}] = 'completed',
-                [{ITEM_COLUMNS['io_complete_time']}] = GETDATE(),
-                [{ITEM_COLUMNS['updated_at']}] = GETDATE()
-            WHERE [{ITEM_COLUMNS['order_no']}] = ? AND [{ITEM_COLUMNS['item_status']}] = 'approved'
-            """
-            self._db.execute_query(update_items_sql, (order_no,), fetch=False)
+                update_items_sql = f"""
+                UPDATE [{TABLE_NAMES['ORDER_ITEM']}] SET
+                    [{ITEM_COLUMNS['item_status']}] = 'completed',
+                    [{ITEM_COLUMNS['io_complete_time']}] = GETDATE(),
+                    [{ITEM_COLUMNS['updated_at']}] = GETDATE()
+                WHERE [{ITEM_COLUMNS['order_no']}] = ? AND [{ITEM_COLUMNS['item_status']}] = 'approved'
+                """
+                self._db.execute_query(update_items_sql, (order_no,), fetch=False, conn=conn)
 
-            # Log
-            self.add_tool_io_log({
-                'order_no': order_no,
-                'action_type': ToolIOAction.COMPLETE,
-                'operator_id': operator_id,
-                'operator_name': operator_name,
-                'operator_role': operator_role,
-                'before_status': current_status,
-                'after_status': 'completed',
-                'content': f'出入库完成，类型：{order_type}'
-            })
+                self.add_tool_io_log({
+                    'order_no': order_no,
+                    'action_type': ToolIOAction.COMPLETE,
+                    'operator_id': operator_id,
+                    'operator_name': operator_name,
+                    'operator_role': operator_role,
+                    'before_status': current_status,
+                    'after_status': 'completed',
+                    'content': f'出入库完成，类型：{order_type}'
+                }, conn=conn)
+
+            self._db.execute_with_transaction(_final_confirm_tx)
 
             return {'success': True}
 
@@ -1026,15 +1035,21 @@ class OrderRepository:
             logger.error(f"删除单据失败: {e}")
             return {'success': False, 'error': str(e)}
 
-    def add_tool_io_log(self, log_data: dict) -> bool:
+    def add_tool_io_log(self, log_data: dict, conn: Any = None) -> bool:
         """
         Add operation log.
 
         Args:
             log_data: Log data dictionary
+            conn: Optional database connection for transactional context.
+                  When provided inside a transaction, failures raise exceptions to trigger rollback.
+                  When None (non-transactional), failures return False without raising.
 
         Returns:
             True if successful
+
+        Raises:
+            Exception: When conn is provided and log insertion fails (triggers transaction rollback)
         """
         try:
             sql = f"""
@@ -1054,10 +1069,14 @@ class OrderRepository:
                 log_data.get('before_status'),
                 log_data.get('after_status'),
                 log_data.get('content')
-            ), fetch=False)
+            ), fetch=False, conn=conn)
             return True
         except Exception as e:
             logger.error(f"记录操作日志失败: {e}")
+            if conn is not None:
+                # Inside transaction: raise to trigger rollback
+                raise
+            # Outside transaction: return False for graceful handling
             return False
 
     def get_tool_io_logs(self, order_no: str) -> list:
@@ -1262,15 +1281,15 @@ class OrderRepository:
         summary_parts = []
         seen_pairs = set()
         for item in occupied_tools:
-            tool_code = str(item.get("tool_code", "")).strip()
+            serial_no = str(item.get("serial_no", "")).strip()
             order_no = str(item.get("order_no", "")).strip()
-            if not tool_code or not order_no:
+            if not serial_no or not order_no:
                 continue
-            key = (tool_code, order_no)
+            key = (serial_no, order_no)
             if key in seen_pairs:
                 continue
             seen_pairs.add(key)
-            summary_parts.append(f"{tool_code}（单号：{order_no}，状态：{item.get('order_status', '-') or '-'}）")
+            summary_parts.append(f"{serial_no}（单号：{order_no}，状态：{item.get('order_status', '-') or '-'}）")
 
         if not summary_parts:
             return "所选工装已被其他进行中的单据占用"
@@ -1284,15 +1303,15 @@ class OrderRepository:
         summary_parts = []
         seen_pairs = set()
         for item in draft_tools:
-            tool_code = str(item.get("tool_code", "")).strip()
+            serial_no = str(item.get("serial_no", "")).strip()
             order_no = str(item.get("order_no", "")).strip()
-            if not tool_code or not order_no:
+            if not serial_no or not order_no:
                 continue
-            key = (tool_code, order_no)
+            key = (serial_no, order_no)
             if key in seen_pairs:
                 continue
             seen_pairs.add(key)
-            summary_parts.append(f"{tool_code}（草稿单：{order_no}）")
+            summary_parts.append(f"{serial_no}（草稿单：{order_no}）")
 
         if not summary_parts:
             return ""

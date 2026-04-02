@@ -34,6 +34,7 @@ const navigation = [
   { name: '创建申请', href: '/inventory/create', icon: PlusCircle, permission: 'order:create' },
   { name: '保管员工作台', href: '/inventory/keeper', icon: PackageSearch, permission: 'order:keeper_confirm' },
   { name: '预知运输', href: '/inventory/pre-transport', icon: ClipboardList, permission: 'order:transport_execute' },
+  { name: 'MPL管理', href: '/mpl', icon: PackageSearch, permission: 'tool:view' },
   { name: '账号管理', href: '/admin/users', icon: Users, permission: 'admin:user_manage' },
   { name: '反馈管理', href: '/admin/feedback', icon: MessageSquare, permission: 'admin:user_manage' },
   { name: '个人设置', href: '/settings', icon: Settings, permission: 'dashboard:view' }

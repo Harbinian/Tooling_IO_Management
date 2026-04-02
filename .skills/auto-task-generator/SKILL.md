@@ -1,5 +1,7 @@
 # 自动任务生成器 / Auto Task Generator Skill
 
+**规则约束**: 本技能受 `.claude/rules/05_task_convention.md` 约束，必须遵循提示词编号约定和执行者分配规则。
+
 ## 目的 / Purpose
 
 本技能使 AI 代理能够自动将发现的问题、开发需求或改进机会转换为标准化的开发提示词。
@@ -96,8 +98,8 @@ Executor:
 | 执行器 | 职责范围 |
 |--------|---------|
 | Gemini | 前端设计 / Frontend Design |
-| Codex | 后端实现 / Backend Implementation |
-| Claude Code | 架构任务 / Architecture Tasks |
+| Codex | 后端实现 / Backend Implementation、数据库 / Database |
+| Claude Code | 架构任务 / Architecture Tasks、简化任务 / Simple Tasks |
 
 ---
 
@@ -187,7 +189,7 @@ Executor:
 
 | 执行器 | 职责范围 |
 |--------|---------|
-| Codex | 测试任务 / Testing tasks |
+| Claude Code | 测试任务 / Testing tasks |
 
 ---
 
@@ -244,19 +246,31 @@ The system must select the correct numbering range based on task type (must use 
 
 编号分配规则 / Number Assignment Rules:
 
-1. 检查 `promptsRec/active/` 中对应范围的现有提示词 / Inspect existing prompts in the corresponding range in `promptsRec/active/`
-2. 确定该范围内使用的最高编号 / Determine the highest used number in that range
-3. 分配下一个有效的可用编号 / Assign the next available valid number
+为避免频繁扫描 archive 目录，系统使用 `promptsRec/.sequence` 文件维护编号计数器。
+
+1. **读取计数器**: 读取 `promptsRec/.sequence` 文件，根据任务类型获取对应的计数器值：
+   - 功能开发 → `feature_next`
+   - Bug 修复 → `bugfix_next`
+   - 重构 → `refactor_next`
+   - 测试 → `test_next`
+2. **分配编号**: 使用当前计数器值作为新提示词的编号
+3. **更新计数器**: 使用 replace_all 模式原子递增 `.sequence` 中的计数器
 
 示例：
 
 Example:
 
-最新功能提示词：00017 / Latest feature prompt: 00017
-下一个功能提示词：00018 / Next feature prompt: 00018
+```
+# .sequence 文件内容
+feature_next=00018
+bugfix_next=10130
+```
 
-最新 Bug 提示词：10101 / Latest bug prompt: 10101
-下一个 Bug 提示词：10102 / Next bug prompt: 10102
+生成功能提示词 → 分配编号 `00018` → 更新 `feature_next=00019`
+
+---
+
+**注意**: `.sequence` 文件是编号的唯一真实来源，严禁扫描 archive 或 active 目录来确定编号。
 
 ---
 

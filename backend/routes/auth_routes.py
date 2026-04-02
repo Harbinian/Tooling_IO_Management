@@ -5,6 +5,7 @@ import logging
 
 from flask import Blueprint, jsonify, request
 
+from backend.extensions import limiter
 from backend.routes.common import get_authenticated_user, get_json_dict, require_auth, validation_error
 
 auth_bp = Blueprint("auth_routes", __name__)
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @auth_bp.route("/api/auth/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def api_auth_login():
     try:
         from backend.services.auth_service import AuthError, authenticate_user

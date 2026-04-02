@@ -20,7 +20,7 @@
 
 ```powershell
 # Backend syntax check
-python -m py_compile web_server.py database.py
+python -m py_compile web_server.py database.py backend/services/tool_io_service.py config/settings.py
 
 # Run all tests
 pytest tests/ -v
@@ -29,11 +29,25 @@ pytest tests/ -v
 pytest --cov=. --cov-report=term-missing
 ```
 
+## E2E Test Runners
+
+Located in `test_runner/`:
+
+```powershell
+# API E2E test (direct backend API calls)
+python test_runner/api_e2e.py
+
+# Playwright E2E test (browser simulation)
+python test_runner/playwright_e2e.py
+```
+
+**Port Requirements**: Frontend 8150, Backend 8151 must be running
+
 ## Frontend Testing
 
 - Manual testing via browser
-- `npm run dev` starts dev server at localhost:5173
-- E2E tests (if configured)
+- `npm run dev` starts dev server at localhost:8150
+- E2E tests via `test_runner/playwright_e2e.py`
 
 ## Manual Testing Checklist
 
@@ -77,3 +91,4 @@ pytest --cov=. --cov-report=term-missing
 | GET /api/system/health | Detailed health |
 | GET /api/system/diagnostics/recent-errors | Error logs |
 | GET /api/system/diagnostics/notification-failures | Notification failures |
+| GET /api/db/test | Database connection test |

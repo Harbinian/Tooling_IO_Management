@@ -17,6 +17,9 @@ ENV/
 logs/
 !logs/.gitkeep
 
+# GUI Events
+incidents/gui_events/*.json
+
 # Build and Dist
 build/
 dist/

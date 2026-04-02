@@ -348,7 +348,7 @@ def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None
             orchestrator.snapshot_before(page)
 
         try:
-            page.goto(f"{FRONTEND_URL}/tool-io", wait_until="networkidle", timeout=15000)
+            page.goto(f"{FRONTEND_URL}/inventory", wait_until="networkidle", timeout=15000)
             time.sleep(1)
 
             if orchestrator:
@@ -378,7 +378,7 @@ def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None
             orchestrator.snapshot_before(page)
 
         try:
-            page.goto(f"{FRONTEND_URL}/create", wait_until="networkidle", timeout=15000)
+            page.goto(f"{FRONTEND_URL}/inventory/create", wait_until="networkidle", timeout=15000)
             time.sleep(1)
 
             if orchestrator:
@@ -468,7 +468,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
             orchestrator.snapshot_before(page_taidongxu)
 
-        page_taidongxu.goto(f"{FRONTEND_URL}/create", wait_until="networkidle", timeout=15000)
+        page_taidongxu.goto(f"{FRONTEND_URL}/inventory/create", wait_until="networkidle", timeout=15000)
         time.sleep(1)
 
         if orchestrator:
@@ -703,7 +703,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
                 order_no = current_url.split("/")[-1].split("?")[0]
             else:
                 # 尝试从页面获取
-                page_taidongxu.goto(f"{FRONTEND_URL}/tool-io", wait_until="networkidle", timeout=10000)
+                page_taidongxu.goto(f"{FRONTEND_URL}/inventory", wait_until="networkidle", timeout=10000)
                 time.sleep(1)
                 order_no_text = get_text(page_taidongxu, '[class*="order-no"], [class*="单号"]')
                 order_no = order_no_text.strip() if order_no_text else None
@@ -751,7 +751,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
 
         # 11. 进入保管员处理页面
         try:
-            page_hutingting.goto(f"{FRONTEND_URL}/keeper", wait_until="networkidle", timeout=15000)
+            page_hutingting.goto(f"{FRONTEND_URL}/inventory/keeper", wait_until="networkidle", timeout=15000)
             time.sleep(1)
             report.add_step("wf_11", "hutingting", "进入保管员处理页", "PASS")
         except Exception as e:
@@ -759,7 +759,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
 
         # 12. 查看待确认订单
         try:
-            page_hutingting.goto(f"{FRONTEND_URL}/tool-io?status=submitted", wait_until="networkidle", timeout=15000)
+            page_hutingting.goto(f"{FRONTEND_URL}/inventory?status=submitted", wait_until="networkidle", timeout=15000)
             time.sleep(1)
             report.add_step("wf_12", "hutingting", "查看待确认订单", "PASS")
         except Exception as e:
@@ -887,15 +887,15 @@ def run_rbac_test(browser: Browser, report: TestReport, orchestrator=None):
 
     rbac_tests = [
         # (用户, 角色, 页面/操作, 预期结果)
-        ("taidongxu", "TEAM_LEADER", "/create", "allow"),      # 可以创建订单
-        ("taidongxu", "TEAM_LEADER", "/keeper", "deny"),       # 不能访问保管员页
-        ("hutingting", "KEEPER", "/create", "deny"),           # 不能创建订单
-        ("hutingting", "KEEPER", "/keeper", "allow"),          # 可以访问保管员页
-        ("fengliang", "PRODUCTION_PREP", "/tool-io", "deny"),  # 不能访问订单列表
-        ("fengliang", "PRODUCTION_PREP", "/pre-transport", "allow"),  # 可以访问预运输
-        ("admin", "SYS_ADMIN", "/create", "allow"),             # 管理员可以创建
-        ("admin", "SYS_ADMIN", "/keeper", "allow"),            # 管理员可以访问保管员页
-        ("admin", "SYS_ADMIN", "/admin", "allow"),             # 管理员可以访问管理页
+        ("taidongxu", "TEAM_LEADER", "/inventory/create", "allow"),      # 可以创建订单
+        ("taidongxu", "TEAM_LEADER", "/inventory/keeper", "deny"),       # 不能访问保管员页
+        ("hutingting", "KEEPER", "/inventory/create", "deny"),           # 不能创建订单
+        ("hutingting", "KEEPER", "/inventory/keeper", "allow"),          # 可以访问保管员页
+        ("fengliang", "PRODUCTION_PREP", "/inventory", "deny"),  # 不能访问订单列表
+        ("fengliang", "PRODUCTION_PREP", "/inventory/pre-transport", "allow"),  # 可以访问预运输
+        ("admin", "SYS_ADMIN", "/inventory/create", "allow"),             # 管理员可以创建
+        ("admin", "SYS_ADMIN", "/inventory/keeper", "allow"),            # 管理员可以访问保管员页
+        ("admin", "SYS_ADMIN", "/admin/users", "allow"),             # 管理员可以访问管理页
     ]
 
     for username, role, path, expected in rbac_tests:

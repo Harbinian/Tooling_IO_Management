@@ -163,12 +163,13 @@ Organizations represent the enterprise hierarchy.
 
 Roles represent sets of permissions.
 
-## 表: roles / Table: roles
+## 表: sys_role / Table: sys_role
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|
-| role_id | 主键 / Primary key |
-| role_code | 唯一标识符 / Unique identifier |
+| id | 主键 / Primary key |
+| role_id | 角色标识符 / Role identifier |
+| role_code | 唯一代码 / Unique code |
 | role_name | 显示名称 / Display name |
 | role_type | 业务角色或系统角色 / Business or system role |
 | status | 启用或禁用 / Active or disabled |
@@ -210,14 +211,15 @@ log:view / 日志:查看
 admin:user_manage / 管理员:用户管理
 admin:role_manage / 管理员:角色管理
 
-## 表: permissions / Table: permissions
+## 表: sys_permission / Table: sys_permission
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|
+| id | 主键 / Primary key |
 | permission_code | 唯一权限标识符 / Unique permission identifier |
 | permission_name | 显示名称 / Display name |
-| resource | 资源名称 / Resource name |
-| action | 允许的操作 / Allowed action |
+| resource_name | 资源名称 / Resource name |
+| action_name | 允许的操作 / Allowed action |
 
 ---
 
@@ -248,7 +250,7 @@ Data scope determines which records a user can access.
 
 ## 用户-角色关系 / User-Role Relation
 
-表: user_role_rel / Table: user_role_rel
+表: sys_user_role_rel / Table: sys_user_role_rel
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|
@@ -266,7 +268,7 @@ A user may have multiple roles in different organizations.
 
 ## 角色-权限关系 / Role-Permission Relation
 
-表: role_permission_rel / Table: role_permission_rel
+表: sys_role_permission_rel / Table: sys_role_permission_rel
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|
@@ -278,7 +280,7 @@ A user may have multiple roles in different organizations.
 
 ## 角色数据范围关系 / Role Data Scope Relation
 
-表: role_data_scope_rel / Table: role_data_scope_rel
+表: sys_role_data_scope_rel / Table: sys_role_data_scope_rel
 
 | 字段 / Field | 描述 / Description |
 |------|-------------|

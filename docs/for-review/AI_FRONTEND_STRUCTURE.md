@@ -5,9 +5,7 @@
 | Technology | Purpose |
 |------------|---------|
 | Vue 3 | Frontend framework |
-| Tailwind CSS | Styling |
-| shadcn/ui (Custom) | UI component library (Mist design style) |
-| Element Plus | UI component library (Being migrated to shadcn/ui) |
+| Element Plus | UI component library |
 | Vite | Build tool |
 | Vue Router | Routing |
 | Pinia | State management |
@@ -19,35 +17,21 @@ frontend/src/
 ├── main.js                 # App entry point
 ├── App.vue                # Root component
 ├── api/                   # API wrappers
-│   └── adminUsers.js     # Admin user API
+│   ├── auth.js           # Auth API
+│   ├── toolIO.js        # Tool IO API
+│   ├── dashboard.js     # Dashboard API
+│   ├── adminUsers.js    # Admin user API
+│   ├── feedback.js      # Feedback API
+│   └── org.js           # Organization API
 ├── components/
-│   ├── mist/             # Mist features components
-│   │   ├── MistFeatures.vue
-│   │   └── MistStats.vue
-│   ├── tool-io/          # Tool IO components
-│   │   ├── LogTimeline.vue
-│   │   ├── NotificationPreview.vue
-│   │   ├── OrderStatusTag.vue
-│   │   ├── ToolSearchDialog.vue
-│   │   └── ToolSelectionTable.vue
-│   └── ui/               # Base UI components
-│       ├── Badge.vue
-│       ├── Button.vue
-│       ├── Card.vue
-│       ├── CardContent.vue
-│       ├── CardDescription.vue
-│       ├── CardFooter.vue
-│       ├── CardHeader.vue
-│       ├── CardTitle.vue
-│       ├── Input.vue
-│       ├── Select.vue
-│       ├── TabsList.vue
-│       ├── TabsTrigger.vue
-│       └── Textarea.vue
-├── debug/
-│   └── debugIds.js       # Debug ID constants
-├── directives/
-│   └── vDebugId.js       # Debug ID directive
+│   └── tool-io/         # Tool IO components
+│       ├── LogTimeline.vue
+│       ├── NotificationPreview.vue
+│       ├── OrderStatusTag.vue
+│       ├── ToolSearchDialog.vue
+│       ├── ToolSelectionTable.vue
+│       ├── TransportIssueDialog.vue
+│       └── WorkflowStepper.vue
 ├── layouts/
 │   └── MainLayout.vue    # Main layout with sidebar
 ├── pages/
@@ -57,6 +41,8 @@ frontend/src/
 │   │   └── LoginPage.vue
 │   ├── dashboard/
 │   │   └── DashboardOverview.vue
+│   ├── settings/
+│   │   └── SettingsPage.vue
 │   └── tool-io/
 │       ├── KeeperProcess.vue
 │       ├── OrderCreate.vue
@@ -81,6 +67,7 @@ frontend/src/
 | /inventory/keeper | KeeperProcess | order:keeper_confirm |
 | /inventory/:orderNo | OrderDetail | order:view |
 | /admin/users | UserAdminPage | admin:user_manage |
+| /settings | SettingsPage | authenticated |
 
 ## Key Components
 
@@ -95,6 +82,7 @@ frontend/src/
 | OrderDetail | View order, workflow actions |
 | KeeperProcess | Keeper workspace for confirmations |
 | UserAdminPage | Admin user management |
+| SettingsPage | User settings and feedback |
 
 ### Reusable Components
 
@@ -105,6 +93,8 @@ frontend/src/
 | LogTimeline | Display order operation logs |
 | NotificationPreview | Show notification preview |
 | OrderStatusTag | Display order status badge |
+| WorkflowStepper | Display workflow progress |
+| TransportIssueDialog | Report transport issues |
 
 ## State Management
 
@@ -132,24 +122,28 @@ frontend/src/
 
 ### Frontend API Calls
 
+All API calls go through the `api/` directory wrappers:
+
 | API | File |
 |-----|------|
-| Auth | Built-in fetch to `/api/auth/*` |
-| Orders | Built-in fetch to `/api/tool-io-orders/*` |
-| Tools | Built-in fetch to `/api/tools/*` |
+| Auth | `api/auth.js` |
+| Orders | `api/toolIO.js` |
+| Tools | `api/toolIO.js` |
+| Dashboard | `api/dashboard.js` |
 | Admin Users | `api/adminUsers.js` |
+| Feedback | `api/feedback.js` |
+| Organization | `api/org.js` |
 
 ## Development Commands
 
 ```powershell
 cd frontend
 npm install
-npm run dev     # Start dev server at localhost:5173
+npm run dev     # Start dev server at localhost:8150
 npm run build   # Production build
 ```
 
 ## Entry Point
 
 - `frontend/src/main.js` - Creates Vue app
-- Registers `v-debug-id` directive
 - Mounts to `#app` element

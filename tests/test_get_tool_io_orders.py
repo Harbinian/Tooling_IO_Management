@@ -210,7 +210,7 @@ class ToolIOOrderQueryTests(unittest.TestCase):
             return_value={"success": True, "order_no": "TO-001"},
         ) as create_db_order:
             result = create_order(
-                {"order_type": "outbound", "items": [{"tool_code": "T-01"}]},
+                {"order_type": "outbound", "items": [{"serial_no": "T-01"}]},
                 current_user={
                     "current_org": {"org_id": "ORG_TEAM"},
                     "default_org": {"org_id": "ORG_FACTORY"},
@@ -257,13 +257,13 @@ class ToolIORuntimeTests(unittest.TestCase):
                     "keeper_remark": "checked",
                     "items": [
                         {
-                            "tool_code": "T-01",
+                            "serial_no": "T-01",
                             "location_text": "A-01",
                             "approved_qty": 1,
                             "status": "approved",
                         },
                         {
-                            "tool_code": "T-02",
+                            "serial_no": "T-02",
                             "location_text": "A-02",
                             "approved_qty": 0,
                             "status": "rejected",
@@ -283,7 +283,7 @@ class ToolIORuntimeTests(unittest.TestCase):
         self.assertEqual(result["keeper_remark"], "checked")
         keeper_confirm_order_mock.assert_called_once()
 
-    def test_keeper_confirm_runtime_rejects_unknown_tool_code(self):
+    def test_keeper_confirm_runtime_rejects_unknown_serial_no(self):
         with patch(
             "backend.services.tool_io_runtime.keeper_confirm_order",
             return_value={"success": False, "error": "tool code T-99 does not belong to order TO-001"},
@@ -292,7 +292,7 @@ class ToolIORuntimeTests(unittest.TestCase):
                 "TO-001",
                 "U-KEEPER",
                 "Keeper",
-                {"items": [{"tool_code": "T-99", "status": "approved"}]},
+                {"items": [{"serial_no": "T-99", "status": "approved"}]},
                 "U-KEEPER",
                 "Keeper",
                 "keeper",
@@ -434,7 +434,7 @@ class ToolIONotificationUsageTests(unittest.TestCase):
             "order_type": "outbound",
             "initiator_name": "Alice",
             "initiator_id": "U-INIT",
-            "items": [{"tool_code": "T-01", "tool_name": "Clamp", "drawing_no": "D-01", "apply_qty": 2}],
+            "items": [{"serial_no": "T-01", "tool_name": "Clamp", "drawing_no": "D-01", "apply_qty": 2}],
         }
 
         with patch("backend.services.tool_io_service.get_order_detail", return_value=order), patch(
@@ -454,7 +454,7 @@ class ToolIONotificationUsageTests(unittest.TestCase):
             "transport_assignee_name": "Bob",
             "items": [
                 {
-                    "tool_code": "T-02",
+                    "serial_no": "T-02",
                     "tool_name": "Fixture",
                     "location_text": "A-01",
                     "approved_qty": 1,

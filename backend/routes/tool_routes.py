@@ -94,14 +94,14 @@ def api_batch_update_tool_status():
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
-@tool_bp.route("/api/tools/status-history/<tool_code>", methods=["GET"])
+@tool_bp.route("/api/tools/status-history/<serial_no>", methods=["GET"])
 @require_permission("tool:view")
-def api_tool_status_history(tool_code: str):
+def api_tool_status_history(serial_no: str):
     try:
         from backend.services.tool_io_service import get_tool_status_history
 
         result = get_tool_status_history(
-            tool_code=tool_code,
+            serial_no=serial_no,
             page_no=parse_positive_int_arg("page_no", 1),
             page_size=parse_positive_int_arg("page_size", 20),
         )

@@ -1,0 +1,92 @@
+# ============================================================
+# Claude Context Ignore Rules
+# Like .gitignore but for AI context loading
+# ============================================================
+
+# GROUP A - Safe to Ignore
+# ============================================================
+
+# Dependencies
+.venv/
+venv/
+env/
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+build/
+dist/
+bin/
+obj/
+
+# Logs (generated, high token cost)
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files
+.env
+
+# Temporary files
+*.tmp
+*.temp
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ============================================================
+# GROUP B - Keep but Avoid Frequent Loading
+# ============================================================
+
+# Archived prompts (historical records)
+promptsRec/archive/
+
+# Old review/design documents
+docs/archive/
+
+# Large development context docs
+ChatGPT_Dev_Context.md
+Harness\ Engineering\ 架构应用指南.md
+AGENTS.md
+
+# ============================================================
+# NEVER IGNORE - Critical Source Files
+# ============================================================
+# Use ! prefix to negate (un-ignore)
+
+# Backend source
+!backend/
+
+# Frontend source
+!frontend/src/
+
+# Active prompts
+!promptsRec/active/
+
+# Skills
+!.skills/
+
+# Development rules
+!.claude/rules/
+
+# Architecture documents
+!docs/PRD.md
+!docs/ARCHITECTURE.md
+!docs/API_SPEC.md
+!docs/DB_SCHEMA.md
+!docs/RBAC_DESIGN.md
+!docs/RBAC_PERMISSION_MATRIX.md
+!docs/PROMPT_TASK_CONVENTION.md
+
+# Current config
+!.claude/commands.md
+!.claude/settings.local.json
+
+# ============================================================
+# NOTES
+# ============================================================
+# Pattern style: gitignore-compatible
+# Prefix ! to negate (un-ignore)
+# Order matters: earlier patterns take precedence

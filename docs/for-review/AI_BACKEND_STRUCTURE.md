@@ -15,8 +15,8 @@ backend/
 ├── routes/
 │   ├── admin_user_routes.py   # User management API
 │   ├── auth_routes.py         # Login, session
-│   ├── common.py              # Request identity hook
 │   ├── dashboard_routes.py    # Dashboard metrics
+│   ├── feedback_routes.py     # User feedback API
 │   ├── order_routes.py        # Order CRUD + workflow
 │   ├── org_routes.py         # Organization API
 │   ├── page_routes.py         # Server-side page routes
@@ -24,21 +24,28 @@ backend/
 │   └── tool_routes.py        # Tool search
 ├── services/
 │   ├── admin_user_service.py    # User CRUD + role assignment
-│   ├── audit_log_service.py     # Operation logging
 │   ├── auth_service.py          # Authentication logic
+│   ├── feedback_service.py       # User feedback handling
 │   ├── feishu_notification_adapter.py  # Feishu message formatting
-│   ├── notification_service.py  # Notification delivery
+│   ├── notification_service.py    # Notification delivery
 │   ├── org_service.py           # Organization management
 │   ├── rbac_data_scope_service.py  # Data scope filtering
 │   ├── rbac_service.py          # Role-based access control
-│   ├── tool_io_runtime.py       # Runtime order processing
 │   ├── tool_io_service.py       # Core order workflow
-│   └── tool_location_service.py  # Tool location tracking
+│   ├── tool_location_service.py   # Tool location tracking
+│   └── transport_issue_service.py # Transport issue handling
 └── database/
-    ├── acceptance_queries.py  # Acceptance test queries
-    ├── core.py               # Database manager
-    ├── monitor_queries.py    # Monitoring queries
-    └── tool_io_queries.py   # Order-specific queries
+    ├── core/
+    │   ├── database_manager.py   # Database manager (connection pool)
+    │   └── executor.py          # SQL executor
+    ├── repositories/
+    │   ├── order_repository.py  # Order data access
+    │   └── tool_repository.py  # Tool data access
+    ├── schema/
+    │   ├── column_names.py     # Column name constants
+    │   └── schema_manager.py   # Schema management
+    └── utils/
+        └── sql_utils.py        # SQL utilities
 ```
 
 ## Key Service Files
@@ -47,35 +54,9 @@ backend/
 
 **Purpose**: Core business logic for 工装出入库 orders
 
-**Key Functions**:
-
-| Function | Purpose |
-|----------|---------|
-| create_order() | Create new order |
-| list_orders() | Query orders with filters |
-| get_order_detail() | Get order by order_no |
-| submit_order() | Submit order for approval |
-| keeper_confirm() | Keeper approves items |
-| final_confirm() | Final confirmation (team_leader/keeper) |
-| reject_order() | Reject order |
-| cancel_order() | Cancel order |
-| notify_transport() | Send transport notification |
-| notify_keeper() | Send keeper notification |
-| get_dashboard_stats() | Dashboard metrics |
-
 ### rbac_service.py
 
 **Purpose**: Role-based access control
-
-**Key Functions**:
-
-| Function | Purpose |
-|----------|---------|
-| ensure_rbac_tables() | Create RBAC tables |
-| load_user_roles() | Get user's roles |
-| load_permissions_for_role_ids() | Get permissions for roles |
-| resolve_user_permissions() | Get all user permissions |
-| has_permission() | Check if user has permission |
 
 ### auth_service.py
 
@@ -102,13 +83,20 @@ POST   /api/tool-io-orders/<order_no>/transport-start
 POST   /api/tool-io-orders/<order_no>/transport-complete
 POST   /api/tool-io-orders/<order_no>/reject
 POST   /api/tool-io-orders/<order_no>/cancel
+DELETE /api/tool-io-orders/<order_no>        # Delete draft order
 GET    /api/tool-io-orders/<order_no>/logs
 GET    /api/tool-io-orders/<order_no>/notification-records
 POST   /api/tool-io-orders/<order_no>/notify-transport
 POST   /api/tool-io-orders/<order_no>/notify-keeper
-GET    /api/tool-io-orders/pending-keeper
 GET    /api/tool-io-orders/<order_no>/generate-keeper-text
 GET    /api/tool-io-orders/<order_no>/generate-transport-text
+GET    /api/tool-io-orders/<order_no>/transport-issues
+POST   /api/tool-io-orders/<order_no>/report-transport-issue
+POST   /api/tool-io-orders/<order_no>/resolve-transport-issue
+GET    /api/tool-io-orders/pending-keeper
+GET    /api/tool-io-orders/pre-transport
+PATCH  /api/tools/batch-status
+GET    /api/tools/status-history/<tool_code>
 ```
 
 ### Auth Routes (auth_bp)
@@ -116,6 +104,7 @@ GET    /api/tool-io-orders/<order_no>/generate-transport-text
 ```
 POST   /api/auth/login
 GET    /api/auth/me
+POST   /api/user/change-password
 ```
 
 ### Tool Routes (tool_bp)
@@ -137,7 +126,7 @@ GET    /api/dashboard/metrics
 GET    /api/orgs
 GET    /api/orgs/tree
 GET    /api/orgs/<org_id>
-POST   /api/orgs/<org_id>
+POST   /api/orgs
 PUT    /api/orgs/<org_id>
 ```
 
@@ -154,6 +143,18 @@ PUT    /api/admin/users/<user_id>/status
 PUT    /api/admin/users/<user_id>/password-reset
 ```
 
+### Feedback Routes (feedback_bp)
+
+```
+GET    /api/feedback
+POST   /api/feedback
+DELETE /api/feedback/<id>
+GET    /api/feedback/all
+PUT    /api/feedback/<id>/status
+POST   /api/feedback/<id>/reply
+GET    /api/feedback/<id>/replies
+```
+
 ### System Routes (system_bp)
 
 ```
@@ -166,8 +167,20 @@ GET    /api/db/test
 
 ## Database Connection
 
-**File**: `database.py`
+**File**: `database.py` and `backend/database/core/database_manager.py`
 
 - Uses pyodbc for SQL Server connection
 - Connection pool management
 - Connection string from config/settings.py
+
+## Column Name Constants
+
+**File**: `backend/database/schema/column_names.py`
+
+All SQL queries should use column name constants from this file:
+
+```python
+from backend.database.schema.column_names import ORDER_COLUMNS, ITEM_COLUMNS
+
+sql = f"SELECT {ORDER_COLUMNS['order_no']} FROM tool_io_order"
+```

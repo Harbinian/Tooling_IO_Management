@@ -69,8 +69,19 @@
 - **权限范围**
   - 查看所有订单
   - 查看操作日志
-  - 查看通知记录
-  - 管理系统配置
+- 查看通知记录
+- 管理系统配置
+
+### 2.5 工程技术维护人员 (Engineering Maintainer)
+
+- **权限范围**
+  - 维护工装可拆卸件清单（MPL）
+  - 查看工装图号与版次对应的组件号、数量和组件照片
+  - 配合保管员完成组件完整性核对
+
+- **业务说明**
+  - 当前实现复用 `tool:view` 进入 MPL 页面
+  - 后续若引入独立工程技术角色，再拆分专用权限
 
 ---
 
@@ -149,12 +160,27 @@
 | submitted | partially_confirmed, keeper_confirmed, rejected | 保管员确认/拒绝 |
 | partially_confirmed | keeper_confirmed, transport_notified, rejected | 保管员确认或发送运输通知 |
 | keeper_confirmed | transport_notified, final_confirmation_pending, rejected | 发送运输通知或直接最终确认 |
-| transport_notified | transport_in_progress | 开始运输 |
-| transport_in_progress | final_confirmation_pending | 完成运输 |
+| transport_notified | transporting | 开始运输 |
+| transporting | final_confirmation_pending | 完成运输 |
 | final_confirmation_pending | completed | 最终确认 |
 | completed | - | 终态 |
 | rejected | cancelled | 班组长取消 |
 | cancelled | - | 终态 |
+
+**完整状态说明：**
+
+| 状态值 | 中文 | 说明 |
+|--------|------|------|
+| draft | 草稿 | 订单刚创建，未提交 |
+| submitted | 已提交 | 已提交给保管员 |
+| partially_confirmed | 部分确认 | 部分明细已确认 |
+| keeper_confirmed | 保管员已确认 | 保管员已确认工装状态 |
+| transport_notified | 已通知运输 | 已发送运输通知 |
+| transporting | 运输中 | 运输进行中 |
+| final_confirmation_pending | 待最终确认 | 等待最终确认 |
+| completed | 已完成 | 订单流程结束 |
+| rejected | 已拒绝 | 保管员拒绝 |
+| cancelled | 已取消 | 已取消 |
 
 ### 5.3 文本生成规则
 
@@ -201,6 +227,15 @@
 - 同一订单不允许同时操作
 - 需要考虑数据库事务一致性
 
+### 6.6 MPL 校验
+
+- 支持为工装图号 + 版次维护可拆卸件清单（MPL）
+- 保管员确认前可按系统开关执行 MPL 校验
+- `mpl_enabled = false` 时，保管员确认流程不受影响
+- `mpl_enabled = true` 且 `mpl_strict_mode = false` 时，缺少 MPL 仅提示警告
+- `mpl_enabled = true` 且 `mpl_strict_mode = true` 时，缺少 MPL 阻止确认
+- MPL 图片以前端 Base64 上传，单张限制 2MB
+
 ---
 
 ## 7. V1 范围 (MVP)
@@ -220,6 +255,8 @@
 | 飞书通知 | 发送飞书消息 | P1 |
 | 订单列表 | 查看订单列表 | P0 |
 | 工装搜索 | 搜索工装库存 | P0 |
+| MPL 管理 | 维护工装可拆卸件清单 | P1 |
+| MPL 校验开关 | 管理员配置 MPL 校验策略 | P1 |
 
 ### 7.2 不包含功能
 

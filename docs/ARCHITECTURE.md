@@ -143,7 +143,7 @@
            │ transport_start
            ↓
    ┌───────────────┐
-   │transport_in_progress│
+   │transporting   │
    └───────┬───────┘
            │
            │ transport_complete
@@ -167,7 +167,7 @@
 | partially_confirmed | 部分确认 | 部分明细已确认 |
 | keeper_confirmed | 保管员已确认 | 保管员已确认工装状态 |
 | transport_notified | 已通知运输 | 已发送运输通知 |
-| transport_in_progress | 运输中 | 运输进行中 |
+| transporting | 运输中 | 运输进行中 |
 | final_confirmation_pending | 待最终确认 | 等待最终确认 |
 | completed | 已完成 | 订单流程结束 |
 | rejected | 已拒绝 | 保管员拒绝 |
@@ -177,8 +177,8 @@
 
 | 状态 | 中文 | 说明 |
 |------|------|------|
-| pending | 待确认 | 等待确认 |
-| confirmed | 已确认 | 保管员已确认 |
+| pending_check | 待确认 | 等待确认 |
+| approved | 已确认 | 保管员已确认 |
 | rejected | 已拒绝 | 拒绝该项目 |
 | completed | 已完成 | 项目完成 |
 
@@ -448,6 +448,18 @@ def update_order_status(order_no: str, new_status: str):
 3. 返回友好的错误信息
 4. 关键操作使用事务回滚
 
+### 8.4 开发运行时事件桥接
+
+开发环境中的 `dev_server_launcher.py` 负责补充 GUI 侧的运行时可观测性，用于衔接 Skills 事件处理链路。
+
+- 当后端健康检查请求失败时，启动器写入 `incidents/gui_events/GUI_EVENT_*.json`
+- 当后端或前端进程启动后立即退出时，启动器写入启动失败事件
+- 当后端或前端进程在运行过程中异常退出时，启动器写入进程崩溃事件
+- 事件文件采用 UTF-8 JSON，包含 `event_id`、`timestamp`、`source`、`session_id`、`event_type`、`severity`、`affected_service`、`error_summary`、`error_details`
+- 事件写入必须是非阻塞的，即使写入失败也不能影响 GUI 主线程和原有检测逻辑
+
+该目录中的事件由后续 incident 相关技能扫描和捕获，作为开发环境问题发现链路的一部分。
+
 ---
 
 ## 9. 数据模型
@@ -459,7 +471,7 @@ def update_order_status(order_no: str, new_status: str):
 │    tool_io_order    │       │      工装基本信息    │
 ├─────────────────────┤       ├─────────────────────┤
 │ order_no (PK)      │       │ 工装ID (PK)         │
-│ order_type          │       │ 工装编码             │
+│ order_type          │       │ 工装序列号           │
 │ order_status        │──────→│ 工装名称             │
 │ initiator_info      │       │ 工装图号             │
 │ keeper_info         │       │ 工装状态             │

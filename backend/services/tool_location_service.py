@@ -13,17 +13,17 @@ from backend.database.schema.column_names import TOOL_MASTER_COLUMNS
 logger = logging.getLogger(__name__)
 
 
-def resolve_tool_master_location(tool_code: str) -> Dict:
+def resolve_tool_master_location(serial_no: str) -> Dict:
     rows = DatabaseManager().execute_query(
         f"""
         SELECT
-            [{TOOL_MASTER_COLUMNS['tool_code']}] AS tool_code,
+            [{TOOL_MASTER_COLUMNS['tool_code']}] AS serial_no,
             [{TOOL_MASTER_COLUMNS['storage_location']}] AS current_location_text,
             [{TOOL_MASTER_COLUMNS['application_history']}] AS location_history_text
         FROM [Tooling_ID_Main]
         WHERE [{TOOL_MASTER_COLUMNS['tool_code']}] = ?
         """,
-        (str(tool_code or "").strip(),),
+        (str(serial_no or "").strip(),),
     )
     if not rows:
         return {"success": False, "error": "tool not found", "data": {}}
@@ -31,7 +31,7 @@ def resolve_tool_master_location(tool_code: str) -> Dict:
     return {
         "success": True,
         "data": {
-            "tool_code": row.get("tool_code", ""),
+            "serial_no": row.get("serial_no", ""),
             "current_location_text": row.get("current_location_text", ""),
             "location_history_text": row.get("location_history_text", ""),
             "authoritative_source": "tool_master",
@@ -40,7 +40,7 @@ def resolve_tool_master_location(tool_code: str) -> Dict:
 
 
 def resolve_order_item_location(order: Dict, item: Dict) -> Dict:
-    master_location = resolve_tool_master_location(item.get("tool_code", ""))
+    master_location = resolve_tool_master_location(item.get("serial_no") or item.get("tool_code", ""))
     order_status = str(order.get("order_status") or "").strip()
     current_location_text = (
         item.get("current_location_text")
@@ -60,7 +60,7 @@ def resolve_order_item_location(order: Dict, item: Dict) -> Dict:
         authoritative_source = "workflow_storage_location"
 
     return {
-        "tool_code": item.get("tool_code", ""),
+        "serial_no": item.get("serial_no") or item.get("tool_code", ""),
         "current_location_text": current_location_text,
         "authoritative_source": authoritative_source,
         "tool_master_location": (master_location.get("data") or {}).get("current_location_text", ""),
@@ -81,7 +81,7 @@ def _determine_target_location(order: Dict, item: Dict, milestone: str) -> str:
 
 def update_tool_location(
     *,
-    tool_code: str,
+    serial_no: str,
     new_location_text: str,
     order_no: str = "",
     operator_user_id: str = "",
@@ -89,7 +89,7 @@ def update_tool_location(
     operator_role: str = "",
     remark: str = "",
 ) -> Dict:
-    current = resolve_tool_master_location(tool_code)
+    current = resolve_tool_master_location(serial_no)
     if not current.get("success"):
         return current
 
@@ -98,7 +98,7 @@ def update_tool_location(
     if not next_location or next_location == previous_location:
         return {
             "success": True,
-            "tool_code": tool_code,
+            "serial_no": serial_no,
             "previous_location": previous_location,
             "new_location": previous_location,
             "changed": False,
@@ -110,7 +110,7 @@ def update_tool_location(
         SET [{TOOL_MASTER_COLUMNS['storage_location']}] = ?
         WHERE [{TOOL_MASTER_COLUMNS['tool_code']}] = ?
         """,
-        (next_location, tool_code),
+        (next_location, serial_no),
         fetch=False,
     )
     write_order_audit_log(
@@ -121,11 +121,11 @@ def update_tool_location(
         operator_role=operator_role,
         previous_status=previous_location,
         new_status=next_location,
-        remark=remark or f"tool {tool_code} location updated",
+        remark=remark or f"tool {serial_no} location updated",
     )
     return {
         "success": True,
-        "tool_code": tool_code,
+        "serial_no": serial_no,
         "previous_location": previous_location,
         "new_location": next_location,
         "changed": True,
@@ -145,20 +145,20 @@ def apply_order_location_updates(
 
     results: List[Dict] = []
     for item in order.get("items", []) or []:
-        tool_code = str(item.get("tool_code") or "").strip()
-        if not tool_code:
+        serial_no = str(item.get("serial_no") or item.get("tool_code") or "").strip()
+        if not serial_no:
             continue
         next_location = _determine_target_location(order, item, milestone)
         if not next_location:
             continue
         result = update_tool_location(
-            tool_code=tool_code,
+            serial_no=serial_no,
             new_location_text=next_location,
             order_no=str(order.get("order_no") or "").strip(),
             operator_user_id=operator_user_id,
             operator_name=operator_name,
             operator_role=operator_role,
-            remark=f"{milestone} location update for {tool_code}: {next_location}",
+            remark=f"{milestone} location update for {serial_no}: {next_location}",
         )
         results.append(result)
 

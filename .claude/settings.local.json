@@ -22,7 +22,20 @@
       "Bash(git branch:*)",
       "Bash(git tag:*)",
       "Bash(git push:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(for dir:*)",
+      "Bash(do echo:*)",
+      "Read(//e/CA001/Tooling_IO_Management/**)",
+      "Bash(done)",
+      "Bash(ls -la docs/DEV_SERVER_LAUNCHER*)",
+      "Bash(ls -la start*.ps1 start*.cmd)",
+      "Bash(find /e/CA001/Tooling_IO_Management -maxdepth 1 -type f -name *.py -o -name *.vue -o -name *.ts -o -name *.js -o -name *.md)",
+      "Bash(find /e/CA001/Tooling_IO_Management/backend -name *.py -type f)",
+      "Bash(xargs wc:*)",
+      "Bash(find /e/CA001/Tooling_IO_Management/frontend/src -name *.vue -o -name *.ts)",
+      "Bash(netstat -ano)",
+      "Bash(ls -la promptsRec/archive/*.md)",
+      "Bash(cd:*)"
     ]
   }
 }

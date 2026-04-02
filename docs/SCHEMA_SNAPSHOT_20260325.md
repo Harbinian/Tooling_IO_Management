@@ -176,9 +176,27 @@
 
 **问题**: `tool_io_order_item.confirm_time` 定义为 `VARCHAR(500)` 而非 `DATETIME`
 
+**状态**: ✅ 已修复 - `schema_manager.py` 中已正确定义为 `DATETIME`
+
 **影响**: 时间比较操作可能失败
 
-**建议**: 后续修复为 `DATETIME` 类型
+**修复位置**: `backend/database/schema/schema_manager.py:70`
+
+### 4.2 缺失字段已补充
+
+以下字段曾缺失，已在 `schema_manager.py` 的 CREATE TABLE 中补充：
+
+| 字段 | 类型 | 状态 |
+|------|------|------|
+| org_id | VARCHAR(64) | ✅ 已补充 |
+| tool_quantity | INT | ✅ 已补充 |
+| confirmed_count | INT | ✅ 已补充 |
+| final_confirm_by | VARCHAR(64) | ✅ 已补充 |
+| cancel_reason | VARCHAR(500) | ✅ 已补充 |
+| confirm_time | DATETIME | ✅ 已补充 |
+| io_complete_time | DATETIME | ✅ 已补充 |
+
+**注意**: 本快照为 2026-03-25 的历史记录，最新表结构请参考 `DB_SCHEMA.md`
 
 ---
 

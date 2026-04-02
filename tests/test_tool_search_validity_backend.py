@@ -14,10 +14,10 @@ def test_search_tool_inventory_normalizes_disabled_fields():
     raw_result = {
         "success": True,
         "data": [
-            {"tool_code": "T001", "disabled": 0, "disabled_reason": None},
-            {"tool_code": "T002", "disabled": "1", "disabled_reason": "工装处于返修状态，不可使用"},
-            {"tool_code": "T003", "disabled": False, "disabled_reason": "  定检超期，工装不具备使用条件  "},
-            {"tool_code": "T004", "disabled": "false", "disabled_reason": "   "},
+            {"serial_no": "T001", "disabled": 0, "disabled_reason": None},
+            {"serial_no": "T002", "disabled": "1", "disabled_reason": "工装处于返修状态，不可使用"},
+            {"serial_no": "T003", "disabled": False, "disabled_reason": "  定检超期，工装不具备使用条件  "},
+            {"serial_no": "T004", "disabled": "false", "disabled_reason": "   "},
         ],
         "total": 4,
         "page_no": 1,

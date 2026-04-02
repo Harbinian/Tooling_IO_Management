@@ -24,6 +24,7 @@ except ImportError:
     _USE_UNIFIED_CONFIG = False
 
 from backend.database.core.connection_pool import ConnectionPool
+from backend.database.schema.column_names import TOOL_MASTER_COLUMNS, TOOL_MASTER_TABLE
 
 logger = logging.getLogger(__name__)
 
@@ -144,13 +145,17 @@ class DatabaseManager:
         self,
         sql: str,
         params: Optional[Tuple] = None,
-        fetch: bool = True
+        fetch: bool = True,
+        conn: Any = None,
     ) -> List[Dict]:
         """Execute query SQL."""
-        conn = None
+        active_conn = conn
+        owns_connection = active_conn is None
+        cursor = None
         try:
-            conn = self.connect()
-            cursor = conn.cursor()
+            if active_conn is None:
+                active_conn = self.connect()
+            cursor = active_conn.cursor()
 
             if params:
                 cursor.execute(sql, params)
@@ -158,7 +163,8 @@ class DatabaseManager:
                 cursor.execute(sql)
 
             if not fetch:
-                conn.commit()
+                if owns_connection:
+                    active_conn.commit()
                 return []
 
             columns = [desc[0] for desc in cursor.description]
@@ -181,11 +187,40 @@ class DatabaseManager:
             return result
 
         except Exception as e:
+            if owns_connection and active_conn is not None:
+                try:
+                    active_conn.rollback()
+                except Exception:
+                    logger.warning("Rollback failed after query error", exc_info=True)
             logger.error(f"Query execution failed: {str(e)}")
             logger.error(f"SQL: {sql}")
             raise
         finally:
-            if conn:
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.warning("Failed to close cursor cleanly", exc_info=True)
+            if owns_connection and active_conn is not None:
+                self.close(active_conn)
+
+    def execute_with_transaction(self, callback):
+        """Execute a callback within a database transaction."""
+        conn = None
+        try:
+            conn = self.connect()
+            result = callback(conn)
+            conn.commit()
+            return result
+        except Exception:
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    logger.warning("Transaction rollback failed", exc_info=True)
+            raise
+        finally:
+            if conn is not None:
                 self.close(conn)
 
     # ========================================
@@ -194,24 +229,24 @@ class DatabaseManager:
 
     def get_tool_basic_info(self) -> List[Dict]:
         """Get basic tool information from Tooling_ID_Main."""
-        sql = """
+        sql = f"""
             SELECT
-                m.序列号,
-                m.工装图号,
-                m.工装名称,
-                m.当前版次,
-                m.制造版次,
-                m.制造日期,
-                m.定检周期,
-                m.定检属性,
-                m.定检有效截止,
-                m.定检派工状态,
-                m.定检有效期剩余天,
-                m.应用历史
-            FROM Tooling_ID_Main m
-            WHERE m.定检有效截止 IS NOT NULL
-              AND (m.定检属性 IS NULL OR m.定检属性 <> '否')
-              AND (m.应用历史 IS NULL OR m.应用历史 NOT LIKE '%封存%')
+                m.[{TOOL_MASTER_COLUMNS['tool_code']}] AS serial_no,
+                m.[{TOOL_MASTER_COLUMNS['drawing_no']}] AS drawing_no,
+                m.[{TOOL_MASTER_COLUMNS['tool_name']}] AS tool_name,
+                m.[{TOOL_MASTER_COLUMNS['current_version']}] AS current_version,
+                m.[{TOOL_MASTER_COLUMNS['manufacturing_version']}] AS manufacturing_version,
+                m.[{TOOL_MASTER_COLUMNS['manufacturing_date']}] AS manufacturing_date,
+                m.[{TOOL_MASTER_COLUMNS['inspection_cycle']}] AS inspection_cycle,
+                m.[{TOOL_MASTER_COLUMNS['inspection_category']}] AS inspection_category,
+                m.[{TOOL_MASTER_COLUMNS['inspection_expiry_date']}] AS inspection_expiry_date,
+                m.[{TOOL_MASTER_COLUMNS['inspection_dispatch_status']}] AS inspection_dispatch_status,
+                m.[{TOOL_MASTER_COLUMNS['inspection_remaining_days']}] AS inspection_remaining_days,
+                m.[{TOOL_MASTER_COLUMNS['application_history']}] AS application_history
+            FROM [{TOOL_MASTER_TABLE}] m
+            WHERE m.[{TOOL_MASTER_COLUMNS['inspection_expiry_date']}] IS NOT NULL
+              AND (m.[{TOOL_MASTER_COLUMNS['inspection_category']}] IS NULL OR m.[{TOOL_MASTER_COLUMNS['inspection_category']}] <> '否')
+              AND (m.[{TOOL_MASTER_COLUMNS['application_history']}] IS NULL OR m.[{TOOL_MASTER_COLUMNS['application_history']}] NOT LIKE '%封存%')
         """
 
         results = self.execute_query(sql)
@@ -221,9 +256,9 @@ class DatabaseManager:
 
         from backend.database.utils.date_utils import normalize_date, format_date
         for row in results:
-            deadline_date = normalize_date(row.get('定检有效截止'))
+            deadline_date = normalize_date(row.get('inspection_expiry_date'))
 
-            remaining_days = row.get('定检有效期剩余天')
+            remaining_days = row.get('inspection_remaining_days')
             if remaining_days is None and deadline_date:
                 remaining_days = (deadline_date - now).days
             elif remaining_days is not None:
@@ -233,19 +268,19 @@ class DatabaseManager:
                     remaining_days = None
 
             tool = {
-                'serial_no': row.get('序列号', ''),
-                'drawing_no': row.get('工装图号', ''),
-                'tool_name': row.get('工装名称', ''),
-                'version': row.get('当前版次', ''),
-                'manufacture_version': row.get('制造版次', ''),
-                'manufacture_date': format_date(row.get('制造日期')),
-                'cycle': row.get('定检周期', ''),
-                'attribute': row.get('定检属性', ''),
-                'deadline': format_date(row.get('定检有效截止')),
+                'serial_no': row.get('serial_no', ''),
+                'drawing_no': row.get('drawing_no', ''),
+                'tool_name': row.get('tool_name', ''),
+                'version': row.get('current_version', ''),
+                'manufacture_version': row.get('manufacturing_version', ''),
+                'manufacture_date': format_date(row.get('manufacturing_date')),
+                'cycle': row.get('inspection_cycle', ''),
+                'attribute': row.get('inspection_category', ''),
+                'deadline': format_date(row.get('inspection_expiry_date')),
                 'deadline_date': deadline_date,
-                'dispatch_status': row.get('定检派工状态', ''),
+                'dispatch_status': row.get('inspection_dispatch_status', ''),
                 'remaining_days': remaining_days,
-                'application_history': row.get('应用历史', ''),
+                'application_history': row.get('application_history', ''),
                 'effective_deadline_date': deadline_date,
                 'effective_remaining_days': remaining_days
             }
@@ -257,17 +292,17 @@ class DatabaseManager:
         """Get dispatch information."""
         sql = """
             SELECT
-                d.序列号,
-                d.工装图号,
-                d.派工号,
-                d.申请工装定检日期,
-                d.完成人,
-                d.完成日期,
-                d.申请人确认,
-                d.TPITR,
-                d.工装版次,
-                d.涉及分体组件数量,
-                m.日期Date as 派工日期
+                d.序列号 AS serial_no,
+                d.工装图号 AS drawing_no,
+                d.派工号 AS dispatch_no,
+                d.申请工装定检日期 AS apply_date,
+                d.完成人 AS complete_person,
+                d.完成日期 AS complete_date,
+                d.申请人确认 AS applicant_confirm,
+                d.TPITR AS tpitr,
+                d.工装版次 AS tool_version,
+                d.涉及分体组件数量 AS component_count,
+                m.日期Date AS dispatch_date
             FROM 工装定检派工_明细 d
             LEFT JOIN 工装定检派工_主表 m ON d.ExcelServerRCID = m.ExcelServerRCID AND d.ExcelServerWIID = m.ExcelServerWIID
             ORDER BY m.日期Date DESC
@@ -278,17 +313,17 @@ class DatabaseManager:
         dispatches = []
         for row in results:
             dispatches.append({
-                'serial_no': row.get('序列号', ''),
-                'drawing_no': row.get('工装图号', ''),
-                'dispatch_no': row.get('派工号', ''),
-                'apply_date': normalize_date(row.get('申请工装定检日期')),
-                'complete_person': row.get('完成人', ''),
-                'complete_date': normalize_date(row.get('完成日期')),
-                'applicant_confirm': row.get('申请人确认', ''),
-                'tpitr': row.get('TPITR', ''),
-                'tool_version': row.get('工装版次', ''),
-                'component_count': row.get('涉及分体组件数量', ''),
-                'dispatch_date': normalize_date(row.get('派工日期'))
+                'serial_no': row.get('serial_no', ''),
+                'drawing_no': row.get('drawing_no', ''),
+                'dispatch_no': row.get('dispatch_no', ''),
+                'apply_date': normalize_date(row.get('apply_date')),
+                'complete_person': row.get('complete_person', ''),
+                'complete_date': normalize_date(row.get('complete_date')),
+                'applicant_confirm': row.get('applicant_confirm', ''),
+                'tpitr': row.get('tpitr', ''),
+                'tool_version': row.get('tool_version', ''),
+                'component_count': row.get('component_count', ''),
+                'dispatch_date': normalize_date(row.get('dispatch_date'))
             })
         return dispatches
 
@@ -296,24 +331,24 @@ class DatabaseManager:
         """Get all TPITR information."""
         sql = """
             SELECT
-                工装图号,
-                版次,
-                编制,
-                编制日期,
-                校对人,
-                校对日期,
-                校对结论,
-                批准人,
-                批准日期,
-                批准结论,
-                会签人,
-                质量会签日期,
-                会签结论,
-                有效状态,
-                编号No,
-                校对意见,
-                批准意见,
-                会签意见
+                工装图号 AS drawing_no,
+                版次 AS version,
+                编制 AS author,
+                编制日期 AS author_date,
+                校对人 AS checker,
+                校对日期 AS check_date,
+                校对结论 AS check_conclusion,
+                批准人 AS approver,
+                批准日期 AS approve_date,
+                批准结论 AS approve_conclusion,
+                会签人 AS signer,
+                质量会签日期 AS sign_date,
+                会签结论 AS sign_conclusion,
+                有效状态 AS valid_status,
+                编号No AS tpitr_no,
+                校对意见 AS check_comment,
+                批准意见 AS approve_comment,
+                会签意见 AS sign_comment
             FROM TPITR_主表_V11
         """
         results = self.execute_query(sql)
@@ -322,24 +357,24 @@ class DatabaseManager:
         tpitrs = []
         for row in results:
             tpitrs.append({
-                'drawing_no': row.get('工装图号', ''),
-                'version': row.get('版次', ''),
-                'author': row.get('编制', ''),
-                'author_date': normalize_date(row.get('编制日期')),
-                'checker': row.get('校对人', ''),
-                'check_date': normalize_date(row.get('校对日期')),
-                'check_conclusion': row.get('校对结论', ''),
-                'approver': row.get('批准人', ''),
-                'approve_date': normalize_date(row.get('批准日期')),
-                'approve_conclusion': row.get('批准结论', ''),
-                'signer': row.get('会签人', ''),
-                'sign_date': normalize_date(row.get('质量会签日期')),
-                'sign_conclusion': row.get('会签结论', ''),
-                'valid_status': row.get('有效状态', ''),
-                'tpitr_no': row.get('编号No', ''),
-                'check_comment': row.get('校对意见', ''),
-                'approve_comment': row.get('批准意见', ''),
-                'sign_comment': row.get('会签意见', '')
+                'drawing_no': row.get('drawing_no', ''),
+                'version': row.get('version', ''),
+                'author': row.get('author', ''),
+                'author_date': normalize_date(row.get('author_date')),
+                'checker': row.get('checker', ''),
+                'check_date': normalize_date(row.get('check_date')),
+                'check_conclusion': row.get('check_conclusion', ''),
+                'approver': row.get('approver', ''),
+                'approve_date': normalize_date(row.get('approve_date')),
+                'approve_conclusion': row.get('approve_conclusion', ''),
+                'signer': row.get('signer', ''),
+                'sign_date': normalize_date(row.get('sign_date')),
+                'sign_conclusion': row.get('sign_conclusion', ''),
+                'valid_status': row.get('valid_status', ''),
+                'tpitr_no': row.get('tpitr_no', ''),
+                'check_comment': row.get('check_comment', ''),
+                'approve_comment': row.get('approve_comment', ''),
+                'sign_comment': row.get('sign_comment', '')
             })
         return tpitrs
 
@@ -348,21 +383,21 @@ class DatabaseManager:
         try:
             sql = """
                 SELECT
-                    m.派工号,
-                    m.表编号,
-                    m.序列号,
-                    m.验收状态,
-                    m.计划员检查完成日期,
-                    m.保管员组织验收日期,
-                    m.质检验收日期,
-                    m.工艺验收日期,
-                    m.验收完成日期,
-                    m.保管员,
-                    m.联合验收说明,
-                    m.最新通知单号,
-                    m.备注,
-                    m.创建时间,
-                    m.修改时间
+                    m.派工号 AS dispatch_no,
+                    m.表编号 AS table_no,
+                    m.序列号 AS serial_no,
+                    m.验收状态 AS acceptance_status,
+                    m.计划员检查完成日期 AS inspector_check_date,
+                    m.保管员组织验收日期 AS keeper_org_date,
+                    m.质检验收日期 AS qc_acceptance_date,
+                    m.工艺验收日期 AS process_acceptance_date,
+                    m.验收完成日期 AS acceptance_complete_date,
+                    m.保管员 AS keeper,
+                    m.联合验收说明 AS acceptance_note,
+                    m.最新通知单号 AS notice_no,
+                    m.备注 AS remarks,
+                    m.创建时间 AS create_time,
+                    m.修改时间 AS modify_time
                 FROM 工装验收管理_主表 m
                 ORDER BY m.修改时间 DESC
             """
@@ -375,21 +410,21 @@ class DatabaseManager:
         acceptances = []
         for row in results:
             acceptances.append({
-                'dispatch_no': str(row.get('派工号', '')) if row.get('派工号') else '',
-                'table_no': str(row.get('表编号', '')) if row.get('表编号') else '',
-                'serial_no': str(row.get('序列号', '')) if row.get('序列号') else '',
-                'acceptance_status': str(row.get('验收状态', '')) if row.get('验收状态') else '待检查',
-                'inspector_check_date': normalize_date(row.get('计划员检查完成日期')),
-                'keeper_org_date': normalize_date(row.get('保管员组织验收日期')),
-                'qc_acceptance_date': normalize_date(row.get('质检验收日期')),
-                'process_acceptance_date': normalize_date(row.get('工艺验收日期')),
-                'acceptance_complete_date': normalize_date(row.get('验收完成日期')),
-                'keeper': str(row.get('保管员', '')) if row.get('保管员') else '',
-                'acceptance_note': str(row.get('联合验收说明', '')) if row.get('联合验收说明') else '',
-                'notice_no': str(row.get('最新通知单号', '')) if row.get('最新通知单号') else '',
-                'remarks': str(row.get('备注', '')) if row.get('备注') else '',
-                'create_time': normalize_date(row.get('创建时间')),
-                'modify_time': normalize_date(row.get('修改时间'))
+                'dispatch_no': str(row.get('dispatch_no', '')) if row.get('dispatch_no') else '',
+                'table_no': str(row.get('table_no', '')) if row.get('table_no') else '',
+                'serial_no': str(row.get('serial_no', '')) if row.get('serial_no') else '',
+                'acceptance_status': str(row.get('acceptance_status', '')) if row.get('acceptance_status') else '待检查',
+                'inspector_check_date': normalize_date(row.get('inspector_check_date')),
+                'keeper_org_date': normalize_date(row.get('keeper_org_date')),
+                'qc_acceptance_date': normalize_date(row.get('qc_acceptance_date')),
+                'process_acceptance_date': normalize_date(row.get('process_acceptance_date')),
+                'acceptance_complete_date': normalize_date(row.get('acceptance_complete_date')),
+                'keeper': str(row.get('keeper', '')) if row.get('keeper') else '',
+                'acceptance_note': str(row.get('acceptance_note', '')) if row.get('acceptance_note') else '',
+                'notice_no': str(row.get('notice_no', '')) if row.get('notice_no') else '',
+                'remarks': str(row.get('remarks', '')) if row.get('remarks') else '',
+                'create_time': normalize_date(row.get('create_time')),
+                'modify_time': normalize_date(row.get('modify_time'))
             })
         return acceptances
 
@@ -398,10 +433,21 @@ class DatabaseManager:
         try:
             sql = """
                 SELECT
-                    m.通知单号, m.关联派工号, m.关联表编号, m.序列号,
-                    m.检验员, m.编制人, m.编制日期, m.处理状态,
-                    m.复检日期, m.复检结论, m.复检人,
-                    m.关闭日期, m.关闭人, m.关闭说明, m.创建时间
+                    m.通知单号 AS notice_no,
+                    m.关联派工号 AS dispatch_no,
+                    m.关联表编号 AS table_no,
+                    m.序列号 AS serial_no,
+                    m.检验员 AS inspector,
+                    m.编制人 AS creator,
+                    m.编制日期 AS create_date_raw,
+                    m.处理状态 AS process_status,
+                    m.复检日期 AS recheck_date_raw,
+                    m.复检结论 AS recheck_conclusion,
+                    m.复检人 AS rechecker,
+                    m.关闭日期 AS close_date_raw,
+                    m.关闭人 AS closer,
+                    m.关闭说明 AS close_note,
+                    m.创建时间 AS create_time_raw
                 FROM 不合格工装通知单_主表 m
                 ORDER BY m.创建时间 DESC
             """
@@ -411,21 +457,21 @@ class DatabaseManager:
             notices = []
             for row in results:
                 notices.append({
-                    'notice_no': str(row.get('通知单号', '')),
-                    'dispatch_no': str(row.get('关联派工号', '')),
-                    'table_no': str(row.get('关联表编号', '')),
-                    'serial_no': str(row.get('序列号', '')),
-                    'inspector': str(row.get('检验员', '')),
-                    'creator': str(row.get('编制人', '')),
-                    'create_date': normalize_date(row.get('编制日期')),
-                    'process_status': str(row.get('处理状态', '待处理')),
-                    'recheck_date': normalize_date(row.get('复检日期')),
-                    'recheck_conclusion': str(row.get('复检结论', '')),
-                    'rechecker': str(row.get('复检人', '')),
-                    'close_date': normalize_date(row.get('关闭日期')),
-                    'closer': str(row.get('关闭人', '')),
-                    'close_note': str(row.get('关闭说明', '')),
-                    'create_time': normalize_date(row.get('创建时间'))
+                    'notice_no': str(row.get('notice_no', '')),
+                    'dispatch_no': str(row.get('dispatch_no', '')),
+                    'table_no': str(row.get('table_no', '')),
+                    'serial_no': str(row.get('serial_no', '')),
+                    'inspector': str(row.get('inspector', '')),
+                    'creator': str(row.get('creator', '')),
+                    'create_date': normalize_date(row.get('create_date_raw')),
+                    'process_status': str(row.get('process_status', '待处理')),
+                    'recheck_date': normalize_date(row.get('recheck_date_raw')),
+                    'recheck_conclusion': str(row.get('recheck_conclusion', '')),
+                    'rechecker': str(row.get('rechecker', '')),
+                    'close_date': normalize_date(row.get('close_date_raw')),
+                    'closer': str(row.get('closer', '')),
+                    'close_note': str(row.get('close_note', '')),
+                    'create_time': normalize_date(row.get('create_time_raw'))
                 })
             return notices
         except Exception as e:
@@ -436,15 +482,21 @@ class DatabaseManager:
         """Get tool inspection records."""
         try:
             sql = """
-                SELECT 序列号, 工装名称, 工装图号, ExcelServerRCID, ExcelServerWIID
-                FROM 工装定检记录_主表 ORDER BY 序号 DESC
+                SELECT
+                    序列号 AS serial_no,
+                    工装名称 AS tool_name,
+                    工装图号 AS drawing_no,
+                    ExcelServerRCID AS rcid,
+                    ExcelServerWIID AS wiid
+                FROM 工装定检记录_主表
+                ORDER BY 序号 DESC
             """
             results = self.execute_query(sql)
-            return [{'serial_no': r.get('序列号', ''),
-                     'tool_name': r.get('工装名称', ''),
-                     'drawing_no': r.get('工装图号', ''),
-                     'rcid': r.get('ExcelServerRCID', ''),
-                     'wiid': r.get('ExcelServerWIID', '')} for r in results]
+            return [{'serial_no': r.get('serial_no', ''),
+                     'tool_name': r.get('tool_name', ''),
+                     'drawing_no': r.get('drawing_no', ''),
+                     'rcid': r.get('rcid', ''),
+                     'wiid': r.get('wiid', '')} for r in results]
         except Exception as e:
             logger.warning(f"Failed to get inspection records: {str(e)}")
             return []
@@ -453,27 +505,47 @@ class DatabaseManager:
         """Get tool repair records."""
         try:
             sql = """
-                SELECT 序列号, 工装名称, 工装图号, ExcelServerRCID, ExcelServerWIID
-                FROM 工装返修记录_主表 ORDER BY 序号 DESC
+                SELECT
+                    序列号 AS serial_no,
+                    工装名称 AS tool_name,
+                    工装图号 AS drawing_no,
+                    ExcelServerRCID AS rcid,
+                    ExcelServerWIID AS wiid
+                FROM 工装返修记录_主表
+                ORDER BY 序号 DESC
             """
             results = self.execute_query(sql)
-            return [{'serial_no': r.get('序列号', ''),
-                     'tool_name': r.get('工装名称', ''),
-                     'drawing_no': r.get('工装图号', ''),
-                     'rcid': r.get('ExcelServerRCID', ''),
-                     'wiid': r.get('ExcelServerWIID', '')} for r in results]
+            return [{'serial_no': r.get('serial_no', ''),
+                     'tool_name': r.get('tool_name', ''),
+                     'drawing_no': r.get('drawing_no', ''),
+                     'rcid': r.get('rcid', ''),
+                     'wiid': r.get('wiid', '')} for r in results]
         except Exception as e:
             logger.warning(f"Failed to get repair records: {str(e)}")
             return []
 
     def get_new_rework_applications(self) -> List[Dict]:
         """Get unsynced rework applications."""
-        sql = """
-            SELECT r.OA申请单编号, r.派工号, r.序列号, r.工装图号, r.工装名称,
-                   r.返工类型, r.目标版次, r.返工内容, r.需求日期, r.转录人, r.转录日期,
-                   r.验收日期, r.验收人员, r.工装计划员, r.计划确认日期, t.当前版次 as 身份卡版次
+        sql = f"""
+            SELECT
+                r.OA申请单编号 AS oa_no,
+                r.派工号 AS dispatch_no,
+                r.序列号 AS serial_no,
+                r.工装图号 AS drawing_no,
+                r.工装名称 AS tool_name,
+                r.返工类型 AS rework_type,
+                r.目标版次 AS target_version,
+                r.返工内容 AS rework_content,
+                r.需求日期 AS required_date_raw,
+                r.转录人 AS transcriber,
+                r.转录日期 AS transcribe_date_raw,
+                r.验收日期 AS acceptance_date_raw,
+                r.验收人员 AS acceptor,
+                r.工装计划员 AS planner,
+                r.计划确认日期 AS confirm_date_raw,
+                t.[{TOOL_MASTER_COLUMNS['current_version']}] AS card_version
             FROM 工艺装备返工申请单_主表 r
-            LEFT JOIN Tooling_ID_Main t ON r.序列号 = t.序列号
+            LEFT JOIN [{TOOL_MASTER_TABLE}] t ON r.序列号 = t.[{TOOL_MASTER_COLUMNS['tool_code']}]
             WHERE r.OA申请单编号 IS NOT NULL
               AND r.派工号 NOT LIKE 'C%'
               AND NOT EXISTS (SELECT 1 FROM 工装验收管理_主表 m WHERE m.派工号 = r.派工号)
@@ -486,9 +558,21 @@ class DatabaseManager:
     def get_new_tooling_applications(self) -> List[Dict]:
         """Get unsynced new tooling applications."""
         sql = """
-            SELECT n.编号, n.派工号, n.工装序列号, n.工装图号, n.工装名称,
-                   n.项目代号, n.版次, n.工作包, n.制造依据, n.技术要求,
-                   n.转录人员, n.转录日期, n.预计使用时间, n.目标版次
+            SELECT
+                n.编号 AS apply_no,
+                n.派工号 AS dispatch_no,
+                n.工装序列号 AS serial_no,
+                n.工装图号 AS drawing_no,
+                n.工装名称 AS tool_name,
+                n.项目代号 AS project_code,
+                n.版次 AS version,
+                n.工作包 AS work_package,
+                n.制造依据 AS manufacture_basis,
+                n.技术要求 AS tech_requirement,
+                n.转录人员 AS transcriber,
+                n.转录日期 AS transcribe_date_raw,
+                n.预计使用时间 AS expected_use_date_raw,
+                n.目标版次 AS target_version
             FROM 工艺装备申请单_主表 n
             WHERE n.编号 IS NOT NULL
               AND n.操作类型 IN ('新建', '效率复制')
@@ -510,29 +594,29 @@ class DatabaseManager:
         apps = []
         for row in results:
             apps.append({
-                'oa_no': row.get('OA申请单编号', ''),
-                'apply_no': row.get('编号', ''),
-                'dispatch_no': row.get('派工号', ''),
-                'serial_no': row.get('序列号') or row.get('工装序列号', ''),
-                'drawing_no': row.get('工装图号', ''),
-                'tool_name': row.get('工装名称', ''),
-                'rework_type': row.get('返工类型', ''),
-                'target_version': row.get('目标版次', ''),
-                'rework_content': row.get('返工内容', ''),
-                'required_date': normalize_date(row.get('需求日期')),
-                'transcriber': row.get('转录人') or row.get('转录人员', ''),
-                'transcribe_date': normalize_date(row.get('转录日期')),
-                'acceptance_date': normalize_date(row.get('验收日期')),
-                'acceptor': row.get('验收人员', ''),
-                'planner': row.get('工装计划员', ''),
-                'confirm_date': normalize_date(row.get('计划确认日期')),
-                'card_version': row.get('身份卡版次', ''),
-                'version': row.get('版次', ''),
-                'project_code': row.get('项目代号', ''),
-                'work_package': row.get('工作包', ''),
-                'manufacture_basis': row.get('制造依据', ''),
-                'tech_requirement': row.get('技术要求', ''),
-                'expected_use_date': normalize_date(row.get('预计使用时间')),
+                'oa_no': row.get('oa_no', ''),
+                'apply_no': row.get('apply_no', ''),
+                'dispatch_no': row.get('dispatch_no', ''),
+                'serial_no': row.get('serial_no', ''),
+                'drawing_no': row.get('drawing_no', ''),
+                'tool_name': row.get('tool_name', ''),
+                'rework_type': row.get('rework_type', ''),
+                'target_version': row.get('target_version', ''),
+                'rework_content': row.get('rework_content', ''),
+                'required_date': normalize_date(row.get('required_date_raw')),
+                'transcriber': row.get('transcriber', ''),
+                'transcribe_date': normalize_date(row.get('transcribe_date_raw')),
+                'acceptance_date': normalize_date(row.get('acceptance_date_raw')),
+                'acceptor': row.get('acceptor', ''),
+                'planner': row.get('planner', ''),
+                'confirm_date': normalize_date(row.get('confirm_date_raw')),
+                'card_version': row.get('card_version', ''),
+                'version': row.get('version', ''),
+                'project_code': row.get('project_code', ''),
+                'work_package': row.get('work_package', ''),
+                'manufacture_basis': row.get('manufacture_basis', ''),
+                'tech_requirement': row.get('tech_requirement', ''),
+                'expected_use_date': normalize_date(row.get('expected_use_date_raw')),
                 'application_type': app_type
             })
         return apps

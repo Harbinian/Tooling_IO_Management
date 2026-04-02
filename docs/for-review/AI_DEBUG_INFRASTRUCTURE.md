@@ -84,9 +84,9 @@ python web_server.py
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| FLASK_DEBUG | True | Flask debug mode |
+| FLASK_DEBUG | False | Flask debug mode |
 | FLASK_HOST | 0.0.0.0 | Server host |
-| FLASK_PORT | 5000 | Server port |
+| FLASK_PORT | 8151 | Server port |
 
 ### Settings
 
@@ -98,7 +98,3 @@ FLASK_HOST: str
 FLASK_PORT: int
 SECRET_KEY: str
 ```
-
-## Documentation
-
-See `docs/FRONTEND_DEBUG_ID_SYSTEM.md` for detailed frontend debug system documentation.

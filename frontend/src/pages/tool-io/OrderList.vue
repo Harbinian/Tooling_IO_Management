@@ -495,7 +495,7 @@ async function cancelCurrentOrder(order) {
 }
 
 async function deleteCurrentOrder(order) {
-  await ElMessageBox.confirm(`确认删除草稿单据 ${order.orderNo} 吗？此操作不可恢复。`, '删除单据', { type: 'warning' })
+  await ElMessageBox.confirm(`确认删除单据 ${order.orderNo} 吗？删除后不可恢复。`, '删除单据', { type: 'warning' })
   const result = await deleteOrder(order.orderNo, buildOperator())
   if (result.success) loadOrders()
 }

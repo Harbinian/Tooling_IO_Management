@@ -16,17 +16,17 @@ The Tooling IO Management System implements a state machine for managing 工装 
 ### Outbound Order (出库)
 
 ```
-draft → submitted → keeper_confirmed → transport_in_progress → transport_completed → final_confirmed → completed
-         ↓              ↓                    ↓                   ↓                    ↓
+draft → submitted → keeper_confirmed → transport_notified → transporting → final_confirmation_pending → completed
+         ↓              ↓                    ↓                  ↓                    ↓
       (reject)     (reject)           (reject)            (reject)            (reject)
 ```
 
 ### Inbound Order (入库)
 
 ```
-draft → submitted → keeper_confirmed → transport_in_progress → transport_completed → keeper_final_confirmed → completed
-         ↓              ↓                    ↓                   ↓                       ↓
-      (reject)     (reject)           (reject)            (reject)               (reject)
+draft → submitted → keeper_confirmed → transport_notified → transporting → final_confirmation_pending → completed
+         ↓              ↓                    ↓                  ↓                    ↓
+      (reject)     (reject)           (reject)            (reject)            (reject)
 ```
 
 ## States
@@ -34,16 +34,14 @@ draft → submitted → keeper_confirmed → transport_in_progress → transport
 | State | Description | Next States |
 |-------|-------------|-------------|
 | draft | Initial draft | submitted, cancelled |
-| submitted | Submitted for approval | keeper_confirmed, rejected |
-| keeper_confirmed | Keeper approved items | transport_notified, rejected |
-| partially_confirmed | Some items confirmed | transport_notified, rejected |
-| transport_notified | Transport notified | transport_in_progress, rejected |
-| transport_in_progress | Transport in progress | transport_completed, rejected |
-| transport_completed | Transport completed | final_confirmed/keeper_final_confirmed, rejected |
-| final_confirmed | Team leader confirmed (outbound) | completed |
-| keeper_final_confirmed | Keeper confirmed (inbound) | completed |
+| submitted | Submitted for approval | keeper_confirmed, partially_confirmed, rejected |
+| partially_confirmed | Some items confirmed | keeper_confirmed, transport_notified, rejected |
+| keeper_confirmed | Keeper approved items | transport_notified, final_confirmation_pending, rejected |
+| transport_notified | Transport notified | transporting, rejected |
+| transporting | Transport in progress | final_confirmation_pending, rejected |
+| final_confirmation_pending | Waiting for final confirmation | completed, rejected |
 | completed | Order finished | - |
-| rejected | Order rejected | - |
+| rejected | Order rejected | cancelled |
 | cancelled | Order cancelled | - |
 
 ## Workflow Actions
@@ -72,30 +70,23 @@ draft → submitted → keeper_confirmed → transport_in_progress → transport
 
 ### Start Transport
 
-- **From**: keeper_confirmed, partially_confirmed, transport_notified
-- **To**: transport_in_progress
-- **Role**: transport staff
+- **From**: transport_notified
+- **To**: transporting
+- **Role**: transport staff (PRODUCTION_PREP)
 - **API**: POST /api/tool-io-orders/{order_no}/transport-start
 
 ### Complete Transport
 
-- **From**: transport_in_progress, transport_notified
-- **To**: transport_completed
-- **Role**: transport staff
+- **From**: transporting
+- **To**: final_confirmation_pending
+- **Role**: transport staff (PRODUCTION_PREP)
 - **API**: POST /api/tool-io-orders/{order_no}/transport-complete
 
-### Final Confirm (Outbound)
+### Final Confirm
 
-- **From**: transport_completed, transport_notified, final_confirmation_pending
+- **From**: final_confirmation_pending, transport_notified, keeper_confirmed
 - **To**: completed
-- **Role**: team_leader
-- **API**: POST /api/tool-io-orders/{order_no}/final-confirm
-
-### Final Confirm (Inbound)
-
-- **From**: transport_completed
-- **To**: completed
-- **Role**: keeper
+- **Role**: team_leader (outbound) or keeper (inbound)
 - **API**: POST /api/tool-io-orders/{order_no}/final-confirm
 
 ### Reject Order

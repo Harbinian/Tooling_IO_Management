@@ -1,5 +1,11 @@
 # 自愈开发循环技能 / Self Healing Dev Loop Skill
 
+**规则约束**: 本技能协调问题修复时，根据问题类型调用相应规则：
+- Bug 修复问题 (10101-19999) → `.claude/rules/02_debug.md` (8D 问题解决协议)
+- 生产环境紧急修复 → `.claude/rules/03_hotfix.md` (热修复 SOP)
+- 功能开发/重构/测试 → `.claude/rules/01_workflow.md` (ADP 开发协议)
+- 任务编号约定 → `.claude/rules/05_task_convention.md`
+
 ---
 
 ## 目的 / Purpose
@@ -125,12 +131,12 @@ Responsible for:
 
 Prompt numbering:
 
-| 范围 / Range | 类别 / Category |
-|-------------|----------------|
-| 00001–09999 | 功能开发 / Feature Development |
-| 10101–19999 | Bug 修复 / Bug Fix |
-| 20101–29999 | 重构 / Refactoring |
-| 30101–39999 | 测试 / Testing |
+| 范围 / Range | 类别 / Category | 适用规则 |
+|-------------|----------------|----------|
+| 00001–09999 | 功能开发 / Feature Development | `01_workflow.md` (ADP) |
+| 10101–19999 | Bug 修复 / Bug Fix | `02_debug.md` (8D) |
+| 20101–29999 | 重构 / Refactoring | `01_workflow.md` (ADP) |
+| 30101–39999 | 测试 / Testing | `01_workflow.md` (ADP) |
 
 执行器规则：
 
@@ -139,8 +145,8 @@ Executor rules:
 | Executor | Scope |
 |----------|-------|
 | Gemini | Frontend Design tasks |
-| Codex | Backend Implementation, Testing tasks |
-| Claude Code | Architecture, Refactoring tasks |
+| Codex | Backend Implementation tasks |
+| Claude Code | Architecture, Refactoring, Testing tasks | |
 
 ---
 

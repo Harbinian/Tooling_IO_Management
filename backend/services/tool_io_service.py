@@ -8,6 +8,8 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional
 
+from backend.database.repositories.mpl_repository import MplRepository
+from backend.database.repositories.system_config_repository import SystemConfigRepository
 from backend.database.repositories.tool_repository import ToolRepository
 from backend.database.schema.column_names import ORDER_COLUMNS, ITEM_COLUMNS, TABLE_NAMES
 from database import (
@@ -62,6 +64,7 @@ from backend.services.tool_io_runtime import (
 
 logger = logging.getLogger(__name__)
 ALLOWED_BATCH_TOOL_STATUSES = {"in_storage", "outbounded", "maintain", "scrapped"}
+MPL_MAX_PHOTO_BYTES = 2 * 1024 * 1024
 
 
 def _build_actor_context(
@@ -125,6 +128,100 @@ def _emit_internal_notification(
         )
 
 
+def _normalize_bool_text(value: Optional[str], default: str = "false") -> str:
+    normalized = str(value if value is not None else default).strip().lower()
+    return "true" if normalized in {"1", "true", "yes", "on"} else "false"
+
+
+def _build_mpl_validation_message(drawing_no: str, revision: str) -> str:
+    return f"工装 {drawing_no or '-'} (版次 {revision or '-'}) 缺少可拆卸件清单"
+
+
+def _resolve_item_revision(item: Dict) -> str:
+    return str(
+        item.get("current_version")
+        or item.get("currentVersion")
+        or item.get("tool_revision")
+        or item.get("toolRevision")
+        or item.get("version")
+        or ""
+    ).strip()
+
+
+def check_order_mpl_violations(order: Dict, mpl_repo: Optional[MplRepository] = None) -> List[str]:
+    """Check whether each tool item in the order has a matching MPL group."""
+    repo = mpl_repo or MplRepository()
+    violations: List[str] = []
+    seen_pairs = set()
+    for item in order.get("items", []) or []:
+        drawing_no = str(item.get("drawing_no") or item.get("drawingNo") or "").strip()
+        revision = _resolve_item_revision(item)
+        if not drawing_no:
+            continue
+        key = (drawing_no, revision)
+        if key in seen_pairs:
+            continue
+        seen_pairs.add(key)
+        if not repo.mpl_exists(drawing_no, revision):
+            violations.append(_build_mpl_validation_message(drawing_no, revision))
+    return violations
+
+
+def _validate_mpl_component(item: Dict) -> Dict:
+    component_no = str(item.get("component_no", "")).strip()
+    component_name = str(item.get("component_name", "")).strip()
+    if not component_no:
+        raise ValueError("component_no is required")
+    if not component_name:
+        raise ValueError("component_name is required")
+    try:
+        quantity = int(item.get("quantity", 1) or 1)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("quantity must be an integer") from exc
+    if quantity <= 0:
+        raise ValueError("quantity must be greater than 0")
+    photo_data = item.get("photo_data")
+    if photo_data and len(str(photo_data).encode("utf-8")) > MPL_MAX_PHOTO_BYTES * 2:
+        raise ValueError("photo_data exceeds supported size limit")
+    return {
+        "component_no": component_no,
+        "component_name": component_name,
+        "quantity": quantity,
+        "photo_data": photo_data or None,
+    }
+
+
+def _validate_mpl_payload(payload: Dict, *, fallback_user: str = "") -> Dict:
+    tool_drawing_no = str(payload.get("tool_drawing_no", "")).strip()
+    tool_revision = str(payload.get("tool_revision", "")).strip()
+    if not tool_drawing_no:
+        raise ValueError("tool_drawing_no is required")
+    if not tool_revision:
+        raise ValueError("tool_revision is required")
+    items = payload.get("items")
+    if not isinstance(items, list) or not items:
+        raise ValueError("items must contain at least one component")
+
+    normalized_items: List[Dict] = []
+    seen_component_nos = set()
+    for item in items:
+        normalized = _validate_mpl_component(item or {})
+        component_no = normalized["component_no"]
+        if component_no in seen_component_nos:
+            raise ValueError(f"duplicate component_no: {component_no}")
+        seen_component_nos.add(component_no)
+        normalized_items.append(normalized)
+
+    updated_by = str(payload.get("updated_by") or payload.get("created_by") or fallback_user or "").strip() or "system"
+    return {
+        "tool_drawing_no": tool_drawing_no,
+        "tool_revision": tool_revision,
+        "items": normalized_items,
+        "created_by": updated_by,
+        "updated_by": updated_by,
+    }
+
+
 def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     ensure_tool_io_tables()
     ensure_schema_alignment()
@@ -150,6 +247,94 @@ def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
                 metadata={"trigger": "create_order"},
             )
     return result
+
+
+def list_system_configs() -> Dict:
+    ensure_tool_io_tables()
+    repo = SystemConfigRepository()
+    return {"success": True, "data": repo.list_configs()}
+
+
+def get_system_config(config_key: str) -> Dict:
+    ensure_tool_io_tables()
+    repo = SystemConfigRepository()
+    value = repo.get_config(config_key)
+    if value is None:
+        return {"success": False, "error": "config not found"}
+    rows = [row for row in repo.list_configs() if row.get("config_key") == config_key]
+    return {"success": True, "data": rows[0] if rows else {"config_key": config_key, "config_value": value}}
+
+
+def update_system_config(config_key: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    ensure_tool_io_tables()
+    if "config_value" not in payload:
+        raise ValueError("config_value is required")
+    normalized_value = _normalize_bool_text(payload.get("config_value")) if config_key in {"mpl_enabled", "mpl_strict_mode"} else str(payload.get("config_value", ""))
+    repo = SystemConfigRepository()
+    repo.set_config(
+        config_key,
+        normalized_value,
+        updated_by=str((current_user or {}).get("display_name") or payload.get("operator_name") or "system"),
+        description=payload.get("description"),
+    )
+    return get_system_config(config_key)
+
+
+def list_mpl_groups(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
+    _ = current_user
+    ensure_tool_io_tables()
+    repo = MplRepository()
+    result = repo.list_all(
+        page=filters.get("page_no", 1),
+        page_size=filters.get("page_size", 20),
+        drawing_no=filters.get("drawing_no", ""),
+        keyword=filters.get("keyword", ""),
+    )
+    return {"success": True, **result}
+
+
+def get_mpl_group(mpl_no: str, current_user: Optional[Dict] = None) -> Dict:
+    _ = current_user
+    ensure_tool_io_tables()
+    repo = MplRepository()
+    group = repo.get_group(mpl_no)
+    if not group:
+        return {"success": False, "error": "mpl not found"}
+    return {"success": True, "data": group}
+
+
+def get_mpl_by_tool(tool_drawing_no: str, tool_revision: str, current_user: Optional[Dict] = None) -> Dict:
+    _ = current_user
+    ensure_tool_io_tables()
+    repo = MplRepository()
+    group = repo.get_group(repo.build_mpl_no(tool_drawing_no, tool_revision))
+    if not group:
+        return {"success": False, "error": "mpl not found"}
+    return {"success": True, "data": group}
+
+
+def create_mpl_group(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    ensure_tool_io_tables()
+    repo = MplRepository()
+    validated = _validate_mpl_payload(payload, fallback_user=str((current_user or {}).get("display_name", "")))
+    return {"success": True, "data": repo.create_mpl(validated)}
+
+
+def update_mpl_group(mpl_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
+    ensure_tool_io_tables()
+    repo = MplRepository()
+    validated = _validate_mpl_payload(payload, fallback_user=str((current_user or {}).get("display_name", "")))
+    return {"success": True, "data": repo.update_mpl(mpl_no, validated)}
+
+
+def delete_mpl_group(mpl_no: str, current_user: Optional[Dict] = None) -> Dict:
+    _ = current_user
+    ensure_tool_io_tables()
+    repo = MplRepository()
+    if not repo.get_group(mpl_no):
+        return {"success": False, "error": "mpl not found"}
+    repo.delete_mpl(mpl_no)
+    return {"success": True}
 
 
 def update_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
@@ -346,8 +531,19 @@ def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
 
 
 def keeper_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    if not get_order_detail(order_no, current_user=current_user):
+    order = get_order_detail(order_no, current_user=current_user)
+    if not order:
         return _order_not_found_response()
+    system_config_repo = SystemConfigRepository()
+    mpl_repo = MplRepository()
+    mpl_enabled = _normalize_bool_text(system_config_repo.get_config("mpl_enabled"))
+    if mpl_enabled == "true":
+        mpl_strict_mode = _normalize_bool_text(system_config_repo.get_config("mpl_strict_mode"))
+        violations = check_order_mpl_violations(order, mpl_repo)
+        if violations:
+            if mpl_strict_mode == "true":
+                return {"success": False, "error": violations[0], "mpl_missing": True, "mpl_warnings": violations}
+            payload["mpl_warnings"] = violations
     confirm_data = {
         "transport_type": payload.get("transport_type"),
         "transport_assignee_id": payload.get("transport_assignee_id"),
@@ -393,6 +589,8 @@ def keeper_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = 
                 target_role="transport_operator",
                 metadata={"required_action": "transport"},
             )
+    if payload.get("mpl_warnings"):
+        result["mpl_warnings"] = payload["mpl_warnings"]
     return result
 
 
@@ -888,7 +1086,7 @@ def _normalize_runtime_order(order: Dict) -> Dict:
         normalized_items.append(
             {
                 **item,
-                "tool_code": _pick_value(item, ["tool_code"], ""),
+                "serial_no": _pick_value(item, ["serial_no", "tool_code"], ""),
                 "tool_name": _pick_value(item, ["tool_name", "工装名称"], ""),
                 "drawing_no": _pick_value(item, ["drawing_no", "工装图号"], ""),
                 "spec_model": _pick_value(item, ["spec_model", "机型", "规格型号"], ""),
@@ -1109,11 +1307,11 @@ def batch_update_tool_status(
     )
 
 
-def get_tool_status_history(tool_code: str, page_no: int = 1, page_size: int = 20) -> Dict:
+def get_tool_status_history(serial_no: str, page_no: int = 1, page_size: int = 20) -> Dict:
     """Get one tool status history with pagination."""
-    normalized_code = str(tool_code or "").strip()
+    normalized_code = str(serial_no or "").strip()
     if not normalized_code:
-        return {"success": False, "error": "tool_code is required"}
+        return {"success": False, "error": "serial_no is required"}
     repo = ToolRepository()
     return repo.get_tool_status_history(normalized_code, page_no=page_no, page_size=page_size)
 
@@ -1156,7 +1354,7 @@ def _extract_order_values(record: Dict) -> Dict:
 
 def _extract_item_values(item: Dict) -> Dict:
     return {
-        "tool_code": _pick_value(item, ["tool_code"], ""),
+        "serial_no": _pick_value(item, ["serial_no", "tool_code"], ""),
         "tool_name": _pick_value(item, ["tool_name"], ""),
         "drawing_no": _pick_value(item, ["drawing_no"], ""),
         "location_text": _pick_value(item, ["location_text"], ""),
@@ -1175,7 +1373,7 @@ def generate_keeper_text(order_no: str, current_user: Optional[Dict] = None) -> 
     order_label = "Outbound" if summary["order_type"] == "outbound" else "Inbound"
     items_text = "\n".join(
         [
-            f"{idx + 1}. {item['tool_code']} / {item['tool_name'] or '-'} / drawing {item['drawing_no'] or '-'} / qty {item['apply_qty'] or 1}"
+            f"{idx + 1}. {item['serial_no']} / {item['tool_name'] or '-'} / drawing {item['drawing_no'] or '-'} / qty {item['apply_qty'] or 1}"
             for idx, item in enumerate(items)
         ]
     ) or "- No items"
@@ -1219,7 +1417,7 @@ def generate_transport_text(order_no: str, current_user: Optional[Dict] = None) 
     summary = _extract_order_values(order)
     items_text = "\n".join(
         [
-            f"{idx + 1}. {item['location_text'] or '-'} / {item['tool_name'] or '-'} / {item['tool_code']} / qty {item['approved_qty'] or 1}"
+            f"{idx + 1}. {item['location_text'] or '-'} / {item['tool_name'] or '-'} / {item['serial_no']} / qty {item['approved_qty'] or 1}"
             for idx, item in enumerate(approved_items)
         ]
     )
@@ -1239,7 +1437,7 @@ def generate_transport_text(order_no: str, current_user: Optional[Dict] = None) 
         f"Transport Type: {transport_type}\n\n"
         f"Pickup Location: {approved_items[0]['location_text'] or '-'}\n"
         f"Receiver: {summary['transport_assignee_name'] or '-'}\n\n"
-        + "\n".join([f"- {item['tool_code']} ({item['tool_name'] or '-'})" for item in approved_items])
+        + "\n".join([f"- {item['serial_no']} ({item['tool_name'] or '-'})" for item in approved_items])
         + f"\n\nRequested By: {summary['initiator_name'] or '-'} / {summary['keeper_name'] or '-'}"
     )
     _create_notification_record(

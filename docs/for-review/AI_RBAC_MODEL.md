@@ -6,11 +6,14 @@ Role-Based Access Control (RBAC) system for the Tooling IO Management System.
 
 ## Roles
 
-| Role ID | Role Name | Description |
-|---------|-----------|-------------|
-| admin | 管理员 | Full system access |
-| team_leader | 班组长 | Create orders, final confirm outbound |
-| keeper | 仓库管理员 | Confirm items, reject, final confirm inbound |
+| Role ID | Role Name | Type | Description |
+|---------|-----------|------|-------------|
+| ROLE_SYS_ADMIN | 系统管理员 | system | Full system access |
+| ROLE_TEAM_LEADER | 班组长 | business | Create orders, final confirm outbound |
+| ROLE_KEEPER | 保管员 | business | Confirm items, reject, final confirm inbound |
+| ROLE_PLANNER | 计划员 | business | Create and submit orders |
+| ROLE_PRODUCTION_PREP | 生产准备工 | business | Execute transport operations |
+| ROLE_AUDITOR | 审计员 | system | View logs and reports |
 
 ## Permissions
 
@@ -20,6 +23,15 @@ Role-Based Access Control (RBAC) system for the Tooling IO Management System.
 |----------------|-------------|
 | dashboard:view | View dashboard |
 
+### Tool Permissions
+
+| Permission Code | Description |
+|----------------|-------------|
+| tool:search | Search tools |
+| tool:view | View tool details |
+| tool:location_view | View tool location |
+| tool:status_update | Update tool status |
+
 ### Order Permissions
 
 | Permission Code | Description |
@@ -27,12 +39,21 @@ Role-Based Access Control (RBAC) system for the Tooling IO Management System.
 | order:list | View order list |
 | order:view | View order details |
 | order:create | Create new order |
-| order:edit | Edit own orders |
 | order:submit | Submit order for approval |
 | order:keeper_confirm | Confirm order items as keeper |
 | order:final_confirm | Final confirmation |
 | order:reject | Reject order |
 | order:cancel | Cancel order |
+| order:delete | Delete order |
+| order:transport_execute | Execute transport operations |
+
+### Notification Permissions
+
+| Permission Code | Description |
+|----------------|-------------|
+| notification:view | View notifications |
+| notification:create | Create notifications |
+| notification:send_feishu | Send Feishu notifications |
 
 ### Admin Permissions
 
@@ -41,53 +62,55 @@ Role-Based Access Control (RBAC) system for the Tooling IO Management System.
 | admin:user_manage | Manage users |
 | admin:role_manage | Manage roles |
 
-## Permission Codes
+### Log Permissions
 
-From `backend/services/rbac_service.py`:
+| Permission Code | Description |
+|----------------|-------------|
+| log:view | View system logs |
 
-```
-admin:user_manage
-admin:role_manage
-dashboard:view
-order:list
-order:view
-order:create
-order:edit
-order:submit
-order:keeper_confirm
-order:final_confirm
-order:reject
-order:cancel
-```
+## Role-Permission Mapping
 
-## Key Functions
-
-### rbac_service.py
-
-| Function | Purpose |
-|----------|---------|
-| ensure_rbac_tables() | Create RBAC tables |
-| _bootstrap_initial_data() | Seed initial roles and permissions |
-| load_user_roles() | Get user's roles |
-| load_permissions_for_role_ids() | Get permissions for role IDs |
-| resolve_user_permissions() | Get all permissions for user |
-| has_permission() | Check if user has permission |
-| build_permission_context() | Build permission context |
+| Permission | TEAM_LEADER | KEEPER | PLANNER | PRODUCTION_PREP | AUDITOR | SYS_ADMIN |
+|------------|-------------|--------|---------|-----------------|---------|-----------|
+| dashboard:view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| tool:search | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ |
+| tool:view | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ |
+| tool:location_view | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| tool:status_update | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| order:create | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ |
+| order:list | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ |
+| order:view | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ |
+| order:submit | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ |
+| order:keeper_confirm | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| order:final_confirm | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| order:cancel | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| order:delete | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| order:transport_execute | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ |
+| notification:view | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ |
+| notification:create | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| notification:send_feishu | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| log:view | ✗ | ✓ | ✗ | ✗ | ✓ | ✓ |
+| admin:user_manage | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| admin:role_manage | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
 
 ## Data Scope
 
-### Organization-Based Filtering
+| Role | Data Scope | Description |
+|------|------------|-------------|
+| TEAM_LEADER | SELF, ORG | Own orders + org orders |
+| KEEPER | ORG, ASSIGNED | Org orders + assigned orders |
+| PLANNER | ORG, ORG_AND_CHILDREN | Org + child org orders |
+| PRODUCTION_PREP | SELF, ORG | Own transport + org tasks |
+| AUDITOR | ALL | All data |
+| SYS_ADMIN | ALL | All data |
 
-- Users are associated with organizations
-- Orders are scoped to organizations
-- RBAC data scope service filters by user's default organization
-
-### Key Files
+## Key Files
 
 | File | Purpose |
 |------|---------|
 | backend/services/rbac_service.py | Core RBAC logic |
 | backend/services/rbac_data_scope_service.py | Data scope filtering |
+| backend/database/schema/column_names.py | Column name constants |
 
 ## Frontend Permission Check
 
@@ -105,34 +128,52 @@ In `frontend/src/store/session.js`:
 
 ## Table Structure
 
-### RBAC_角色 (Roles)
+### sys_role (Roles)
 
 | Column | Type | Description |
 |--------|------|-------------|
-| 角色ID | NVARCHAR | Primary key |
-| 角色名称 | NVARCHAR | Display name |
-| 角色描述 | NVARCHAR | Description |
+| id | BIGINT | Primary key |
+| role_id | NVARCHAR(64) | Role identifier |
+| role_code | NVARCHAR(50) | Unique code |
+| role_name | NVARCHAR(100) | Display name |
+| role_type | NVARCHAR(20) | business/system |
+| status | NVARCHAR(20) | active/disabled |
 
-### RBAC_权限 (Permissions)
-
-| Column | Type | Description |
-|--------|------|-------------|
-| 权限ID | NVARCHAR | Primary key |
-| 权限名称 | NVARCHAR | Display name |
-| 所属模块 | NVARCHAR | Module (admin/dashboard/order) |
-| 权限代码 | NVARCHAR | Unique permission code |
-
-### RBAC_角色权限 (Role-Permission)
+### sys_permission (Permissions)
 
 | Column | Type | Description |
 |--------|------|-------------|
-| 角色ID | NVARCHAR | Foreign key to role |
-| 权限ID | NVARCHAR | Foreign key to permission |
+| id | BIGINT | Primary key |
+| permission_code | NVARCHAR(100) | Unique permission identifier |
+| permission_name | NVARCHAR(100) | Display name |
+| resource_name | NVARCHAR(50) | Resource name |
+| action_name | NVARCHAR(50) | Action name |
 
-### RBAC_用户角色 (User-Role)
+### sys_role_permission_rel (Role-Permission)
 
 | Column | Type | Description |
 |--------|------|-------------|
-| 用户ID | NVARCHAR | User identifier |
-| 角色ID | NVARCHAR | Role identifier |
-| 组织ID | NVARCHAR | Organization scope |
+| id | BIGINT | Primary key |
+| role_id | NVARCHAR(64) | Role reference |
+| permission_code | NVARCHAR(100) | Permission reference |
+
+### sys_user_role_rel (User-Role)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key |
+| user_id | NVARCHAR(64) | User reference |
+| role_id | NVARCHAR(64) | Role reference |
+| is_primary | BIT | Is primary role |
+| status | NVARCHAR(20) | active/disabled |
+
+### sys_org (Organizations)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key |
+| org_id | NVARCHAR(64) | Organization identifier |
+| org_name | NVARCHAR(100) | Display name |
+| org_type | NVARCHAR(50) | company/warehouse/workshop/etc |
+| parent_org_id | NVARCHAR(64) | Parent organization |
+| status | NVARCHAR(20) | active/disabled |
