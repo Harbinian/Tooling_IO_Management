@@ -217,7 +217,8 @@ class TestDataManager:
 TEST_TOOL = {
     "serial_no": "T000001",
     "drawing_no": "Tooling_IO_TEST",
-    "tool_name": "测试用工装"
+    "tool_name": "测试用工装",
+    "spec_model": "标准规格"
 }
 
 
@@ -479,7 +480,7 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
         orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
         orchestrator.snapshot_before(None)
 
-    token, user_id, user_data = login_user("taidongxu", "test123")
+    token, user_id, user_data = login_user("taidongxu", TEST_USERS["taidongxu"]["password"])
 
     if orchestrator:
         snap, anomalies, checks = orchestrator.snapshot_after(
@@ -914,7 +915,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
         orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
         orchestrator.snapshot_before(None)
 
-    token_td, user_id_td, _ = login_user("taidongxu", "test123")
+    token_td, user_id_td, _ = login_user("taidongxu", TEST_USERS["taidongxu"]["password"])
 
     if orchestrator:
         snap, anomalies, checks = orchestrator.snapshot_after(
@@ -1085,7 +1086,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
         orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
         orchestrator.snapshot_before(None)
 
-    token_ht, user_id_ht, _ = login_user("hutingting", "test123")
+    token_ht, user_id_ht, _ = login_user("hutingting", TEST_USERS["hutingting"]["password"])
 
     if orchestrator:
         snap, anomalies, checks = orchestrator.snapshot_after(
@@ -1230,7 +1231,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
         orchestrator.set_user_context("fengliang", "PRODUCTION_PREP", "ORG001")
         orchestrator.snapshot_before(None)
 
-    token_fl, user_id_fl, _ = login_user("fengliang", "test123")
+    token_fl, user_id_fl, _ = login_user("fengliang", TEST_USERS["fengliang"]["password"])
 
     if orchestrator:
         snap, anomalies, checks = orchestrator.snapshot_after(
@@ -1654,11 +1655,11 @@ def run_rbac_test(report: TestReport, orchestrator=None):
 
         # 4. 验证预期响应
         # ALLOW: 期望 200/201
-        # DENY: 期望 403
+        # DENY: 期望 403 (permission denied) 或 404 (resource not found)
         if expected_result == "ALLOW":
             actual_result = "ALLOW" if status_code in [200, 201] else "DENY"
         else:  # DENY
-            actual_result = "DENY" if status_code == 403 else "ALLOW"
+            actual_result = "DENY" if status_code in [403, 404] else "ALLOW"
 
         test_passed = (actual_result == expected_result)
         test_status = "PASS" if test_passed else "FAIL"

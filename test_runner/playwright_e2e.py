@@ -295,7 +295,7 @@ def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None
             orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
             orchestrator.snapshot_before(page)
 
-        login_success = login(page, "taidongxu", "test123")
+        login_success = login(page, "taidongxu", TEST_USERS["taidongxu"]["password"])
 
         if orchestrator:
             snap, anomalies, checks = orchestrator.snapshot_after(
@@ -450,7 +450,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
             orchestrator.snapshot_before(page_taidongxu)
 
-        login(page_taidongxu, "taidongxu", "test123")
+        login(page_taidongxu, "taidongxu", TEST_USERS["taidongxu"]["password"])
 
         if orchestrator:
             snap, anomalies, checks = orchestrator.snapshot_after(
@@ -746,7 +746,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
     page_hutingting = context_hutingting.new_page()
 
     try:
-        login(page_hutingting, "hutingting", "test123")
+        login(page_hutingting, "hutingting", TEST_USERS["hutingting"]["password"])
         report.add_step("wf_10", "hutingting", "登录", "PASS")
 
         # 11. 进入保管员处理页面
@@ -804,7 +804,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
     page_fengliang = context_fengliang.new_page()
 
     try:
-        login(page_fengliang, "fengliang", "test123")
+        login(page_fengliang, "fengliang", TEST_USERS["fengliang"]["password"])
         report.add_step("wf_16", "fengliang", "登录", "PASS")
 
         # 17. 进入预运输列表
@@ -839,7 +839,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
     page_taidongxu2 = context_taidongxu2.new_page()
 
     try:
-        login(page_taidongxu2, "taidongxu", "test123")
+        login(page_taidongxu2, "taidongxu", TEST_USERS["taidongxu"]["password"])
         report.add_step("wf_19", "taidongxu", "登录(最终确认)", "PASS")
 
         # 20. 进入订单详情
