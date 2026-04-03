@@ -146,14 +146,26 @@
                 </div>
 
                 <!-- Transport Config -->
-                  <div class="grid md:grid-cols-2 gap-6">
+                <div class="grid md:grid-cols-2 gap-6">
                   <div class="space-y-2">
                     <label class="text-sm font-semibold text-foreground">运输类型</label>
-                    <Input v-model="confirmForm.transportType" placeholder="如：人工 / 叉车 / 外协" />
+                    <Select v-debug-id="DEBUG_IDS.KEEPER.TRANSPORT_TYPE_DROPDOWN" v-model="confirmForm.transportType">
+                      <option value="叉车">叉车</option>
+                      <option value="外协">外协</option>
+                    </Select>
                   </div>
                   <div class="space-y-2">
                     <label class="text-sm font-semibold text-foreground">运输负责人</label>
-                    <Input v-model="confirmForm.transportAssigneeName" placeholder="请输入姓名" />
+                    <Select
+                      v-debug-id="DEBUG_IDS.KEEPER.TRANSPORT_ASSIGNEE_SELECT"
+                      v-model="confirmForm.transportAssigneeId"
+                      @change="onTransportAssigneeChange($event.target.value)"
+                    >
+                      <option value="">请选择</option>
+                      <option v-for="user in productionPrepUsers" :key="user.user_id" :value="user.user_id">
+                        {{ user.display_name }}
+                      </option>
+                    </Select>
                   </div>
                   <div class="space-y-2 md:col-span-2">
                     <label class="text-sm font-semibold text-foreground">保管员备注</label>
@@ -181,9 +193,9 @@
                     <table class="w-full text-sm text-left border-collapse">
                       <thead class="bg-muted/50 border-b border-border text-muted-foreground text-[11px] font-bold uppercase tracking-wider">
                         <tr>
-                          <th class="px-4 py-3 font-bold">工装信息</th>
-                          <th class="px-4 py-3 font-bold">建议位置</th>
-                          <th class="px-4 py-3 font-bold w-[180px]">确认位置</th>
+                          <th class="px-4 py-3 font-bold">工装序列号</th>
+                          <th class="px-4 py-3 font-bold">工装图号</th>
+                          <th class="px-4 py-3 font-bold">工装名称</th>
                           <th class="px-4 py-3 font-bold w-[120px]">MPL</th>
                           <th class="px-4 py-3 font-bold w-[120px]">状态</th>
                           <th class="px-4 py-3 font-bold w-[100px]">分体数量</th>
@@ -192,14 +204,17 @@
                       <tbody class="divide-y divide-border">
                         <tr v-for="item in confirmItems" :key="item.toolCode" class="group hover:bg-muted/20 transition-colors">
                           <td class="px-4 py-4">
-                            <p class="font-semibold text-foreground mb-0.5">{{ item.toolCode }}</p>
-                            <p class="text-xs text-muted-foreground">{{ item.toolName }}</p>
-                          </td>
-                          <td class="px-4 py-4 text-muted-foreground/80 italic">
-                            {{ item.currentLocationText || '-' }}
+                            <p class="font-semibold text-foreground font-mono text-xs">{{ item.serial_no || '-' }}</p>
                           </td>
                           <td class="px-4 py-4">
-                            <Input v-model="item.locationText" placeholder="确认位置" class="h-8 text-xs border-border" />
+                            <p class="text-xs break-words whitespace-normal max-w-[200px]">
+                              {{ item.drawing_no || '-' }}
+                            </p>
+                          </td>
+                          <td class="px-4 py-4">
+                            <p class="text-xs break-words whitespace-normal max-w-[200px]">
+                              {{ item.tool_name || '-' }}
+                            </p>
                           </td>
                           <td class="px-4 py-4">
                             <div class="flex flex-col gap-2">
@@ -492,7 +507,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   RefreshCw,
@@ -522,6 +537,7 @@ import {
 import { getFinalConfirmAvailability } from '@/api/orders'
 import { getMplByTool } from '@/api/mpl'
 import { searchTools, batchUpdateToolStatus, getToolStatusHistory } from '@/api/tools'
+import { getUsersByRole } from '@/api/users'
 import { useSessionStore } from '@/store/session'
 import { DEBUG_IDS } from '@/debug/debugIds'
 import NotificationPreview from '@/components/tool-io/NotificationPreview.vue'
@@ -550,6 +566,7 @@ const mplWarnings = ref([])
 const mplDialogVisible = ref(false)
 const selectedMplItem = ref(null)
 const selectedMplGroup = ref(null)
+const productionPrepUsers = ref([])
 
 // Tool Status Management State
 const toolSearchKeyword = ref('')
@@ -654,7 +671,7 @@ function getStatusLabel(status) {
 }
 
 const confirmForm = reactive({
-  transportType: '',
+  transportType: '叉车',
   transportAssigneeId: '',
   transportAssigneeName: '',
   keeperRemark: ''
@@ -696,11 +713,18 @@ function resetPreview() {
   wechatPreview.value = ''
 }
 
+function resolveItemLocationText(item) {
+  return item.keeperConfirmLocationText || item.currentLocationText || item.locationText || ''
+}
+
 function buildEditableItems(order) {
   return (order.items || []).map((item) => {
     return {
       ...item,
-      locationText: item.keeperConfirmLocationText || item.currentLocationText || '',
+      serial_no: item.toolCode || '',
+      drawing_no: item.drawingNo || '',
+      tool_name: item.toolName || '',
+      locationText: resolveItemLocationText(item),
       status: item.itemStatus === 'rejected' ? 'rejected' : 'approved',
       checkRemark: item.checkRemark || '',
       mplExists: false
@@ -732,6 +756,40 @@ async function loadMplStatuses(items) {
   mplWarnings.value = results.filter((entry) => !entry.exists && entry.message).map((entry) => entry.message)
 }
 
+function applyDefaultTransportAssignee(users) {
+  const normalizedUsers = Array.isArray(users) ? users : []
+  const currentUser = normalizedUsers.find((user) => user.user_id === confirmForm.transportAssigneeId)
+  const fengliang = normalizedUsers.find((user) => user.login_name === 'fengliang')
+  const fallbackUser = currentUser || fengliang || normalizedUsers[0] || null
+
+  if (!fallbackUser) {
+    confirmForm.transportAssigneeId = ''
+    confirmForm.transportAssigneeName = ''
+    return
+  }
+
+  confirmForm.transportAssigneeId = fallbackUser.user_id
+  confirmForm.transportAssigneeName = fallbackUser.display_name
+}
+
+async function loadProductionPrepUsers() {
+  const orgId = session.currentOrg?.org_id || session.defaultOrg?.org_id || ''
+  try {
+    productionPrepUsers.value = await getUsersByRole('PRODUCTION_PREP', orgId ? { org_id: orgId } : {})
+    applyDefaultTransportAssignee(productionPrepUsers.value)
+  } catch (error) {
+    productionPrepUsers.value = []
+    confirmForm.transportAssigneeId = ''
+    confirmForm.transportAssigneeName = ''
+    console.error('Failed to load production prep users:', error)
+  }
+}
+
+function onTransportAssigneeChange(userId) {
+  const user = productionPrepUsers.value.find((item) => item.user_id === userId)
+  confirmForm.transportAssigneeName = user ? user.display_name : ''
+}
+
 async function loadPendingOrders() {
   loading.value = true
   try {
@@ -750,7 +808,7 @@ async function selectOrder(row) {
 
   selectedOrder.value = result.data
   confirmItems.value = buildEditableItems(result.data)
-  confirmForm.transportType = result.data.transportType || ''
+  confirmForm.transportType = result.data.transportType || '叉车'
   confirmForm.transportAssigneeId = result.data.transportOperatorId || ''
   confirmForm.transportAssigneeName = result.data.transportOperatorName || ''
   confirmForm.keeperRemark = ''
@@ -761,6 +819,7 @@ async function selectOrder(row) {
   }).catch(() => ({ success: false, available: false }))
   finalConfirmState.value = availability.success ? availability : { available: false, reason: '' }
   await loadMplStatuses(confirmItems.value)
+  await loadProductionPrepUsers()
   resetPreview()
 }
 
@@ -778,23 +837,17 @@ async function previewTransport() {
 }
 
 async function approveOrder() {
-  const invalidItem = confirmItems.value.find((item) => !item.locationText?.trim() && item.status === 'approved')
-  if (invalidItem) {
-    ElMessage.warning(`请填写工装 ${invalidItem.toolCode} 的确认位置`)
-    return
-  }
-
   const payload = {
     keeper_id: session.userId,
     keeper_name: session.userName,
     transport_type: confirmForm.transportType,
-    transport_assignee_id: confirmForm.transportAssigneeName,
+    transport_assignee_id: confirmForm.transportAssigneeId,
     transport_assignee_name: confirmForm.transportAssigneeName,
     keeper_remark: confirmForm.keeperRemark,
     items: confirmItems.value.map((item) => ({
       tool_code: item.toolCode,
       location_id: null,
-      location_text: item.locationText,
+      location_text: resolveItemLocationText(item),
       check_result: item.status,
       check_remark: item.checkRemark || confirmForm.keeperRemark,
       approved_qty: item.status === 'approved' ? (item.split_quantity ?? item.applyQty ?? 1) : 0,
@@ -836,7 +889,7 @@ async function openDispatchTransportDialog() {
 async function dispatchTransport() {
   const payload = {
     transport_type: confirmForm.transportType,
-    transport_assignee_id: confirmForm.transportAssigneeId || confirmForm.transportAssigneeName,
+    transport_assignee_id: confirmForm.transportAssigneeId,
     transport_assignee_name: confirmForm.transportAssigneeName,
     operator_id: session.userId,
     operator_name: session.userName,

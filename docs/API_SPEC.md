@@ -98,6 +98,35 @@
 
 **实现说明：** 支持基础字段更新与层级校验
 
+## 0.6 用户查询 API
+
+### 0.6.1 按角色查询用户
+
+**GET** `/api/users/by-role/{role_code}`
+
+**权限要求：** `dashboard:view`
+
+**请求参数：**
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| role_code | string | 是 | 角色编码，例如 `PRODUCTION_PREP` |
+| org_id | string | 否 | 组织ID，用于按默认组织过滤 |
+
+**响应参数：**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| success | boolean | 是否成功 |
+| data | array | 用户列表 |
+| data[].user_id | string | 用户ID |
+| data[].login_name | string | 登录名 |
+| data[].display_name | string | 显示名称 |
+| data[].default_org_id | string | 默认组织ID |
+| data[].org_name | string | 默认组织名称 |
+
+**实现说明：** 查询 `sys_user`、`sys_user_role_rel`、`sys_role`、`sys_org`，仅返回启用状态用户与角色。
+
 ---
 
 ## 1. 订单 API

@@ -22,6 +22,7 @@ from backend.routes.page_routes import page_bp
 from backend.routes.system_config_routes import system_config_bp
 from backend.routes.system_routes import system_bp
 from backend.routes.tool_routes import tool_bp
+from backend.routes.user_routes import user_bp
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,6 +61,7 @@ app.register_blueprint(tool_bp)
 app.register_blueprint(page_bp)
 app.register_blueprint(system_config_bp)
 app.register_blueprint(system_bp)
+app.register_blueprint(user_bp)
 
 
 if __name__ == "__main__":
