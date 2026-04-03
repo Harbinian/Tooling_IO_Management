@@ -775,7 +775,7 @@ function applyDefaultTransportAssignee(users) {
 async function loadProductionPrepUsers() {
   const orgId = session.currentOrg?.org_id || session.defaultOrg?.org_id || ''
   try {
-    productionPrepUsers.value = await getUsersByRole('PRODUCTION_PREP', orgId ? { org_id: orgId } : {})
+    productionPrepUsers.value = await getUsersByRole('production_prep_worker', orgId ? { org_id: orgId } : {})
     applyDefaultTransportAssignee(productionPrepUsers.value)
   } catch (error) {
     productionPrepUsers.value = []
