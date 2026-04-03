@@ -1,6 +1,0 @@
-Checking columns in [工装出入库单_主表]:
-
-Found columns: ['运输AssigneeID', '运输AssigneeName', '运输人ID', '运输人姓名']
-
-[ERROR] Table has BOTH '运输人ID' and '运输AssigneeID'!
-SELECT * INTO would create duplicate column names and FAIL.
