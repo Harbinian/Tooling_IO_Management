@@ -10,6 +10,18 @@
 
 ---
 
+## 规则约束 / Rule Constraints
+
+**本技能受以下规则约束，必须遵循：**
+
+1. **提示词格式规范**：提示词生成必须遵循 `.claude/rules/05_task_convention.md` 及 `auto-task-generator/SKILL.md` 中定义的格式标准
+2. **编号约定**：提示词编号必须来自 `promptsRec/.sequence` 计数器
+3. **执行者分配**：根据任务类型确定执行者（详见 `auto-task-generator/SKILL.md`）
+
+> **重要**：功能开发提示词 (00001-09999) 必须使用 **ADP 四阶段章节**（Phase 1-4），而非自定义的 `Core Task` 等章节。
+
+---
+
 ## 5W2H 框架 / 5W2H Framework
 
 | 维度 | 问题 | 目的 |
@@ -282,14 +294,30 @@
 
 ### 2. 后续提示词 / Follow-up Prompt
 
-根据需求类型，生成对应的提示词：
+根据需求类型，生成对应的提示词。**格式必须遵循 `auto-task-generator/SKILL.md` 中的定义。**
 
-| 需求类型 | 提示词编号 | 文件格式 |
+| 需求类型 | 提示词编号 | 必须章节 |
 |---------|-----------|---------|
-| 功能开发 | 00001-09999 | `<编号>_feat_<名称>.md` |
-| Bug修复 | 10101-19999 | `<编号>_bug_<名称>.md` |
-| 重构 | 20101-29999 | `<编号>_refactor_<名称>.md` |
-| 测试 | 30101-39999 | `<编号>_test_<名称>.md` |
+| 功能开发 (00001-09999) | 00001-09999 | ADP 四阶段（Phase 1-4）+ Header + Context + Required References + Constraints + Completion Criteria |
+| Bug修复 (10101-19999) | 10101-19999 | 8D 八阶段（D1-D8）+ Header + Context + Required References + Constraints + Completion Criteria |
+| 重构 (20101-29999) | 20101-29999 | ADP 四阶段（Phase 1-4）+ Header + Context + Required References + Constraints + Completion Criteria |
+| 测试 (30101-39999) | 30101-39999 | Test Scope + Test Strategy + Test Cases + Pass Criteria + Test Artifacts |
+
+**禁止使用以下章节名称**：
+- ❌ `Core Task / 核心任务` - 功能开发应使用 `Phase 1-4`
+- ❌ `Required Work / 必需工作` - 应整合到 `Phase 4` 中
+- ❌ `Acceptance Tests / 验收测试` - 应使用 `Completion Criteria`
+
+**Header 格式（所有类型必需）**：
+```
+Primary Executor: <Agent>
+Task Type: <Feature Development | Bug Fix | Refactoring | Testing>
+Priority: <P0 | P1 | P2>
+Stage: <5-digit Prompt Number>
+Goal: <One-line description>
+Dependencies: <"None" or list of prompt numbers>
+Execution: RUNPROMPT
+```
 
 ---
 
@@ -328,6 +356,8 @@
 - 修改现有代码
 - 跳过用户确认直接生成提示词
 - 使用拼音命名
+- **生成不符合规范的提示词格式**（详见 `auto-task-generator/SKILL.md`）
+- **跳过必需的提示词章节**（如 Phase 1-4、Header 等）
 
 ---
 
@@ -340,6 +370,7 @@
 3. [ ] 用户确认需求文档准确
 4. [ ] 生成了对应的后续提示词（如需要）
 5. [ ] 提示词遵循编号约定（00001-09999 / 10101-19999 / 20101-29999 / 30101-39999）
+6. [ ] **提示词格式符合 `auto-task-generator/SKILL.md` 规范**（包含正确的章节标题）
 
 ---
 
