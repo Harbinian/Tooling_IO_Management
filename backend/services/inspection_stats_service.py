@@ -16,6 +16,8 @@ def get_summary(current_user: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
     Returns counts for pending, in_progress, overdue, and completed tasks.
     """
     _ = current_user
+    from backend.services.inspection_task_service import _ensure_inspection_schema
+    _ensure_inspection_schema()
     db = DatabaseManager()
 
     today = date.today()

@@ -30,7 +30,7 @@ D6 完成 → SendMessage(to: "reviewer", type: "plan_approval_request")
         → 收到全部维度达标后才能继续 D7
 ```
 
-**评分维度与门槛**：
+**评分维度与门槛**（来自 `.claude/rules/02_debug.md`）：
 
 | 维度 | 满分 | 最低门槛 | 说明 |
 |------|------|----------|------|
@@ -53,7 +53,7 @@ Phase 4 完成 → 通知 tester 执行 E2E 验证
 
 ### 归档前置条件
 
-提示词在归档前必须验证：
+提示词在归档前必须验证（来自 `.claude/rules/05_task_convention.md`）：
 1. Bug 修复：D3/D5/D6 reviewer 评分记录存在
 2. 功能/重构：tester E2E 验证 pass 记录存在
 3. 所有 Completion Criteria 已满足
@@ -66,20 +66,12 @@ Phase 4 完成 → 通知 tester 执行 E2E 验证
 
 自愈开发循环技能使系统能够自动检测开发问题、生成结构化的开发提示词、执行修复并更新项目任务管道。
 
-The Self-Healing Dev Loop skill enables the system to automatically detect development issues, generate structured development prompts, execute fixes, and update the project task pipeline.
-
 此技能集成了以下子系统：
-
-This skill integrates the following subsystems:
 
 - Dev Inspector / 开发检查器
 - Auto Task Generator / 自动任务生成器
 - RUNPROMPT / 运行提示词
 - pipeline-dashboard / 流水线仪表盘
-
-目标是创建一个半自主开发循环，其中检测到的问题可以通过标准化提示词进行诊断和解决。
-
-The goal is to create a semi-autonomous development loop where detected issues can be diagnosed and resolved through standardized prompts.
 
 ---
 
@@ -87,11 +79,7 @@ The goal is to create a semi-autonomous development loop where detected issues c
 
 此技能协调自动化开发工作流。
 
-This skill orchestrates the automated development workflow.
-
 标准执行流程：
-
-Standard execution flow:
 
 检测到运行时问题 / Runtime Issue Detected
 ↓
@@ -103,7 +91,7 @@ pipeline-dashboard 注册新任务 / pipeline-dashboard registers new task
 ↓
 RUNPROMPT 执行提示词 / RUNPROMPT executes prompt
 ↓
-执行器代理（Gemini / Codex）执行实现 / Executor agent (Gemini / Codex) performs implementation
+执行器代理（Claude Code / Codex / Gemini）执行实现 / Executor agent performs implementation
 ↓
 pipeline-dashboard 更新任务状态 / pipeline-dashboard updates task status
 
@@ -113,8 +101,6 @@ pipeline-dashboard 更新任务状态 / pipeline-dashboard updates task status
 
 在以下情况下使用此技能：
 
-Use this skill when:
-
 - 检测到运行时错误 / a runtime error is detected
 - 出现控制台错误 / a console error appears
 - 在测试期间发现缺失功能 / a missing feature is discovered during testing
@@ -122,51 +108,24 @@ Use this skill when:
 - 发生 API 失败 / an API failure occurs
 - 出现工作流不一致 / a workflow inconsistency appears
 
-典型触发条件包括：
-
-Typical triggers include:
-
-- 浏览器控制台错误 / browser console errors
-- API 响应失败 / API response failures
-- 意外的 UI 状态 / unexpected UI states
-- 工作流破坏 / broken workflows
-- 数据库操作失败 / failed database operations
-
 ---
 
 # 技能组件 / Skill Components
 
 此技能协调四个子系统。
 
-This skill coordinates four subsystems.
-
 ## Dev Inspector
 
 负责：
-
-Responsible for:
 
 - 观察浏览器和运行时环境 / observing browser and runtime environment
 - 分析控制台错误 / analyzing console errors
 - 分析 API 失败 / analyzing API failures
 - 识别可能的根本原因层 / identifying probable root cause layer
 
-可能的层：
+可能的层：前端 / 网络 / 后端 / 数据库
 
-Possible layers:
-
-- 前端 / frontend
-- 网络 / network
-- 后端 / backend
-- 数据库 / database
-
-Dev Inspector 不修改代码。
-
-Dev Inspector does NOT modify code.
-
-它只执行诊断。
-
-It only performs diagnosis.
+Dev Inspector 不修改代码，只执行诊断。
 
 ---
 
@@ -174,16 +133,12 @@ It only performs diagnosis.
 
 负责：
 
-Responsible for:
-
 - 将检查的问题转换为结构化提示词 / converting inspected issues into structured prompts
-- 分配提示词编号 / assigning prompt numbers
-- 选择正确的执行器代理 / selecting the correct executor agent
+- 分配提示词编号（从 `.sequence` 读取）/ assigning prompt numbers
+- 选择正确的执行器代理（按 `.claude/rules/05_task_convention.md`）/ selecting the correct executor agent
 - 生成符合项目规则的提示词 / generating prompts compliant with project rules
 
-提示词编号：
-
-Prompt numbering:
+**任务类型按编号区间判断**（不按文件名片段）：
 
 | 范围 / Range | 类别 / Category | 适用规则 |
 |-------------|----------------|----------|
@@ -192,15 +147,13 @@ Prompt numbering:
 | 20101–29999 | 重构 / Refactoring | `01_workflow.md` (ADP) |
 | 30101–39999 | 测试 / Testing | `01_workflow.md` (ADP) |
 
-执行器规则：
-
-Executor rules:
+**执行器规则**（来自 `.claude/rules/05_task_convention.md`）：
 
 | Executor | Scope |
 |----------|-------|
-| Gemini | Frontend Design tasks |
-| Codex | Backend Implementation tasks |
-| Claude Code | Architecture, Refactoring, Testing tasks | |
+| Claude Code | 简化任务、P0/P1 Bug、测试、重构 |
+| Codex | 普通 Bug 修复、功能实现 |
+| Gemini | 前端 UI 设计 |
 
 ---
 
@@ -208,49 +161,37 @@ Executor rules:
 
 每个生成的任务必须注册到 pipeline-dashboard。
 
-Every generated task must be registered with pipeline-dashboard.
-
 必需的管道更新操作：
-
-Required pipeline update actions:
 
 1. 注册新任务 / register new task
 2. 分配执行器 / assign executor
 3. 标记任务为待处理 / mark task as pending
 
-示例管道条目：
-
-Example pipeline entry:
-
-Task: 104_bug_order_api_response_error
-Executor: Codex
-Status: Pending
-
-RUNPROMPT 完成后，pipeline-dashboard 必须更新：
-
-When RUNPROMPT finishes execution, pipeline-dashboard must update:
-
-Status → Completed
-
 ---
 
 ## Lock 文件管理 / Lock File Management
 
-Lock 文件用于防止多 Agent 抢同一任务。创建规则：
+**所有执行者（包括 Claude Code）必须创建 lock 文件。**
 
-Lock file creation rules:
+Lock 文件用于防止多 Agent 抢同一任务。创建规则：
 
 | 场景 | 行为 |
 |------|------|
-| Executor ≠ Claude Code | **创建 lock 文件**，交给目标执行器 |
-| Executor = Claude Code | **不创建 lock 文件**，直接执行 |
-| Claude Code 主动接手非 Claude Code 任务 | **创建 lock 文件**，记住锁是 Claude Code 上的，可由 Claude Code 移除 |
+| 任何执行者 | **创建 lock 文件**，交给目标执行器 |
 
 Lock 文件命名：`promptsRec/active/<prompt_name>.lock`
 
-Claude Code 必须记录自己上了哪些锁，以便后续移除。
+Lock 文件内容应包含：
 
-Claude Code must record which locks it has created so it can remove them later.
+```
+{
+  "executor": "<executor_name>",
+  "start_time": "<ISO timestamp>",
+  "status": "running"
+}
+```
+
+任务完成后删除 lock 文件以释放任务锁。
 
 ---
 
@@ -258,19 +199,15 @@ Claude Code must record which locks it has created so it can remove them later.
 
 管道注册后，执行生成的提示词。
 
-After pipeline registration, the generated prompt is executed.
-
 执行流程：
-
-Execution flow:
 
 RUNPROMPT 从 promptsRec/active/ 读取提示词 / RUNPROMPT reads prompt from promptsRec/active/
 ↓
-检查是否需要创建 lock 文件 / Check if lock file needed (see above)
+检查是否需要创建 lock 文件（所有执行者都需要） / Check if lock file needed
 ↓
 分配的代理执行实现 / Assigned agent performs implementation
 ↓
-删除 lock 文件（如果是 Claude Code 锁） / Remove lock file if Claude Code lock
+删除 lock 文件 / Remove lock file
 ↓
 生成执行报告 / Execution report generated
 ↓
@@ -282,39 +219,14 @@ RUNPROMPT 从 promptsRec/active/ 读取提示词 / RUNPROMPT reads prompt from p
 
 在生成任务之前，Dev Inspector 必须尝试根本原因分析。
 
-Before generating a task, Dev Inspector must attempt root cause analysis.
-
 可能的问题层包括：
 
-Possible issue layers include:
-
-前端层 / Frontend Layer
-
-- Vue 运行时错误 / Vue runtime errors
-- 错误的组件状态 / incorrect component state
-- 错误的 API 调用 / incorrect API calls
-
-网络层 / Network Layer
-
-- 错误的基础 URL / incorrect base URL
-- 缺少代理配置 / missing proxy configuration
-- 请求头不匹配 / request header mismatch
-
-后端层 / Backend Layer
-
-- 缺少 API 路由 / missing API route
-- 服务逻辑错误 / service logic error
-- 未处理的异常 / unhandled exception
-
-数据库层 / Database Layer
-
-- 架构不匹配 / schema mismatch
-- 缺少表 / missing table
-- SQL 查询错误 / SQL query error
+- 前端层：Vue 运行时错误、错误的组件状态、错误的 API 调用
+- 网络层：错误的基础 URL、缺少代理配置、请求头不匹配
+- 后端层：缺少 API 路由、服务逻辑错误、未处理的异常
+- 数据库层：架构不匹配、缺少表、SQL 查询错误
 
 识别的层决定执行器。
-
-The identified layer determines the executor.
 
 ---
 
@@ -322,11 +234,7 @@ The identified layer determines the executor.
 
 生成的提示词必须遵循项目标准。
 
-Generated prompts must follow project standards.
-
 提示词头部格式：
-
-Prompt header format:
 
 Primary Executor / 主要执行者
 Task Type / 任务类型
@@ -349,9 +257,7 @@ Completion Criteria / 完成标准
 
 # 任务生命周期 / Task Lifecycle
 
-每个任务必须遵循此生命周期。
-
-Each task must follow this lifecycle.
+每个任务必须遵循此生命周期：
 
 已检测 / Detected
 ↓
@@ -365,8 +271,6 @@ RUNPROMPT 执行 / RUNPROMPT Execution
 
 如果执行失败：
 
-If execution fails:
-
 Status → 需要调查 / Investigation Required
 
 ---
@@ -374,8 +278,6 @@ Status → 需要调查 / Investigation Required
 # 安全约束 / Safety Constraints
 
 此技能严禁：
-
-This skill must NOT:
 
 - 直接修改生产数据 / modify production data directly
 - 绕过 RUNPROMPT 执行 / bypass RUNPROMPT execution
@@ -385,98 +287,11 @@ This skill must NOT:
 
 所有修复必须通过提示词执行。
 
-All fixes must be executed through prompts.
-
----
-
-# Claude Code 锁记录 / Claude Code Lock Recording
-
-当 Claude Code 创建 lock 文件时，必须记录锁的信息，以便后续移除。
-
-Claude Code should maintain a record of locks it creates:
-
-记录内容：
-- lock 文件路径
-- 创建原因（主动创建 / 接手他人任务）
-- 创建时间
-
-存储位置：建议记录在任务执行报告或记忆文件中。
-
-When Claude Code finishes executing a task it locked, it must remove the lock file.
-
----
-
-# 示例工作流 / Example Workflow
-
-## 示例 1：任务交给 Codex 执行
-
-示例情况：
-
-Browser console:
-
-GET /api/tool-io-orders → 500
-
-Dev Inspector 结果：
-
-Layer: Backend
-Problem: API failure
-
-Auto Task Generator 创建：
-
-104_bug_order_api_endpoint_failure.md
-(Executor: Codex → 创建 lock 文件)
-
-pipeline-dashboard 注册：
-
-Task: 104_bug_order_api_endpoint_failure
-Executor: Codex
-Status: Pending
-
-RUNPROMPT 将任务交给 Codex，Codex 执行实现。
-
-Codex implements fix.
-
-完成后删除 lock 文件，归档提示词。
-
----
-
-## 示例 2：Claude Code 直接执行
-
-示例情况：
-
-E2E 测试报告发现多个 bug，Dev Inspector 分析后确定需要 Claude Code 执行。
-
-Auto Task Generator 创建：
-
-104_bug_keeper_cross_org_access.md
-(Executor: Claude Code → 不创建 lock 文件)
-
-Claude Code 直接读取提示词并执行实现。
-
-完成后归档提示词为 `✅_*.md`。
-
----
-
-## 示例 3：Claude Code 接手他人任务
-
-示例情况：
-
-Codex 的任务卡住了，Claude Code 决定接手。
-
-Claude Code：
-
-1. 创建 lock 文件（接手标记）
-2. 记录："这是我接手的锁，可移除"
-3. 执行实现
-4. 完成后删除 lock 并归档
-
 ---
 
 # 完成标准 / Completion Criteria
 
 当满足以下条件时，自愈开发循环被视为可运行：
-
-Self-Healing Dev Loop is considered operational when:
 
 1. 运行时问题触发 Dev Inspector / runtime issues trigger Dev Inspector
 2. 任务自动生成 / tasks are generated automatically

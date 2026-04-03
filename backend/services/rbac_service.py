@@ -498,6 +498,24 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
         role_id="ROLE_KEEPER",
         permission_code="order:cancel",
     )
+    # RBAC_INIT_DATA.md specifies these permissions but they were only in bootstrap,
+    # not in _ensure_incremental_permission_defaults. Adding them here ensures they
+    # are assigned even when RBAC tables were already seeded before this fix.
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_TEAM_LEADER",
+        permission_code="order:create",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_TEAM_LEADER",
+        permission_code="order:submit",
+    )
+    _ensure_role_permission_rel(
+        db,
+        role_id="ROLE_KEEPER",
+        permission_code="order:keeper_confirm",
+    )
     _ensure_role_permission_rel(
         db,
         role_id="ROLE_PRODUCTION_PREP",

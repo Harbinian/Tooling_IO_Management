@@ -33,21 +33,21 @@ sys.path.insert(0, str(REPO_ROOT))
 from playwright.sync_api import sync_playwright, Page, Browser
 from test_runner.commands import start, advance, status, stop
 
-# P1-2: 集成感知层
-SENSING_PACKAGE_ROOT = REPO_ROOT / ".skills" / "human-e2e-tester"
-if str(SENSING_PACKAGE_ROOT) not in sys.path:
-    sys.path.insert(0, str(SENSING_PACKAGE_ROOT))
-
+# P1-2: 集成感知层 (已禁用 - 2026-04-03)
+# 感知模块在并发运行时导致 SQLite 数据库锁定，此文件降级为手动测试模式
 # 统一数据库路径
-E2E_SENSING_DB = REPO_ROOT / "test_reports" / "e2e_sensing.db"
+# E2E_SENSING_DB = REPO_ROOT / "test_reports" / "e2e_sensing.db"
 
-try:
-    from sensing.storage import SQLiteStorage
-    from sensing.orchestrator import SensingOrchestrator
-    SENSING_AVAILABLE = True
-except ImportError:
-    SENSING_AVAILABLE = False
-    print("[WARN] Sensing module not available, running without sensing")
+# 强制禁用感知模块 - 避免 SQLite 并发锁定
+SENSING_AVAILABLE = False
+
+# try:
+#     from sensing.storage import SQLiteStorage
+#     from sensing.orchestrator import SensingOrchestrator
+#     SENSING_AVAILABLE = True
+# except ImportError:
+#     SENSING_AVAILABLE = False
+#     print("[WARN] Sensing module not available, running without sensing")
 
 
 # =============================================================================
@@ -229,14 +229,18 @@ def login(page: Page, username: str, password: str) -> bool:
     print(f"   正在登录: {username}")
     try:
         page.goto(f"{FRONTEND_URL}/login", wait_until="networkidle")
-        time.sleep(0.5)
+        page.wait_for_selector('input[placeholder="请输入用户名"]', timeout=5000)
+        time.sleep(0.3)
 
-        # 填写登录表单 - 使用 placeholder 文本定位
-        page.fill('input[placeholder="请输入用户名"]', username, timeout=5000)
-        page.fill('input[placeholder="请输入密码"]', password, timeout=5000)
+        # 使用 locator API 填写表单，确保触发 Vue 响应式更新
+        page.locator('input[placeholder="请输入用户名"]').press_sequentially(username, delay=50)
+        page.locator('input[placeholder="请输入密码"]').press_sequentially(password, delay=50)
+
+        # 等待 Vue 响应式更新
+        page.wait_for_timeout(300)
 
         # 点击登录按钮 - 使用实际按钮文本 "进入系统"
-        page.click('button:has-text("进入系统")', timeout=5000)
+        page.locator('button:has-text("进入系统")').click(timeout=5000)
 
         # 等待重定向完成 - 等待 URL 变化或网络空闲
         page.wait_for_timeout(2000)
@@ -625,46 +629,39 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             orchestrator.snapshot_before(page_taidongxu)
 
         try:
-            # 使用 JavaScript 直接设置 Vue 表单值（绕过复杂的 UI 交互）
+            # 使用 Playwright 标准 UI 交互替代 Vue 内部 API
             from datetime import datetime, timedelta
             tomorrow = datetime.now() + timedelta(days=1)
-            planned_time = tomorrow.strftime("%Y-%m-%d %H:%M:%S")
+            planned_time = tomorrow.strftime("%Y-%m-%d %H:%M")
 
-            # 直接通过 JavaScript 设置表单字段
-            page_taidongxu.evaluate("""
-                () => {
-                    // 尝试找到 Vue 实例并设置表单值
-                    const vueApp = document.querySelector('#app').__vue_app__;
-                    if (vueApp) {
-                        // 查找所有 el-select 元素并设置值
-                        const selects = document.querySelectorAll('.el-select');
-                        // 用途 - 第一个 select (index 0)
-                        if (selects[0]) {
-                            selects[0].__vueParentComponent__.exposed.modelValue = '现场使用';
-                        }
-                        // 目标位置 - 第二个 select (index 1)
-                        if (selects[1]) {
-                            selects[1].__vueParentComponent__.exposed.modelValue = 'A06';
-                        }
-                    }
-                }
-            """)
-            time.sleep(0.5)
-
-            # 使用 JavaScript 设置日期时间
-            page_taidongxu.evaluate(f"""
-                () => {{
-                    const dateInput = document.querySelector('.el-date-editor input');
-                    if (dateInput) {{
-                        // 触发 focus 事件
-                        dateInput.dispatchEvent(new Event('focus', {{ bubbles: true }}));
-                        dateInput.value = '{planned_time}';
-                        dateInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        dateInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                    }}
-                }}
-            """)
+            # 用途 select - 原生 HTML select（第一个 select 元素）并选择"现场使用"
+            page_taidongxu.select_option('select >> nth=0', '现场使用', timeout=5000)
             time.sleep(0.3)
+
+            # 目标位置 select - el-select 使用 nth=0（第一个 el-select）
+            page_taidongxu.click('.el-select >> nth=0', timeout=5000)
+            page_taidongxu.wait_for_selector('.el-select-dropdown', timeout=5000)
+            page_taidongxu.click('.el-select-dropdown__item:has-text("A06")', timeout=5000)
+            time.sleep(0.3)
+
+            # 计划使用时间 - el-date-picker
+            # 首先点击日期编辑器触发弹出面板
+            page_taidongxu.click('.el-date-editor >> nth=0', timeout=5000)
+            page_taidongxu.wait_for_selector('.el-picker-panel', timeout=5000)
+            time.sleep(0.3)
+
+            # 在日期面板中点击输入框并使用 fill 方法（更可靠地触发 input 事件）
+            date_input = page_taidongxu.query_selector('.el-picker-panel input')
+            if date_input:
+                date_input.fill(planned_time)
+            else:
+                # 备用：在主输入框使用 fill
+                page_taidongxu.fill('.el-date-editor input >> nth=0', planned_time)
+            time.sleep(0.3)
+
+            # 按 Escape 关闭日期选择器面板
+            page_taidongxu.keyboard.press('Escape')
+            time.sleep(0.5)
 
             if orchestrator:
                 snap, anomalies, checks = orchestrator.snapshot_after(
@@ -774,11 +771,19 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             time.sleep(1)
             current_url = page_taidongxu.url
             print(f"   DEBUG: Current URL after submit: {current_url}")
-            if "/detail/" in current_url or "/order/" in current_url:
-                order_no = current_url.split("/")[-1].split("?")[0]
+            # 更精确的订单号提取逻辑
+            # URL 格式: /inventory/TO-OUT-20260402-011 或 /detail/TO-OUT-xxx
+            # 排除 /inventory/create 这种页面
+            segments = current_url.split("/")
+            last_segment = segments[-1].split("?")[0] if segments else ""
+            # 订单号格式以 TO- 开头，或者包含 -OUT- 或 -IN-
+            if last_segment and (last_segment.startswith("TO-") or "-OUT-" in last_segment or "-IN-" in last_segment):
+                order_no = last_segment
                 print(f"   DEBUG: Extracted order_no from URL: {order_no}")
             else:
                 # 尝试从页面获取
+                order_no = None
+                print(f"   DEBUG: URL segment '{last_segment}' is not an order number, trying page...")
                 page_taidongxu.goto(f"{FRONTEND_URL}/inventory", wait_until="networkidle", timeout=10000)
                 time.sleep(1)
                 order_no_text = get_text(page_taidongxu, '[class*="order-no"], [class*="单号"], [class*="orderNo"]')

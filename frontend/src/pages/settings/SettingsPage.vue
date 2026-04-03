@@ -147,11 +147,18 @@
               <h3 class="text-sm font-semibold text-foreground mb-4">功能开关管理</h3>
               <el-table :data="featureFlags" stripe class="w-full" v-loading="featureFlagsLoading">
                 <el-table-column prop="config_key" label="开关键" min-width="180" />
-                <el-table-column prop="config_value" label="当前值" min-width="120">
+                <el-table-column prop="config_value" label="当前值" min-width="140">
                   <template #default="{ row }">
-                    <el-tag :type="row.config_value === 'true' ? 'success' : 'info'" disable-transitions>
-                      {{ row.config_value }}
-                    </el-tag>
+                    <template v-if="urlConfigKeys.has(row.config_key)">
+                      <el-tag type="info" disable-transitions class="max-w-[120px] truncate" :title="row.config_value">
+                        {{ row.config_value }}
+                      </el-tag>
+                    </template>
+                    <template v-else>
+                      <el-tag :type="row.config_value === 'true' ? 'success' : 'info'" disable-transitions>
+                        {{ row.config_value }}
+                      </el-tag>
+                    </template>
                   </template>
                 </el-table-column>
                 <el-table-column prop="description" label="描述" min-width="240" show-overflow-tooltip />
@@ -163,17 +170,52 @@
                 </el-table-column>
                 <el-table-column label="操作" min-width="120" fixed="right">
                   <template #default="{ row }">
-                    <el-switch
-                      :model-value="row.config_value === 'true'"
-                      :loading="row._loading"
-                      @change="(value) => updateFeatureFlagHandler(row.config_key, value)"
-                      active-value="true"
-                      inactive-value="false"
-                    />
+                    <template v-if="urlConfigKeys.has(row.config_key)">
+                      <el-button type="primary" link @click="openUrlEditDialog(row)">
+                        编辑
+                      </el-button>
+                    </template>
+                    <template v-else>
+                      <el-switch
+                        :model-value="row.config_value === 'true'"
+                        :loading="row._loading"
+                        @change="(value) => updateFeatureFlagHandler(row.config_key, value)"
+                        active-value="true"
+                        inactive-value="false"
+                      />
+                    </template>
                   </template>
                 </el-table-column>
               </el-table>
             </div>
+
+            <!-- URL Edit Dialog -->
+            <el-dialog
+              v-model="urlEditDialog.visible"
+              title="编辑 Webhook URL"
+              width="500px"
+              :close-on-click-modal="false"
+            >
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-foreground">{{ urlEditDialog.key }}</label>
+                  <p class="text-xs text-muted-foreground">{{ urlEditDialog.description }}</p>
+                </div>
+                <el-input
+                  v-model="urlEditDialog.value"
+                  placeholder="请输入 Webhook URL"
+                  :loading="urlEditDialog.loading"
+                />
+              </div>
+              <template #footer>
+                <el-button @click="urlEditDialog.visible = false" :disabled="urlEditDialog.loading">
+                  取消
+                </el-button>
+                <el-button type="primary" @click="saveUrlConfig" :loading="urlEditDialog.loading">
+                  保存
+                </el-button>
+              </template>
+            </el-dialog>
 
             <!-- MPL Specific Settings -->
             <div>
@@ -485,6 +527,22 @@ const systemConfig = ref({
 const featureFlagsLoading = ref(false)
 const featureFlags = ref([])
 
+// URL config keys that should NOT use el-switch
+const urlConfigKeys = new Set([
+  'feishu_webhook_supply_team',
+  'feishu_webhook_transport',
+  'feishu_webhook_url'
+])
+
+// URL edit dialog state
+const urlEditDialog = ref({
+  visible: false,
+  loading: false,
+  key: '',
+  value: '',
+  description: ''
+})
+
 function getCategoryLabel(category) {
   return FeedbackCategoryLabels[category] || category
 }
@@ -610,6 +668,40 @@ async function updateFeatureFlagHandler(flagKey, value) {
     if (flag) {
       flag._loading = false
     }
+  }
+}
+
+function openUrlEditDialog(row) {
+  urlEditDialog.value = {
+    visible: true,
+    loading: false,
+    key: row.config_key,
+    value: row.config_value,
+    description: row.description || ''
+  }
+}
+
+async function saveUrlConfig() {
+  if (!urlEditDialog.value.value) {
+    ElMessage.warning('请输入 Webhook URL')
+    return
+  }
+  urlEditDialog.value.loading = true
+  try {
+    const result = await updateSystemConfig(urlEditDialog.value.key, {
+      config_value: urlEditDialog.value.value
+    })
+    if (result.success) {
+      ElMessage.success('Webhook URL 已保存')
+      urlEditDialog.value.visible = false
+      await loadFeatureFlags()
+    } else {
+      ElMessage.error(result.error || '保存失败')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '保存失败')
+  } finally {
+    urlEditDialog.value.loading = false
   }
 }
 

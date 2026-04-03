@@ -81,6 +81,7 @@ const navigation = [
 ]
 
 const mplAllowedRoleCodes = new Set(['engineering', 'sys_admin'])
+const inspectionAllowedRoleCodes = new Set(['sys_admin'])
 
 const availableNavigation = computed(() => {
   return navigation
@@ -92,6 +93,11 @@ const availableNavigation = computed(() => {
               const roleCodes = new Set((session.roles || []).map((role) => role.role_code))
               const canAccessMpl = [...mplAllowedRoleCodes].some((roleCode) => roleCodes.has(roleCode))
               return canAccessMpl && session.hasPermission(child.permission)
+            }
+            if (child.href.startsWith('/inspection/')) {
+              const roleCodes = new Set((session.roles || []).map((role) => role.role_code))
+              const canAccessInspection = [...inspectionAllowedRoleCodes].some((roleCode) => roleCodes.has(roleCode))
+              return canAccessInspection && session.hasPermission(child.permission)
             }
             return !child.permission || session.hasPermission(child.permission)
           })

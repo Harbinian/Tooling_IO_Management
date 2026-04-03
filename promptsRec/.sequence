@@ -6,14 +6,14 @@
 feature_next=00087
 
 # Bug修复 (10101-19999)
-bugfix_next=10191
+bugfix_next=10196
 
 # 重构 (20101-29999)
-refactor_next=20113
+refactor_next=20115
 
 # 测试 (30101-39999)
 test_next=30110
 
 # 执行顺序号（归档用）
-exec_next=00215
+exec_next=00221
 

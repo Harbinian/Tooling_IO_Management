@@ -394,19 +394,29 @@ class InspectionTaskService:
         return {"success": True, "data": status}
 
     def reschedule_task(self, task_no: str, new_deadline: str, current_user: Optional[Dict]) -> Dict:
-        _ensure_inspection_schema()
-        task = self._must_get_task(task_no)
-        current_status = str(task.get("task_status") or "").strip()
-        if current_status not in {"pending"}:
-            return {"success": False, "error": f"cannot reschedule task in status '{current_status}', only pending tasks can be rescheduled"}
-        updated = self._update_task(
-            task_no,
-            {
-                "deadline": new_deadline,
-                "updated_by": _user_name(current_user),
-            },
-        )
-        return {"success": True, "data": updated}
+        try:
+            _ensure_inspection_schema()
+            task = self._must_get_task(task_no)
+            current_status = str(task.get("task_status") or "").strip()
+            if current_status not in {"pending"}:
+                return {"success": False, "error": f"cannot reschedule task in status '{current_status}', only pending tasks can be rescheduled"}
+            updated = self._update_task(
+                task_no,
+                {
+                    "deadline": new_deadline,
+                    "updated_by": _user_name(current_user),
+                },
+            )
+            return {"success": True, "data": updated}
+        except RuntimeError as exc:
+            # Schema init failed — this is a system error, not a business logic error
+            raise
+        except ValueError as exc:
+            # Task not found or business rule violation
+            raise
+        except Exception as exc:
+            # Unexpected system error
+            raise
 
     def _must_get_task(self, task_no: str) -> Dict:
         task = self._task_repo.get_task(task_no)
