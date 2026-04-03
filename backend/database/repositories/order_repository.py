@@ -230,17 +230,54 @@ class OrderRepository:
                 return {'success': False, 'error': f'只有草稿状态的订单可以编辑，当前状态：{current_status}'}
 
             items = payload.get('items')
-            remark = payload.get('remark')
+            header_keys = {
+                'order_type',
+                'department',
+                'project_code',
+                'usage_purpose',
+                'planned_use_time',
+                'planned_return_time',
+                'target_location_id',
+                'target_location_text',
+                'remark',
+            }
+            has_header_updates = any(key in payload for key in header_keys)
 
-            # Update order remark if provided
-            if remark is not None:
+            # Update order header fields if provided
+            if has_header_updates:
+                next_tool_quantity = len(items) if items is not None else None
                 update_header_sql = f"""
                 UPDATE [{TABLE_NAMES['ORDER']}] SET
+                    [{ORDER_COLUMNS['order_type']}] = COALESCE(?, [{ORDER_COLUMNS['order_type']}]),
+                    [{ORDER_COLUMNS['department']}] = COALESCE(?, [{ORDER_COLUMNS['department']}]),
+                    [{ORDER_COLUMNS['project_code']}] = COALESCE(?, [{ORDER_COLUMNS['project_code']}]),
+                    [{ORDER_COLUMNS['usage_purpose']}] = COALESCE(?, [{ORDER_COLUMNS['usage_purpose']}]),
+                    [{ORDER_COLUMNS['planned_use_time']}] = COALESCE(?, [{ORDER_COLUMNS['planned_use_time']}]),
+                    [{ORDER_COLUMNS['planned_return_time']}] = COALESCE(?, [{ORDER_COLUMNS['planned_return_time']}]),
+                    [{ORDER_COLUMNS['target_location_id']}] = COALESCE(?, [{ORDER_COLUMNS['target_location_id']}]),
+                    [{ORDER_COLUMNS['target_location_text']}] = COALESCE(?, [{ORDER_COLUMNS['target_location_text']}]),
                     [{ORDER_COLUMNS['remark']}] = ?,
+                    [{ORDER_COLUMNS['tool_quantity']}] = COALESCE(?, [{ORDER_COLUMNS['tool_quantity']}]),
                     [{ORDER_COLUMNS['updated_at']}] = GETDATE()
                 WHERE [{ORDER_COLUMNS['order_no']}] = ?
                 """
-                self._db.execute_query(update_header_sql, (remark, order_no), fetch=False)
+                self._db.execute_query(
+                    update_header_sql,
+                    (
+                        payload.get('order_type'),
+                        payload.get('department'),
+                        payload.get('project_code'),
+                        payload.get('usage_purpose'),
+                        payload.get('planned_use_time'),
+                        payload.get('planned_return_time'),
+                        payload.get('target_location_id'),
+                        payload.get('target_location_text'),
+                        payload.get('remark'),
+                        next_tool_quantity,
+                        order_no,
+                    ),
+                    fetch=False,
+                )
 
             # Update items if provided
             if items is not None:

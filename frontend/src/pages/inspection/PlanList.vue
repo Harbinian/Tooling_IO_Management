@@ -1,5 +1,5 @@
 <template>
-  <div class="animate-in fade-in space-y-8 duration-500 text-foreground">
+  <div v-debug-id="DEBUG_IDS.INSPECTION.PLAN_LIST.PAGE_HEADER" class="animate-in fade-in space-y-8 duration-500 text-foreground">
     <header class="page-header">
       <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
@@ -23,7 +23,7 @@
       <div class="page-header-blur"></div>
     </header>
 
-    <Card class="border-border bg-card shadow-xl overflow-hidden">
+    <Card v-debug-id="DEBUG_IDS.INSPECTION.PLAN_LIST.PLAN_TABLE" class="border-border bg-card shadow-xl overflow-hidden">
       <CardHeader class="card-header">
         <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div class="card-header-inner">
@@ -123,6 +123,7 @@ import { PlusCircle, Search } from 'lucide-vue-next'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { getPlanList, publishPlan } from '@/api/inspection'
 import { useSessionStore } from '@/store/session'
+import { DEBUG_IDS } from '@/debug/debugIds'
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'

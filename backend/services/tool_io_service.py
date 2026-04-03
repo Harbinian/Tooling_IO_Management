@@ -503,7 +503,7 @@ def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         payload.get("operator_name", ""),
         payload.get("operator_role", ""),
     )
-    if result.get("success"):
+    if result.get("success") and not result.get("idempotent"):
         actor = _build_actor_context(payload)
         order = get_order_detail(order_no, current_user=current_user)
         if order:

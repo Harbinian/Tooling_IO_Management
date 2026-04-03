@@ -218,7 +218,34 @@
 
 ---
 
-### 1.5 提交订单
+### 1.5 更新草稿订单
+
+**PUT** `/api/tool-io-orders/{order_no}`
+
+**实现说明：** 仅允许更新 `draft` 状态订单，用于草稿编辑后再次保存或提交前同步最新表单内容。
+
+**请求参数：**
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| order_type | string | 否 | 单据类型，`outbound` / `inbound` |
+| department | string | 否 | 部门 |
+| project_code | string | 否 | 项目号 |
+| usage_purpose | string | 否 | 用途 |
+| planned_use_time | string | 否 | 计划使用时间 |
+| planned_return_time | string | 否 | 计划归还时间 |
+| target_location_id | string/int | 否 | 目标位置 ID |
+| target_location_text | string | 否 | 目标位置文本 |
+| remark | string | 否 | 备注 |
+| items | array | 否 | 工装明细，提交时会整体替换草稿明细 |
+
+**错误语义：**
+- `404`: 订单不存在
+- `400`: 当前订单不是 `draft`，或请求体不合法
+
+---
+
+### 1.6 提交订单
 
 **POST** `/api/tool-io-orders/{order_no}/submit`
 
@@ -245,10 +272,11 @@
 - `404`: 订单不存在
 - `409`: 当前订单已是 `submitted` 以外的非草稿状态，不能再次提交
 - 重复点击导致的同一订单重复提交按幂等成功返回 `200`
+- 幂等成功仅表示状态已满足，不会重复发送提交通知或重复触发保管员分配副作用
 
 ---
 
-### 1.5 保管员确认
+### 1.7 保管员确认
 
 **POST** `/api/tool-io-orders/{order_no}/keeper-confirm`
 

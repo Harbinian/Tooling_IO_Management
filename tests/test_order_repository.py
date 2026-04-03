@@ -148,6 +148,55 @@ class OrderRepositoryPendingKeeperTests(unittest.TestCase):
 
 
 class OrderRepositoryCancellationAndResetTests(unittest.TestCase):
+    def test_update_order_persists_header_fields_for_existing_draft(self):
+        db = Mock()
+        db.execute_query.side_effect = [
+            [{"order_status": "draft", "initiator_id": "U_INIT"}],
+            None,
+        ]
+        repo = OrderRepository(db_manager=db)
+        repo.add_tool_io_log = Mock(return_value=True)
+
+        result = repo.update_order(
+            "ORD-010",
+            {
+                "order_type": "outbound",
+                "department": "D1",
+                "project_code": "P-001",
+                "usage_purpose": "现场使用",
+                "planned_use_time": "2026-04-03 10:00:00",
+                "planned_return_time": "2026-04-04 10:00:00",
+                "target_location_id": "LOC-01",
+                "target_location_text": "A06",
+                "remark": "updated",
+            },
+            operator_id="U_INIT",
+            operator_name="Initiator",
+            operator_role="team_leader",
+        )
+
+        self.assertEqual(result, {"success": True, "order_no": "ORD-010"})
+        update_call = db.execute_query.call_args_list[1]
+        self.assertIn("usage_purpose", update_call.args[0])
+        self.assertIn("planned_use_time", update_call.args[0])
+        self.assertIn("target_location_text", update_call.args[0])
+        self.assertEqual(
+            update_call.args[1],
+            (
+                "outbound",
+                "D1",
+                "P-001",
+                "现场使用",
+                "2026-04-03 10:00:00",
+                "2026-04-04 10:00:00",
+                "LOC-01",
+                "A06",
+                "updated",
+                None,
+                "ORD-010",
+            ),
+        )
+
     def test_submit_order_is_idempotent_when_already_submitted(self):
         db = Mock()
         db.execute_query.side_effect = [

@@ -241,7 +241,7 @@ import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Box, RefreshCw, Search, Trash2 } from 'lucide-vue-next'
-import { createOrder, previewKeeperText, submitOrder } from '@/api/orders'
+import { createOrder, previewKeeperText, submitOrder, updateOrder } from '@/api/orders'
 import { DEBUG_IDS } from '@/debug/debugIds'
 import ToolSearchDialog from '@/components/tool-io/ToolSearchDialog.vue'
 import NotificationPreview from '@/components/tool-io/NotificationPreview.vue'
@@ -396,18 +396,40 @@ async function saveDraft() {
   savingDraft.value = true
 
   try {
-    const result = await createOrder(buildPayload())
+    const payload = buildPayload()
+    const result = createdOrderNo.value
+      ? await updateOrder(createdOrderNo.value, payload)
+      : await createOrder(payload)
     if (!result.success) {
       ElMessage.error(result.error || '提交单据失败')
       return
     }
 
-    createdOrderNo.value = result.order_no || ''
-    ElMessage.success(`草稿已保存：${result.order_no}`)
-    router.push(`/inventory/${result.order_no}`)
+    const orderNo = result.order_no || createdOrderNo.value
+    createdOrderNo.value = orderNo || ''
+    ElMessage.success(`草稿已保存：${orderNo}`)
+    router.push(`/inventory/${orderNo}`)
   } finally {
     savingDraft.value = false
   }
+}
+
+async function persistCurrentDraft() {
+  const payload = buildPayload()
+  if (!createdOrderNo.value) {
+    const created = await createOrder(payload)
+    if (!created.success) {
+      return created
+    }
+    createdOrderNo.value = created.order_no || ''
+    return created
+  }
+
+  const updated = await updateOrder(createdOrderNo.value, payload)
+  if (updated.success) {
+    updated.order_no = updated.order_no || createdOrderNo.value
+  }
+  return updated
 }
 
 async function submitCreatedOrder() {
@@ -415,19 +437,15 @@ async function submitCreatedOrder() {
   submittingOrder.value = true
 
   try {
-    let orderNo = createdOrderNo.value
-    if (!orderNo) {
-      const created = await createOrder(buildPayload())
-      if (!created.success) {
-        ElMessage.error(created.error || '创建单据失败')
-        return
-      }
-      if (created.warning) {
-        ElMessage.warning(created.warning)
-      }
-      orderNo = created.order_no
-      createdOrderNo.value = orderNo || ''
+    const draftResult = await persistCurrentDraft()
+    if (!draftResult.success) {
+      ElMessage.error(draftResult.error || '创建单据失败')
+      return
     }
+    if (draftResult.warning) {
+      ElMessage.warning(draftResult.warning)
+    }
+    const orderNo = draftResult.order_no || createdOrderNo.value
 
     const result = await submitOrder(orderNo, {
       operator_id: session.userId || 'anonymous',

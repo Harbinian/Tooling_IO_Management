@@ -1,5 +1,5 @@
 <template>
-  <div class="animate-in fade-in space-y-8 duration-500 text-foreground">
+  <div v-debug-id="DEBUG_IDS.INSPECTION.TASK_LIST.PAGE_HEADER" class="animate-in fade-in space-y-8 duration-500 text-foreground">
     <header class="page-header">
       <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
@@ -15,7 +15,7 @@
       <div class="page-header-blur"></div>
     </header>
 
-    <div class="flex flex-col gap-6">
+    <div v-debug-id="DEBUG_IDS.INSPECTION.TASK_LIST.FILTER_SECTION" class="flex flex-col gap-6">
       <el-tabs v-model="filters.status" class="inspection-tabs" @tab-change="handleSearch">
         <el-tab-pane label="全部" name="" />
         <el-tab-pane label="待领取" name="pending" />
@@ -26,7 +26,7 @@
         <el-tab-pane label="已关闭" name="closed" />
       </el-tabs>
 
-      <Card class="border-border bg-card shadow-xl overflow-hidden">
+      <Card v-debug-id="DEBUG_IDS.INSPECTION.TASK_LIST.TASK_TABLE" class="border-border bg-card shadow-xl overflow-hidden">
         <CardHeader class="card-header">
           <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div class="card-header-inner">
@@ -104,6 +104,7 @@ import { ref, onMounted } from 'vue'
 import { Search } from 'lucide-vue-next'
 import { getTaskList } from '@/api/inspection'
 import { useSessionStore } from '@/store/session'
+import { DEBUG_IDS } from '@/debug/debugIds'
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'

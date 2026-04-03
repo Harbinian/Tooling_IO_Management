@@ -1,5 +1,5 @@
 <template>
-  <div class="animate-in fade-in space-y-8 duration-500 text-foreground">
+  <div v-debug-id="DEBUG_IDS.INSPECTION.DASHBOARD.PAGE_HEADER" class="animate-in fade-in space-y-8 duration-500 text-foreground">
     <header class="page-header">
       <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
@@ -22,7 +22,7 @@
     </header>
 
     <!-- 四宫格统计卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div v-debug-id="DEBUG_IDS.INSPECTION.DASHBOARD.STATS_CARD" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card v-for="stat in stats" :key="stat.label" class="border-border bg-card shadow-lg hover:shadow-xl transition-all overflow-hidden group">
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
@@ -39,7 +39,7 @@
     </div>
 
     <!-- 筛选与表格 -->
-    <Card class="border-border bg-card shadow-xl overflow-hidden">
+    <Card v-debug-id="DEBUG_IDS.INSPECTION.DASHBOARD.RECENT_TASKS_TABLE" class="border-border bg-card shadow-xl overflow-hidden">
       <CardHeader class="card-header">
         <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div class="card-header-inner">
@@ -132,12 +132,13 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import { 
-  Download, Search, AlertCircle, Clock, CheckCircle2, PlayCircle 
+import {
+  Download, Search, AlertCircle, Clock, CheckCircle2, PlayCircle
 } from 'lucide-vue-next'
 import { ElMessage } from 'element-plus'
 import { getStatsSummary, getPlanList, exportInspectionStatus } from '@/api/inspection'
 import { useSessionStore } from '@/store/session'
+import { DEBUG_IDS } from '@/debug/debugIds'
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'

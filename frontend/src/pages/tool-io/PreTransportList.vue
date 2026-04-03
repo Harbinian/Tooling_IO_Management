@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 text-foreground">
+  <div v-debug-id="DEBUG_IDS.PRE_TRANSPORT.PAGE_HEADER" class="space-y-6 text-foreground">
     <section class="space-y-2">
       <p class="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">预知运输</p>
       <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -10,7 +10,7 @@
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <Button variant="outline" @click="loadOrders">
+          <Button v-debug-id="DEBUG_IDS.PRE_TRANSPORT.REFRESH_BTN" variant="outline" @click="loadOrders">
             <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': loading }" />
             刷新列表
           </Button>
@@ -18,10 +18,10 @@
       </div>
     </section>
 
-    <Card class="overflow-hidden border-border/80 bg-card/85 shadow-lg">
+    <Card v-debug-id="DEBUG_IDS.PRE_TRANSPORT.ORDER_TABLE" class="overflow-hidden border-border/80 bg-card/85 shadow-lg">
       <CardHeader class="border-b border-border bg-muted/30 py-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
+          <div v-debug-id="DEBUG_IDS.PRE_TRANSPORT.FILTER_SECTION" class="flex items-center gap-4">
             <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">状态筛选</span>
             <div class="flex bg-muted/50 p-1 rounded-xl border border-border/50">
               <button
@@ -123,6 +123,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { RefreshCw, Truck, Clock, CheckCircle2 } from 'lucide-vue-next'
 import { getPreTransportOrders } from '@/api/orders'
+import { DEBUG_IDS } from '@/debug/debugIds'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
