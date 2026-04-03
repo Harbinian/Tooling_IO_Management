@@ -1,11 +1,11 @@
-﻿"""Runtime-safe Tool IO wrappers for workflow paths."""
+"""Runtime-safe Tool IO wrappers for workflow paths."""
 
 from __future__ import annotations
 
 import logging
 from typing import Dict, List
 
-from backend.database.schema.column_names import LOG_COLUMNS, NOTIFY_COLUMNS
+from backend.database.schema.column_names import LOG_COLUMNS, NOTIFY_COLUMNS, TABLE_NAMES
 from database import (
     DatabaseManager,
     get_pending_keeper_orders,
@@ -83,13 +83,10 @@ def get_recent_operation_errors(limit: int = 20) -> List[Dict]:
     try:
         db = DatabaseManager()
         return db.execute_query(
-            """
+            f"""
             SELECT TOP (?) *
-FROM {LOG_COLUMNS['table_name']}
-            WHERE 1=1
-            ORDER BY {LOG_COLUMNS['operation_time']} DESC
-            
-            
+            FROM [{TABLE_NAMES['ORDER_LOG']}]
+            ORDER BY [{LOG_COLUMNS['operation_time']}] DESC
             """,
             (limit,),
         )
@@ -103,11 +100,10 @@ def get_recent_notification_failures(limit: int = 20) -> List[Dict]:
     try:
         db = DatabaseManager()
         return db.execute_query(
-            """
+            f"""
             SELECT TOP (?) *
-FROM {NOTIFY_COLUMNS['table_name']}
-            WHERE 1=1
-            ORDER BY {NOTIFY_COLUMNS['send_time']} DESC
+            FROM [{TABLE_NAMES['ORDER_NOTIFICATION']}]
+            ORDER BY [{NOTIFY_COLUMNS['send_time']}] DESC
             """,
             (limit,),
         )
