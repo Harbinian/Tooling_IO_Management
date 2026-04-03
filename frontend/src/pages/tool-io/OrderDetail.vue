@@ -14,7 +14,7 @@
             {{ order.orderNo || orderNo }}
           </h1>
           <p class="mt-3 max-w-2xl text-sm leading-relaxed text-primary-foreground/80">
-            实时查看单据上下文、工装明细状态、工作流追踪以及通知记录。
+            实时查看单据上下文、工装明细状态以及工作流追踪。
           </p>
         </div>
         <div v-debug-id="DEBUG_IDS.ORDER_DETAIL.ACTION_SECTION" class="flex flex-wrap items-center gap-3">
@@ -144,7 +144,7 @@
           </CardContent>
         </Card>
 
-        <Card class="border-border bg-card shadow-xl">
+        <Card v-debug-id="DEBUG_IDS.ORDER_DETAIL.WORKFLOW_TRACKING" class="border-border bg-card shadow-xl">
           <CardHeader class="border-b border-border">
             <div class="space-y-1">
               <p class="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">流程</p>
@@ -231,50 +231,10 @@
           </CardContent>
         </Card>
 
-        <Card class="border-border bg-card shadow-xl">
-          <CardHeader class="border-b border-border">
-            <div class="space-y-1">
-              <p class="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">通知</p>
-              <CardTitle class="text-lg text-foreground">通知记录</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent class="pt-6">
-            <div v-if="order.notificationRecords?.length" class="space-y-3">
-              <article
-                v-for="(record, index) in order.notificationRecords"
-                :key="`${record.notifyType}-${record.sendTime}-${index}`"
-                class="rounded-2xl border border-border bg-muted/30 p-4 shadow-sm"
-              >
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div class="space-y-1">
-                    <p class="text-sm font-semibold text-foreground">
-                      {{ record.title || record.notifyType || '通知记录' }}
-                    </p>
-                    <p class="text-sm text-muted-foreground">
-                      {{ record.receiver || '-' }} · {{ record.notifyChannel || '-' }}
-                    </p>
-                  </div>
-                  <p class="text-xs text-muted-foreground/60">{{ formatDateTime(record.sendTime) }}</p>
-                </div>
-                <div class="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground/60">
-                  <span class="rounded-full bg-muted/50 px-2.5 py-1 border border-border/50">类型 {{ record.notifyType || '-' }}</span>
-                  <span class="rounded-full bg-muted/50 px-2.5 py-1 border border-border/50">状态 {{ record.sendStatus || '-' }}</span>
-                </div>
-                <p class="mt-3 text-sm leading-6 text-foreground/70">{{ record.sendResult || record.content || '-' }}</p>
-              </article>
-            </div>
-            <div
-              v-else
-              class="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground"
-            >
-              当前单据还没有通知记录。
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div class="grid gap-6 xl:grid-cols-3">
-        <div class="relative">
+        <div v-debug-id="DEBUG_IDS.ORDER_DETAIL.NOTIFICATION_PREVIEW_KEEPER" class="relative">
           <NotificationPreview
             type="keeper"
             :content="keeperText"
@@ -291,7 +251,7 @@
             发送飞书
           </Button>
         </div>
-        <div class="relative">
+        <div v-debug-id="DEBUG_IDS.ORDER_DETAIL.NOTIFICATION_PREVIEW_TRANSPORT" class="relative">
           <NotificationPreview
             type="transport"
             :content="transportText"
@@ -308,15 +268,17 @@
             发送飞书
           </Button>
         </div>
-        <NotificationPreview
-          type="wechat"
-          :content="wechatText"
-          empty-text="暂无复制文本"
-        />
+        <div v-debug-id="DEBUG_IDS.ORDER_DETAIL.NOTIFICATION_PREVIEW_WECHAT">
+          <NotificationPreview
+            type="wechat"
+            :content="wechatText"
+            empty-text="暂无复制文本"
+          />
+        </div>
       </div>
 
       <!-- Transport Issues Panel -->
-      <Card v-if="issues.length || canReportIssue" class="border-border bg-card shadow-xl overflow-hidden">
+      <Card v-debug-id="DEBUG_IDS.ORDER_DETAIL.TRANSPORT_ISSUES" v-if="issues.length || canReportIssue" class="border-border bg-card shadow-xl overflow-hidden">
         <CardHeader class="border-b border-border bg-muted/20">
           <div class="flex items-center justify-between">
             <div class="space-y-1">
@@ -404,7 +366,6 @@ import {
   cancelOrder,
   finalConfirmOrder,
   getFinalConfirmAvailability,
-  getNotificationRecords,
   generateKeeperText,
   generateTransportText,
   getOrderDetail,
@@ -447,8 +408,7 @@ const loading = ref(false)
 const errorMessage = ref('')
 const finalConfirmState = ref({ available: false, reason: '', expected_role: '' })
 const order = ref({
-  items: [],
-  notificationRecords: []
+  items: []
 })
 const logs = ref([])
 const keeperText = ref('')
@@ -546,24 +506,19 @@ async function loadOrder() {
   errorMessage.value = ''
 
   try {
-    const [detailResult, logResult, notificationResult, issueResult] = await Promise.all([
+    const [detailResult, logResult, issueResult] = await Promise.all([
       getOrderDetail(props.orderNo),
       getOrderLogs(props.orderNo),
-      getNotificationRecords(props.orderNo),
       getTransportIssues(props.orderNo).catch(() => ({ success: false, data: [] }))
     ])
 
     order.value = detailResult.success
       ? detailResult.data
       : {
-          items: [],
-          notificationRecords: []
+          items: []
         }
     logs.value = logResult.success ? logResult.data : []
     issues.value = issueResult.success ? issueResult.data : []
-    if (detailResult.success) {
-      order.value.notificationRecords = notificationResult.success ? notificationResult.data : order.value.notificationRecords || []
-    }
 
     if (!detailResult.success) {
       errorMessage.value = detailResult.error || '单据详情加载失败。'
@@ -597,7 +552,7 @@ async function loadOrder() {
       wechatText.value = transportResult.wechat_text
     }
   } catch (error) {
-    order.value = { items: [], notificationRecords: [] }
+    order.value = { items: [] }
     logs.value = []
     finalConfirmState.value = { available: false, reason: '', expected_role: '' }
     keeperText.value = ''

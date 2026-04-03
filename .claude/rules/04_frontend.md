@@ -118,3 +118,74 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)
 ## RBAC 数据隔离 / RBAC Data Isolation
 
 **测试时注意**: 不同组织的用户无法访问彼此的订单数据。E2E 测试需要使用同一组织的用户账户。
+
+---
+
+## DEBUG_ID 徽章同步 / DEBUG_ID Badge Synchronization
+
+### 规则 / Rules
+
+**添加新 UI 元素时，必须同时添加 v-debug-id。**
+
+| 元素类型 | 是否需要徽章 | 说明 |
+|---------|------------|------|
+| `<Card>` | ✅ 必须 | 主要内容容器 |
+| `<header>` | ✅ 必须 | 页面/区域头部 |
+| `<section>` | ✅ 必须 | 功能区域 |
+| `<Button>` | ✅ 必须 | 操作按钮 |
+| `<div>` 容器 | ⚠️ 推荐 | 关键面板区域 |
+| v-for 循环元素 | ❌ 除外 | 动态列表项（每个 item 自身应有标识） |
+| 动画/过渡元素 | ❌ 除外 | 不影响功能的装饰元素 |
+
+### DEBUG_IDS 维护流程 / Maintenance Process
+
+1. **添加元素时**：
+   - 在 `frontend/src/debug/debugIds.js` 中定义新 ID
+   - 在 Vue 文件中添加 `v-debug-id="DEBUG_IDS.XXX.YYY"`
+
+2. **ID 命名规范**：
+   ```
+   {PAGE}-{TYPE}-{NUMBER}
+   例: OD-PANEL-005, I-TASK-BTN-001
+   ```
+
+3. **自动化检查**：
+   ```bash
+   # 在 frontend 目录下运行
+   node scripts/check-debug-ids.js
+
+   # 显示详细输出
+   node scripts/check-debug-ids.js --verbose
+
+   # 检查特定文件
+   node scripts/check-debug-ids.js --files "src/pages/**/*.vue"
+   ```
+
+### CI/CD 集成 / CI/CD Integration
+
+在 PR 检查中运行覆盖度检查：
+
+```yaml
+# .github/workflows/frontend-check.yml
+- name: Check DEBUG_ID coverage
+  run: node scripts/check-debug-ids.js --threshold 0.8
+```
+
+### 已有但未同步的元素修复 / Fix Missing Elements
+
+如果检查发现遗漏，执行：
+
+1. 在 `debugIds.js` 中添加缺失的 ID 定义
+2. 在对应的 Vue 文件中添加 `v-debug-id` 属性
+3. 重新运行检查确认通过
+
+---
+
+## 预提交检查 / Pre-commit Check
+
+将覆盖度检查集成到 pre-commit hook：
+
+```bash
+# .git/hooks/pre-commit (或使用 husky)
+npm run check:debug-ids || exit 1
+```
