@@ -118,6 +118,8 @@ def api_tool_io_order_submit(order_no):
             return jsonify(result)
         if result.get("error") == "order not found":
             return jsonify(result), 404
+        if result.get("error_code") == "ORDER_STATUS_CONFLICT":
+            return jsonify(result), 409
         return jsonify(result), 400
     except ValueError as exc:
         return validation_error(str(exc))
@@ -380,6 +382,8 @@ def api_tool_io_order_cancel(order_no):
             return jsonify(result)
         if result.get("error") == "order not found":
             return jsonify(result), 404
+        if result.get("error_code") == "ORDER_STATUS_CONFLICT":
+            return jsonify(result), 409
         return jsonify(result), 400
     except ValueError as exc:
         return validation_error(str(exc))

@@ -319,6 +319,33 @@ class OrderRepository:
         try:
             from backend.database.repositories.tool_repository import ToolRepository
 
+            status_rows = self._db.execute_query(
+                """
+                SELECT [order_status]
+                FROM [tool_io_order]
+                WHERE [order_no] = ? AND [IS_DELETED] = 0
+                """,
+                (order_no,),
+            )
+            if not status_rows:
+                return {"success": False, "error": "订单不存在", "error_code": "ORDER_NOT_FOUND"}
+
+            current_status = status_rows[0].get("order_status")
+            if current_status == "submitted":
+                return {
+                    "success": True,
+                    "order_no": order_no,
+                    "status": "submitted",
+                    "idempotent": True,
+                }
+            if current_status != "draft":
+                return {
+                    "success": False,
+                    "error": f"当前状态不允许提交：{current_status}",
+                    "error_code": "ORDER_STATUS_CONFLICT",
+                    "current_status": current_status,
+                }
+
             # Check items exist
             detail_rows = self._db.execute_query(
                 "SELECT [serial_no] AS serial_no FROM [tool_io_order_item] WHERE [order_no] = ?",

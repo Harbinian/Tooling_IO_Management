@@ -886,7 +886,8 @@ def reset_order_to_draft(order_no: str, payload: Dict, current_user: Optional[Di
 
 
 def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    if not get_order_detail(order_no, current_user=current_user):
+    order = get_order_detail(order_no, current_user=current_user)
+    if not order:
         return _order_not_found_response()
     result = cancel_tool_io_order(
         order_no,
@@ -895,6 +896,19 @@ def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         payload.get("operator_role", ""),
         payload.get("cancel_reason", ""),
     )
+    if not result.get("success") and order.get("order_status") in {
+        "keeper_confirmed",
+        "partially_confirmed",
+        "transport_notified",
+        "transport_in_progress",
+        "transport_completed",
+        "final_confirmation_pending",
+        "completed",
+        "rejected",
+        "cancelled",
+    }:
+        result.setdefault("error_code", "ORDER_STATUS_CONFLICT")
+        result.setdefault("current_status", order.get("order_status"))
     if result.get("success"):
         actor = _build_actor_context(payload)
         order = get_order_detail_runtime(order_no)

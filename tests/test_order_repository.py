@@ -148,6 +148,51 @@ class OrderRepositoryPendingKeeperTests(unittest.TestCase):
 
 
 class OrderRepositoryCancellationAndResetTests(unittest.TestCase):
+    def test_submit_order_is_idempotent_when_already_submitted(self):
+        db = Mock()
+        db.execute_query.side_effect = [
+            [{"order_status": "submitted"}],
+        ]
+        repo = OrderRepository(db_manager=db)
+        repo.add_tool_io_log = Mock(return_value=True)
+
+        result = repo.submit_order(
+            "ORD-001",
+            operator_id="U_INIT",
+            operator_name="Initiator",
+            operator_role="team_leader",
+        )
+
+        self.assertEqual(
+            result,
+            {
+                "success": True,
+                "order_no": "ORD-001",
+                "status": "submitted",
+                "idempotent": True,
+            },
+        )
+        self.assertEqual(db.execute_query.call_count, 1)
+        repo.add_tool_io_log.assert_not_called()
+
+    def test_submit_order_returns_status_conflict_for_non_draft_state(self):
+        db = Mock()
+        db.execute_query.side_effect = [
+            [{"order_status": "keeper_confirmed"}],
+        ]
+        repo = OrderRepository(db_manager=db)
+
+        result = repo.submit_order(
+            "ORD-002",
+            operator_id="U_INIT",
+            operator_name="Initiator",
+            operator_role="team_leader",
+        )
+
+        self.assertEqual(result["success"], False)
+        self.assertEqual(result["error_code"], "ORDER_STATUS_CONFLICT")
+        self.assertEqual(result["current_status"], "keeper_confirmed")
+
     def test_cancel_order_persists_cancel_reason_to_reject_and_cancel_reason_columns(self):
         db = Mock()
         db.execute_query.side_effect = [

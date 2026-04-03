@@ -60,6 +60,7 @@
           </Button>
           <Button
             v-if="canDelete"
+            v-debug-id="DEBUG_IDS.ORDER_DETAIL.DELETE_BTN"
             variant="destructive"
             class="bg-destructive font-bold text-primary-foreground shadow-lg hover:bg-destructive/90 border-none"
             @click="deleteCurrentOrder"
@@ -68,6 +69,7 @@
           </Button>
           <Button
             v-if="canReportIssue"
+            v-debug-id="DEBUG_IDS.ORDER_DETAIL.REPORT_ISSUE_BTN"
             variant="default"
             class="bg-warning font-bold text-primary-foreground shadow-lg hover:bg-warning/90 border-none"
             @click="reportIssueVisible = true"

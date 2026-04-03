@@ -283,6 +283,7 @@ const keeperText = ref('')
 const searchDialogVisible = ref(false)
 const savingDraft = ref(false)
 const submittingOrder = ref(false)
+const createdOrderNo = ref('')
 
 const selectedToolCodes = computed(() => selectedTools.value.map((tool) => tool.toolCode).filter(Boolean))
 
@@ -391,7 +392,7 @@ async function handlePreview() {
 }
 
 async function saveDraft() {
-  if (!validateBeforeSubmit()) return
+  if (savingDraft.value || submittingOrder.value || !validateBeforeSubmit()) return
   savingDraft.value = true
 
   try {
@@ -401,6 +402,7 @@ async function saveDraft() {
       return
     }
 
+    createdOrderNo.value = result.order_no || ''
     ElMessage.success(`草稿已保存：${result.order_no}`)
     router.push(`/inventory/${result.order_no}`)
   } finally {
@@ -409,20 +411,25 @@ async function saveDraft() {
 }
 
 async function submitCreatedOrder() {
-  if (!validateBeforeSubmit()) return
+  if (submittingOrder.value || savingDraft.value || !validateBeforeSubmit()) return
   submittingOrder.value = true
 
   try {
-    const created = await createOrder(buildPayload())
-    if (!created.success) {
-      ElMessage.error(created.error || '创建单据失败')
-      return
-    }
-    if (created.warning) {
-      ElMessage.warning(created.warning)
+    let orderNo = createdOrderNo.value
+    if (!orderNo) {
+      const created = await createOrder(buildPayload())
+      if (!created.success) {
+        ElMessage.error(created.error || '创建单据失败')
+        return
+      }
+      if (created.warning) {
+        ElMessage.warning(created.warning)
+      }
+      orderNo = created.order_no
+      createdOrderNo.value = orderNo || ''
     }
 
-    const result = await submitOrder(created.order_no, {
+    const result = await submitOrder(orderNo, {
       operator_id: session.userId || 'anonymous',
       operator_name: session.userName || 'anonymous',
       operator_role: session.role || 'team_leader'
@@ -436,8 +443,10 @@ async function submitCreatedOrder() {
       ElMessage.warning(result.warning)
     }
 
-    ElMessage.success(`单据已提交：${created.order_no}`)
-    router.push(`/inventory/${created.order_no}`)
+    ElMessage.success(`单据已提交：${orderNo}`)
+    router.push(`/inventory/${orderNo}`)
+  } catch (error) {
+    console.error('[OrderCreate] submitCreatedOrder failed:', error)
   } finally {
     submittingOrder.value = false
   }
@@ -453,6 +462,7 @@ function resetForm() {
   form.remark = ''
   selectedTools.value = []
   keeperText.value = ''
+  createdOrderNo.value = ''
 }
 </script>
 

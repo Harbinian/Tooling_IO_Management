@@ -241,6 +241,11 @@
 
 **状态转换：** `draft` → `submitted`
 
+**错误语义：**
+- `404`: 订单不存在
+- `409`: 当前订单已是 `submitted` 以外的非草稿状态，不能再次提交
+- 重复点击导致的同一订单重复提交按幂等成功返回 `200`
+
 ---
 
 ### 1.5 保管员确认
@@ -350,7 +355,11 @@
 | operator_name | string | 是 | 操作人姓名 |
 | operator_role | string | 是 | 操作人角色 |
 
-**状态转换：** 非终态 → `cancelled`
+**状态转换：** `draft` / `submitted` → `cancelled`
+
+**错误语义：**
+- `404`: 订单不存在
+- `409`: 当前状态不允许取消，例如 `keeper_confirmed`、`transport_in_progress`、`completed`、`cancelled`
 
 ---
 
