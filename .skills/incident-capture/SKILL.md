@@ -1,14 +1,26 @@
-# 事件捕获 / INCIDENT CAPTURE
+---
+name: incident-capture
+executor: Claude Code
+auto_invoke: false
+depends_on:
+  - incident-monitor
+triggers: []
+rules_ref:
+  - .claude/rules/00_core.md
+version: 1.0.0
+---
+
+# 事件捕获技能 / INCIDENT CAPTURE
 
 ---
 
 ## 目的 / Purpose
 
-捕获运行时错误、日志或意外系统行为，并将其转换为结构化的事件记录。 / Capture runtime errors, logs, or unexpected system behaviors and convert them into a structured incident record.
+捕获运行时错误、日志或意外系统行为，并将其转换为结构化的事件记录。/ Capture runtime errors, logs, or unexpected system behaviors and convert them into a structured incident record.
 
-此技能准备事件数据，以便 `bug-triage` 可以分析并生成 bug 修复提示词。 / This skill prepares incident data so that `bug-triage` can analyze it and generate a bug-fix prompt.
+此技能准备事件数据，以便 `bug-triage` 可以分析并生成 bug 修复提示词。/ This skill prepares incident data so that `bug-triage` can analyze it and generate a bug-fix prompt.
 
-此技能不直接修复问题。 / This skill does NOT fix the issue directly.
+此技能不直接修复问题。/ This skill does NOT fix the issue directly.
 
 ---
 
@@ -138,6 +150,17 @@
 - 执行 bug 修复 / execute bug fixes
 
 它仅记录事件并为分类准备数据。 / It only records incidents and prepares data for triage.
+
+---
+
+## 与相邻技能的边界 / Boundary with Adjacent Skills
+
+| 维度 | 本技能 | incident-monitor |
+|------|--------|-----------------|
+| 触发时机 | 被动接收，记录已发生事件 | 持续轮询，主动发现异常 |
+| 输入 | 错误日志、堆栈跟踪、用户报告 | 后端日志、前端控制台、预检报告等 |
+| 输出 | 结构化事件文件 | 监控报告 + 建议 |
+| 职责 | 接收 + 记录 + 准备分类 | 检测 + 建议是否捕获 |
 
 ---
 

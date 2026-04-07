@@ -1,0 +1,33 @@
+# E2E 测试账户 / E2E Test Accounts
+
+**用途**: `human-e2e-tester` 技能专用测试账户，所有用户必须属于同一组织以便进行 RBAC 数据范围测试。
+
+**权威来源**: `backend/database/schema/schema_manager.py` 中的初始化数据
+
+---
+
+## 测试账户表 / Test Accounts Table
+
+| 用户名 | 登录名 | 密码 | 角色 | 角色 ID | 组织 | 测试重点 |
+|--------|--------|------|------|---------|------|---------|
+| 冯亮 | fengliang | test1234 | 生产准备工 (Production Prep) | `ROLE_PRODUCTION_PREP` | 同一组织 | 运输执行、位置查看 |
+| 胡婷婷 | hutingting | test1234 | 保管员 (Keeper) | `ROLE_KEEPER` | 同一组织 | 订单确认、驳回、通知 |
+| 太东旭 | taidongxu | test1234 | 班组长 (Team Leader) | `ROLE_TEAM_LEADER` | 同一组织 | 创建订单、提交、最终确认 |
+| CA | admin | admin123 | 系统管理员 (System Administrator) | `ROLE_SYS_ADMIN` | ALL | 管理权限、订单删除 |
+
+**注意**: 太东旭的登录名是 `taidongxu`（非 taitongxu），密码已统一重置为 `test1234`。
+
+---
+
+## 测试数据约束 / Test Data Constraint
+
+所有 E2E 测试必须**仅使用**以下测试工装数据：
+
+| 字段 | 值 |
+|------|-----|
+| 序列号 | `T000001` |
+| 工装图号 | `Tooling_IO_TEST` |
+| 工装名称 | `测试用工装` |
+| 机型 | `测试机型` |
+
+**禁止使用其他工装数据进行测试！**

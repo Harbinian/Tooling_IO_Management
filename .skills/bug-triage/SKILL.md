@@ -1,13 +1,25 @@
-# Bug 分类 / BUG TRIAGE
+---
+name: bug-triage
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/02_debug.md
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# Bug 分类技能 / BUG TRIAGE
 
 ---
 
 ## 目的 / Purpose
 
-分析新报告的 bug，分类其严重性和所有权，为正确的执行者生成结构化的后续提示词。 / Analyze a newly reported bug, classify its severity and ownership, and generate a structured follow-up prompt for the correct executor.
+分析新报告的 bug，分类其严重性和所有权，为正确的执行者生成结构化的后续提示词。/ Analyze a newly reported bug, classify its severity and ownership, and generate a structured follow-up prompt for the correct executor.
 
-此技能不直接修复 bug。 / This skill does NOT directly fix the bug.
-它为流水线创建 bug 任务。 / It creates a bug task for the pipeline.
+此技能不直接修复 bug。/ This skill does NOT directly fix the bug.
+它为流水线创建 bug 任务。/ It creates a bug task for the pipeline.
 
 ---
 

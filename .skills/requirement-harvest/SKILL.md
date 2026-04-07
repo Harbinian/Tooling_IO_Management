@@ -1,12 +1,23 @@
-# 需求收集 / REQUIREMENT HARVEST
+---
+name: requirement-harvest
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# 需求收集技能 / REQUIREMENT HARVEST
 
 ---
 
 ## 目的 / Purpose
 
-通过结构化的5W2H问答流程，引导用户明确需求，生成标准化的需求文档。 / Guide users through a structured 5W2H questioning process to clarify requirements and generate standardized requirement documents.
+通过结构化的5W2H问答流程，引导用户明确需求，生成标准化的需求文档。/ Guide users through a structured 5W2H questioning process to clarify requirements and generate standardized requirement documents.
 
-此技能不直接实现功能，只收集和整理需求。 / This skill does NOT implement features — it only collects and organizes requirements.
+此技能不直接实现功能，只收集和整理需求。/ This skill does NOT implement features — it only collects and organizes requirements.
 
 ---
 

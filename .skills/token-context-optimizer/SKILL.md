@@ -1,5 +1,11 @@
 name: token-context-optimizer
 executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/00_core.md
+version: 1.0.0
 description: 维护 .trae/.ignore 以通过从 AI 上下文扫描中排除大型或无关文件来减少 token 使用。/ Maintain .trae/.ignore to reduce token usage by excluding large or irrelevant files from AI context scanning.
 
 ---
@@ -11,17 +17,15 @@ description: 维护 .trae/.ignore 以通过从 AI 上下文扫描中排除大型
 此技能减少 AI 辅助开发期间的 token 消耗。/ This skill reduces token consumption during AI-assisted development.
 
 它维护文件：/ It maintains the file:
-
 `.trae/.ignore`
 
 此文件告诉 AI 环境在加载仓库上下文时哪些目录和文件不应该被扫描。/ This file tells the AI environment which directories and files should NOT be scanned when loading repository context.
 
 目标是让 AI 上下文专注于：/ The goal is to keep AI context focused on:
-
-后端源代码 / backend source code
-前端源代码 / frontend source code
-主动提示词 / active prompts
-基本架构文档 / essential architecture documents
+- 后端源代码 / backend source code
+- 前端源代码 / frontend source code
+- 主动提示词 / active prompts
+- 基本架构文档 / essential architecture documents
 
 并忽略其他一切。/ and ignore everything else.
 

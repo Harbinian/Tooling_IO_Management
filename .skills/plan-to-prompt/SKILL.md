@@ -1,3 +1,18 @@
+---
+name: plan-to-prompt
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/01_workflow.md
+  - .claude/rules/02_debug.md
+  - .claude/rules/03_hotfix.md
+  - .claude/rules/05_task_convention.md
+  - .claude/rules/06_testing.md
+version: 1.0.0
+---
+
 # 计划转提示词技能 / Plan-to-Prompt Skill
 
 **规则约束**: 本技能在转换计划时，根据任务类型调用相应规则：
@@ -8,23 +23,14 @@
 
 ## 目的 / Purpose
 
-本技能将 Claude Code "计划模式"（Plan Mode）产生的对话结果转换为符合项目标准的可执行开发提示词。
+本技能将 Claude Code "计划模式"（Plan Mode）产生的对话结果转换为符合项目标准的可执行开发提示词。/ This skill converts Claude Code Plan Mode conversation results into executable development prompts that comply with project standards.
 
-This skill converts Claude Code Plan Mode conversation results into executable development prompts that comply with project standards.
-
-计划模式产生的对话结果具有独特的特点：
-- 更完整的上下文（Context）
-- 明确的架构设计（Architecture）
-- 具体的实现步骤（Implementation Steps）
-- 约束条件（Constraints）
-- 验证计划（Verification Plan）
-
-Plan Mode results have unique characteristics:
-- Complete context
-- Explicit architecture design
-- Specific implementation steps
-- Constraints
-- Verification plan
+计划模式产生的对话结果具有独特的特点：/ Plan Mode results have unique characteristics:
+- 更完整的上下文（Context）/ Complete context
+- 明确的架构设计（Architecture）/ Explicit architecture design
+- 具体的实现步骤（Implementation Steps）/ Specific implementation steps
+- 约束条件（Constraints）/ Constraints
+- 验证计划（Verification Plan）/ Verification plan
 
 ---
 
@@ -189,6 +195,19 @@ Then output the full prompt content.
 | Gemini       | Frontend tasks: UI, UX, component styling, page layout       |
 | Codex        | Backend tasks: API, service logic, database queries           |
 | Claude Code  | Architecture tasks: refactoring, cross-cutting concerns, RBAC design, workflow redesign, multi-file structural changes |
+
+---
+
+---
+
+## 与相邻技能的边界 / Boundary with Adjacent Skills
+
+| 维度 | 本技能 | prompt-generator |
+|------|--------|-----------------|
+| 输入 | 计划文件路径或对话内容（来自 Plan Mode） | 自由文本需求描述 |
+| 输出 | 单个或批量提示词文件 | 单个提示词文件 |
+| 使用场景 | 用户使用 Plan Mode 产生计划后 | 用户直接描述需求 |
+| 与 prompt-generator 关系 | 下游：plan-to-prompt 产生的提示词可由 prompt-generator 精化 | 上游：prompt-generator 可直接生成提示词 |
 
 ---
 

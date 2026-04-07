@@ -1,4 +1,18 @@
-# 提示词生成器 / Prompt Generator Skill
+---
+name: prompt-generator
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/01_workflow.md
+  - .claude/rules/02_debug.md
+  - .claude/rules/03_hotfix.md
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# 提示词生成器技能 / Prompt Generator Skill
 
 **规则约束**: 本技能生成提示词时，根据任务类型调用相应规则：
 - 功能开发/重构/测试 → `.claude/rules/01_workflow.md` (ADP 四阶段开发协议)
@@ -8,9 +22,9 @@
 
 ## 目的 / Purpose
 
-本技能使 AI 代理能够生成符合项目 AI 驱动开发工作流的标准化开发提示词。
+本技能使 AI 代理能够生成符合项目 AI 驱动开发工作流的标准化开发提示词。/ This skill enables AI agents to generate standardized development prompts that comply with the project's AI-driven development workflow.
 
-生成的提示词必须遵循项目的提示词规范，并且必须可以直接在 `promptsRec/active/` 目录中使用。
+生成的提示词必须遵循项目的提示词规范，并且必须可以直接在 `promptsRec/active/` 目录中使用。/ The generated prompts must follow the project's prompt specifications and must be directly usable in the `promptsRec/active/` directory.
 
 ---
 
@@ -196,6 +210,17 @@ AI 不得：
 - 仅输出提示词内容而不生成实际文件
 - 生成不完整的提示词
 - 跳过必需章节
+
+---
+
+## 与相邻技能的边界 / Boundary with Adjacent Skills
+
+| 维度 | 本技能 | auto-task-generator |
+|------|--------|-------------------|
+| 输入 | 自由文本需求描述或问题分析 | 结构化问题检测 |
+| 输出 | 单个提示词文件 | 批量任务队列/自动编号 |
+| 使用场景 | 单次临时任务、用户触发 | 自动检测触发、流水线集成 |
+| 触发方式 | 手动调用 | 自动检测 + 手动调用 |
 - 无正当理由重新设计稳定架构
 - 假设数据库架构
 - 不检查就假设后端 API

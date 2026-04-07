@@ -1,14 +1,25 @@
-# 发布预检 / RELEASE PRECHECK
+---
+name: release-precheck
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/07_ci_gates.md
+version: 1.0.0
+---
+
+# 发布预检技能 / RELEASE PRECHECK
 
 ---
 
 ## 目的 / Purpose
 
-在发布项目之前执行最终的系统一致性审查。 / Perform a final system consistency review before releasing the project.
+在发布项目之前执行最终的系统一致性审查。/ Perform a final system consistency review before releasing the project.
 
-此技能验证文档、后端实现、数据库 Schema 和前端集成的内部一致性。 / This skill verifies that documentation, backend implementation, database schema, and frontend integration are internally consistent.
+此技能验证文档、后端实现、数据库 Schema 和前端集成的内部一致性。/ This skill verifies that documentation, backend implementation, database schema, and frontend integration are internally consistent.
 
-此技能不修改项目文件，仅生成最终报告。 / This skill does NOT modify project files except for generating the final report.
+此技能不修改项目文件，仅生成最终报告。/ This skill does NOT modify project files except for generating the final report.
 
 ---
 

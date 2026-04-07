@@ -1,15 +1,26 @@
-# 事件监控 / INCIDENT MONITOR
+---
+name: incident-monitor
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/00_core.md
+version: 1.0.0
+---
+
+# 事件监控技能 / INCIDENT MONITOR
 
 ---
 
 ## 目的 / Purpose
 
-监控事件来源并识别应捕获为结构化事件的新运行时问题。 / Monitor incident sources and identify new runtime problems that should be captured as structured incidents.
+监控事件来源并识别应捕获为结构化事件的新运行时问题。/ Monitor incident sources and identify new runtime problems that should be captured as structured incidents.
 
-此技能不直接修复问题。 / This skill does NOT fix issues directly.
-此技能不直接生成 bug 修复提示词。 / This skill does NOT generate bug-fix prompts directly.
+此技能不直接修复问题。/ This skill does NOT fix issues directly.
+此技能不直接生成 bug 修复提示词。/ This skill does NOT generate bug-fix prompts directly.
 
-其职责是: / Its responsibility is:
+其职责是：/ Its responsibility is:
 
 1. 检测潜在事件 / detect potential incidents
 2. 总结发现的内容 / summarize what was found
@@ -211,6 +222,17 @@ incidents/gui_events/   # GUI Launcher 生成的事件文件 (GUI_EVENT_*.json)
 - 直接创建事件文件 / create incident files directly
 
 此技能仅监控并建议下一步操作。 / This skill only monitors and recommends the next action.
+
+---
+
+## 与相邻技能的边界 / Boundary with Adjacent Skills
+
+| 维度 | 本技能 | incident-capture |
+|------|--------|-----------------|
+| 触发时机 | 持续轮询，主动发现异常 | 被动接收，记录已发生事件 |
+| 输入 | 后端日志、前端控制台、预检报告等 | 错误日志、堆栈跟踪、用户报告 |
+| 输出 | 监控报告 + 建议 | 结构化事件文件 |
+| 职责 | 检测 + 建议是否捕获 | 接收 + 记录 + 准备分类 |
 
 ---
 

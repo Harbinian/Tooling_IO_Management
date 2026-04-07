@@ -72,6 +72,8 @@ const navigation = [
         icon: Settings,
         children: [
           { name: '账号管理', href: '/admin/users', permission: 'admin:user_manage' },
+          { name: '角色管理', href: '/admin/roles', permission: 'admin:role_manage' },
+          { name: '权限管理', href: '/admin/permissions', permission: 'admin:role_manage' },
           { name: '反馈管理', href: '/admin/feedback', permission: 'admin:user_manage' },
           { name: '个人设置', href: '/settings', permission: 'dashboard:view' }
         ]

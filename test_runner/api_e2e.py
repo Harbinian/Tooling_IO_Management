@@ -27,20 +27,6 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from test_runner.commands import start, advance, status, stop
 
-# P1-2: 集成感知层
-SENSING_PACKAGE_ROOT = REPO_ROOT / ".skills" / "human-e2e-tester"
-if str(SENSING_PACKAGE_ROOT) not in sys.path:
-    sys.path.insert(0, str(SENSING_PACKAGE_ROOT))
-
-# 统一数据库路径
-E2E_SENSING_DB = REPO_ROOT / "test_reports" / "e2e_sensing.db"
-
-# API E2E 测试不使用感知系统，因为没有浏览器页面可以观察
-# SensingOrchestrator 依赖 Playwright/Selenium driver 来获取页面状态
-# API 测试只有 HTTP 响应，没有页面状态可言
-SENSING_AVAILABLE = False
-print("[INFO] API E2E mode: sensing disabled (no browser available)")
-
 
 # =============================================================================
 # 配置
@@ -600,8 +586,7 @@ def is_recoverable_error(e: Exception) -> bool:
 
 
 def execute_step(step_name: str, before_action: callable, action: callable,
-                 after_action: callable, expected_next_state: str = None,
-                 orchestrator=None):
+                 after_action: callable, expected_next_state: str = None):
     """
     统一步骤执行框架: before -> action -> after -> advance
 
@@ -614,59 +599,15 @@ def execute_step(step_name: str, before_action: callable, action: callable,
         action: 主要操作，返回 (status_code, body)
         after_action: 执行后的验证操作
         expected_next_state: 期望的下一步状态
-        orchestrator: 感知协调器（可选）
     """
-    # before
-    if orchestrator:
-        orchestrator.snapshot_before(None)
-
     try:
         # action
         result = action()
         status_code, body = result if isinstance(result, tuple) else (result, None)
 
-        # after
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation=step_name,
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status=expected_next_state
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, step_name, anomalies, critical)
-
         return result  # Return the original result tuple, not (status_code, body)
 
     except Exception as e:
-        # 即使失败，也要执行 snapshot_after
-        if orchestrator:
-            try:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    None,
-                    operation=step_name,
-                    api_response={"status_code": 0, "body": {"error": str(e)}},
-                    expected_next_status=expected_next_state
-                )
-            except Exception:
-                # snapshot_after 本身也可能失败，忽略
-                anomalies = []
-                checks = []
-
-            # 记录异常
-            anomalies_count = 1
-            critical_count = 1 if is_critical_error(e) else 0
-
-            # 仍要 advance 或 stop
-            if is_recoverable_error(e):
-                _sensing_advance(orchestrator, step_name, anomalies, critical_count)
-            else:
-                _sensing_advance(orchestrator, step_name, anomalies, critical_count)
-                try:
-                    stop(f"step_failed: {step_name}, error: {str(e)}")
-                except Exception:
-                    pass
-
         # 重新抛出异常
         raise
 
@@ -675,7 +616,7 @@ def execute_step(step_name: str, before_action: callable, action: callable,
 # PHASE 1: 快速冒烟测试
 # =============================================================================
 
-def run_quick_smoke_test(report: TestReport, orchestrator=None):
+def run_quick_smoke_test(report: TestReport):
     """快速冒烟测试 - 验证基本功能"""
     print("\n" + "=" * 50)
     print("[PHASE 1] Quick Smoke Test")
@@ -683,24 +624,7 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
 
     # 1. 测试登录 API
     print("\n[1/4] Testing login API...")
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token, user_id, user_data = login_user("taidongxu", TEST_USERS["taidongxu"]["password"])
-
-    if orchestrator:
-        snap, anomalies, checks = orchestrator.snapshot_after(
-            None,
-            operation="smoke_login",
-            api_response={"status_code": 200 if token else 401, "body": user_data},
-            expected_next_status="logged_in"
-        )
-        critical = sum(1 for a in anomalies if a.severity == "critical")
-        try:
-            advance("smoke_login", len(anomalies), critical)
-        except Exception:
-            pass
 
     if token:
         report.add_step("smoke_01", "taidongxu", "登录", "PASS",
@@ -714,24 +638,7 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
 
     # 2. 测试获取订单列表
     print("[2/4] Testing order list API...")
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_get("/tool-io-orders", token=token)
-
-    if orchestrator:
-        snap, anomalies, checks = orchestrator.snapshot_after(
-            None,
-            operation="smoke_list_orders",
-            api_response={"status_code": status_code, "body": body},
-            expected_next_status="orders_viewed"
-        )
-        critical = sum(1 for a in anomalies if a.severity == "critical")
-        try:
-            advance("smoke_list_orders", len(anomalies), critical)
-        except Exception:
-            pass
 
     if status_code == 200:
         report.add_step("smoke_02", "taidongxu", "获取订单列表", "PASS",
@@ -742,10 +649,6 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
 
     # 3. 测试创建订单
     print("[3/4] Testing order creation API...")
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post("/tool-io-orders", {
         "order_type": "outbound",
         "initiator_id": user_id,
@@ -772,33 +675,9 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
         global _test_data_manager
         if _test_data_manager:
             _test_data_manager.add_order(order_no)
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="smoke_create_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="draft"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            try:
-                advance("smoke_create_order", len(anomalies), critical)
-            except Exception:
-                pass
         report.add_step("smoke_03", "taidongxu", "创建订单", "PASS",
                        details=f"order_no={order_no}", http_status=status_code)
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="smoke_create_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="draft"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            try:
-                advance("smoke_create_order", len(anomalies), critical)
-            except Exception:
-                pass
         report.add_step("smoke_03", "taidongxu", "创建订单", "FAIL",
                        details=f"status={status_code}, error={body.get('error')}", http_status=status_code)
 
@@ -806,26 +685,11 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
     if order_no:
         print(f"[4/4] Cleaning up test order {order_no}...")
         admin_token, _, _ = login_user("admin", "admin123")
-        if orchestrator:
-            orchestrator.set_user_context("admin", "SYS_ADMIN", "ORG001")
-            orchestrator.snapshot_before(None)
         status_code, body = api_delete(f"/tool-io-orders/{order_no}", {
             "operator_id": "U_ADMIN",
             "operator_name": "管理员",
             "operator_role": "admin"
         }, token=admin_token)
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="smoke_delete_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="deleted"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            try:
-                advance("smoke_delete_order", len(anomalies), critical)
-            except Exception:
-                pass
         if status_code == 200:
             if _test_data_manager:
                 _test_data_manager.remove_order(order_no)
@@ -844,19 +708,12 @@ def run_quick_smoke_test(report: TestReport, orchestrator=None):
 # PHASE 2: 完整出库工作流测试
 # =============================================================================
 
-def _sensing_advance(orchestrator, operation, anomalies, critical_count):
-    """Helper to call advance with error handling"""
-    try:
-        advance(operation, len(anomalies), critical_count)
-    except Exception:
-        pass
-
 
 # =============================================================================
 # 关键步骤封装 (使用 execute_step 框架)
 # =============================================================================
 
-def step_login(username: str, password: str, orchestrator=None) -> tuple:
+def step_login(username: str, password: str) -> tuple:
     """
     步骤: login - 用户登录
 
@@ -871,8 +728,7 @@ def step_login(username: str, password: str, orchestrator=None) -> tuple:
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="logged_in",
-        orchestrator=orchestrator
+        expected_next_state="logged_in"
     )
 
     # login_user returns (token, user_id, user_data)
@@ -881,8 +737,7 @@ def step_login(username: str, password: str, orchestrator=None) -> tuple:
     return None, None, None
 
 
-def step_create_order(token: str, user_id: int, order_type: str, order_no: str = None,
-                      orchestrator=None) -> tuple:
+def step_create_order(token: str, user_id: int, order_type: str, order_no: str = None) -> tuple:
     """
     步骤: create_order - 创建订单
 
@@ -913,16 +768,14 @@ def step_create_order(token: str, user_id: int, order_type: str, order_no: str =
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="draft",
-        orchestrator=orchestrator
+        expected_next_state="draft"
     )
 
     result_order_no = body.get("order_no") if body else None
     return status_code, body, result_order_no
 
 
-def step_submit_order(order_no: str, token: str, user_id: int,
-                      orchestrator=None) -> tuple:
+def step_submit_order(order_no: str, token: str, user_id: int) -> tuple:
     """
     步骤: submit_order - 提交订单
 
@@ -941,15 +794,14 @@ def step_submit_order(order_no: str, token: str, user_id: int,
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="submitted",
-        orchestrator=orchestrator
+        expected_next_state="submitted"
     )
 
     return status_code, body
 
 
 def step_keeper_confirm(order_no: str, token: str, user_id: int,
-                        transport_assignee_id: str, orchestrator=None,
+                        transport_assignee_id: str,
                         order_items: list = None) -> tuple:
     """
     步骤: keeper_confirm - 保管员确认
@@ -959,7 +811,6 @@ def step_keeper_confirm(order_no: str, token: str, user_id: int,
         token: 认证令牌
         user_id: 保管员用户ID
         transport_assignee_id: 运输接收人ID
-        orchestrator: 感知编排器(可选)
         order_items: 订单明细列表(可选)，如果提供则使用其中的item_id
 
     Returns:
@@ -1021,15 +872,13 @@ def step_keeper_confirm(order_no: str, token: str, user_id: int,
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="keeper_confirmed",
-        orchestrator=orchestrator
+        expected_next_state="keeper_confirmed"
     )
 
     return status_code, body
 
 
-def step_transport_start(order_no: str, token: str, user_id: int,
-                          orchestrator=None) -> tuple:
+def step_transport_start(order_no: str, token: str, user_id: int) -> tuple:
     """
     步骤: transport_execute (start) - 开始运输
 
@@ -1048,15 +897,13 @@ def step_transport_start(order_no: str, token: str, user_id: int,
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="transport_in_progress",
-        orchestrator=orchestrator
+        expected_next_state="transport_in_progress"
     )
 
     return status_code, body
 
 
-def step_transport_complete(order_no: str, token: str, user_id: int,
-                             orchestrator=None) -> tuple:
+def step_transport_complete(order_no: str, token: str, user_id: int) -> tuple:
     """
     步骤: transport_execute (complete) - 完成运输
 
@@ -1075,16 +922,14 @@ def step_transport_complete(order_no: str, token: str, user_id: int,
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="transport_completed",
-        orchestrator=orchestrator
+        expected_next_state="transport_completed"
     )
 
     return status_code, body
 
 
 def step_final_confirm(order_no: str, token: str, user_id: int,
-                        operator_role: str, order_type: str = "outbound",
-                        orchestrator=None) -> tuple:
+                        operator_role: str, order_type: str = "outbound") -> tuple:
     """
     步骤: final_confirm - 最终确认
 
@@ -1096,7 +941,6 @@ def step_final_confirm(order_no: str, token: str, user_id: int,
         order_type: "outbound" 或 "inbound"
             - outbound: TEAM_LEADER 最终确认
             - inbound: KEEPER 最终确认
-        orchestrator: 可选的编排器
 
     Returns:
         (status_code, body)
@@ -1118,14 +962,13 @@ def step_final_confirm(order_no: str, token: str, user_id: int,
         before_action=None,
         action=action,
         after_action=None,
-        expected_next_state="completed",
-        orchestrator=orchestrator
+        expected_next_state="completed"
     )
 
     return status_code, body
 
 
-def run_full_workflow_test(report: TestReport, orchestrator=None):
+def run_full_workflow_test(report: TestReport):
     """完整出库工作流测试"""
     print("\n" + "=" * 50)
     print("[PHASE 2] Full Outbound Workflow Test")
@@ -1136,21 +979,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 2A: Order Creation (taidongxu) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_td, user_id_td, _ = ensure_user_session("taidongxu")
-
-    if orchestrator:
-        snap, anomalies, checks = orchestrator.snapshot_after(
-            None,
-            operation="wf_login_taidongxu",
-            api_response={"status_code": 200 if token_td else 401},
-            expected_next_status="logged_in"
-        )
-        critical = sum(1 for a in anomalies if a.severity == "critical")
-        _sensing_advance(orchestrator, "wf_login_taidongxu", anomalies, critical)
 
     if not token_td:
         report.add_step("wf_01", "taidongxu", "登录", "FAIL", "Login failed")
@@ -1162,10 +991,6 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     TEST_USERS["taidongxu"]["user_id"] = user_id_td
 
     # 创建出库订单
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post("/tool-io-orders", {
         "order_type": "outbound",
         "initiator_id": user_id_td,
@@ -1192,37 +1017,14 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
         global _test_data_manager
         if _test_data_manager:
             _test_data_manager.add_order(order_no)
-        if orchestrator:
-            orchestrator.set_order_context(order_no, "draft", "outbound")
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_create_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="draft"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_create_order", anomalies, critical)
         report.add_step("wf_02", "taidongxu", "创建出库订单", "PASS", f"order_no={order_no}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_create_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="draft"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_create_order", anomalies, critical)
         report.add_step("wf_02", "taidongxu", "创建出库订单", "FAIL",
                        details=f"status={status_code}, error={body}")
         print(f"   [ERROR] Failed to create order: {body}")
         return
 
     # 提交订单
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post(f"/tool-io-orders/{order_no}/submit", {
         "operator_id": user_id_td,
         "operator_name": "太东旭",
@@ -1230,75 +1032,25 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     }, token=token_td)
 
     if status_code == 200 and body.get("success"):
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_submit_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="submitted"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_submit_order", anomalies, critical)
         report.add_step("wf_03", "taidongxu", "提交订单", "PASS", f"order_no={order_no}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_submit_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="submitted"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_submit_order", anomalies, critical)
         report.add_step("wf_03", "taidongxu", "提交订单", "FAIL",
                        details=f"status={status_code}, error={body}")
         print(f"   [ERROR] Failed to submit order: {body}")
         return
 
     # 验证订单状态变为 submitted
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.set_order_context(order_no, "submitted", "outbound")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_get(f"/tool-io-orders/{order_no}", token=token_td)
     if status_code == 200:
         order_data = body.get("data", {})
         current_status = order_data.get("order_status", "")
         if current_status in ["submitted", "已提交"]:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    None,
-                    operation="wf_verify_status",
-                    api_response={"status_code": status_code, "body": body},
-                    expected_next_status="submitted"
-                )
-                critical = sum(1 for a in anomalies if a.severity == "critical")
-                _sensing_advance(orchestrator, "wf_verify_status", anomalies, critical)
             report.add_step("wf_04", "taidongxu", "验证订单状态", "PASS",
                            details=f"status={current_status}")
         else:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    None,
-                    operation="wf_verify_status",
-                    api_response={"status_code": status_code, "body": body},
-                    expected_next_status="submitted"
-                )
-                critical = sum(1 for a in anomalies if a.severity == "critical")
-                _sensing_advance(orchestrator, "wf_verify_status", anomalies, critical)
             report.add_step("wf_04", "taidongxu", "验证订单状态", "FAIL",
                            details=f"expected=submitted, actual={current_status}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_verify_status",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="submitted"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_verify_status", anomalies, critical)
         report.add_step("wf_04", "taidongxu", "验证订单状态", "FAIL",
                        details=f"status={status_code}")
 
@@ -1307,21 +1059,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 2B: Keeper Confirmation (hutingting) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_ht, user_id_ht, _ = login_user("hutingting", TEST_USERS["hutingting"]["password"])
-
-    if orchestrator:
-        snap, anomalies, checks = orchestrator.snapshot_after(
-            None,
-            operation="wf_login_hutingting",
-            api_response={"status_code": 200 if token_ht else 401},
-            expected_next_status="logged_in"
-        )
-        critical = sum(1 for a in anomalies if a.severity == "critical")
-        _sensing_advance(orchestrator, "wf_login_hutingting", anomalies, critical)
 
     if not token_ht:
         report.add_step("wf_05", "hutingting", "登录", "FAIL", "Login failed")
@@ -1332,45 +1070,18 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     TEST_USERS["hutingting"]["user_id"] = user_id_ht
 
     # 获取待确认订单列表
-    if orchestrator:
-        orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_get("/tool-io-orders/pending-keeper",
                                  params={"keeper_id": user_id_ht}, token=token_ht)
 
     if status_code == 200:
         pending_orders = body.get("data", [])
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_get_pending_orders",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="pending_viewed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_get_pending_orders", anomalies, critical)
         report.add_step("wf_06", "hutingting", "获取待确认订单", "PASS",
                        details=f"count={len(pending_orders)}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_get_pending_orders",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="pending_viewed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_get_pending_orders", anomalies, critical)
         report.add_step("wf_06", "hutingting", "获取待确认订单", "FAIL",
                        details=f"status={status_code}")
 
     # 保管员确认
-    if orchestrator:
-        orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
-        orchestrator.set_order_context(order_no, "submitted", "outbound")
-        orchestrator.snapshot_before(None)
-
     # First get order detail to extract item_ids
     _, order_detail = api_get(f"/tool-io-orders/{order_no}", token=token_ht)
     order = order_detail.get("data", {}) if order_detail else {}
@@ -1381,42 +1092,19 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
         token_ht,
         user_id_ht,
         TEST_USERS["fengliang"]["user_id"],
-        orchestrator=orchestrator,
         order_items=order_items
     )
 
     if status_code == 200 and body.get("success"):
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_keeper_confirm",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="keeper_confirmed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_keeper_confirm", anomalies, critical)
         report.add_step("wf_07", "hutingting", "保管员确认", "PASS",
                        details=f"approved_count={body.get('approved_count')}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_keeper_confirm",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="keeper_confirmed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_keeper_confirm", anomalies, critical)
         report.add_step("wf_07", "hutingting", "保管员确认", "FAIL",
                        details=f"status={status_code}, error={body}")
         print(f"   [ERROR] Keeper confirm failed: {body}")
         return
 
     # 发送运输通知
-    if orchestrator:
-        orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post(f"/tool-io-orders/{order_no}/notify-transport", {
         "operator_id": user_id_ht,
         "operator_name": "胡婷婷",
@@ -1424,26 +1112,8 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     }, token=token_ht)
 
     if status_code == 200:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_notify_transport",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="transport_notified"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_notify_transport", anomalies, critical)
         report.add_step("wf_08", "hutingting", "发送运输通知", "PASS")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_notify_transport",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="transport_notified"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_notify_transport", anomalies, critical)
         report.add_step("wf_08", "hutingting", "发送运输通知", "FAIL",
                        details=f"status={status_code}, error={body}")
 
@@ -1452,21 +1122,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 2C: Transport Execution (fengliang) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("fengliang", "PRODUCTION_PREP", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_fl, user_id_fl, _ = login_user("fengliang", TEST_USERS["fengliang"]["password"])
-
-    if orchestrator:
-        snap, anomalies, checks = orchestrator.snapshot_after(
-            None,
-            operation="wf_login_fengliang",
-            api_response={"status_code": 200 if token_fl else 401},
-            expected_next_status="logged_in"
-        )
-        critical = sum(1 for a in anomalies if a.severity == "critical")
-        _sensing_advance(orchestrator, "wf_login_fengliang", anomalies, critical)
 
     if not token_fl:
         report.add_step("wf_09", "fengliang", "登录", "FAIL", "Login failed")
@@ -1477,42 +1133,15 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     TEST_USERS["fengliang"]["user_id"] = user_id_fl
 
     # 获取预运输列表
-    if orchestrator:
-        orchestrator.set_user_context("fengliang", "PRODUCTION_PREP", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_get("/tool-io-orders/pre-transport", token=token_fl)
     if status_code == 200:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_get_pre_transport",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="pre_transport_viewed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_get_pre_transport", anomalies, critical)
         report.add_step("wf_10", "fengliang", "获取预运输列表", "PASS",
                        details=f"count={len(body.get('data', []))}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_get_pre_transport",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="pre_transport_viewed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_get_pre_transport", anomalies, critical)
         report.add_step("wf_10", "fengliang", "获取预运输列表", "FAIL",
                        details=f"status={status_code}")
 
     # 开始运输
-    if orchestrator:
-        orchestrator.set_user_context("fengliang", "PRODUCTION_PREP", "ORG001")
-        orchestrator.set_order_context(order_no, "transport_notified", "outbound")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post(f"/tool-io-orders/{order_no}/transport-start", {
         "operator_id": user_id_fl,
         "operator_name": "冯亮",
@@ -1520,36 +1149,14 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     }, token=token_fl)
 
     if status_code == 200 and body.get("success"):
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_transport_start",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="transport_in_progress"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_transport_start", anomalies, critical)
         report.add_step("wf_11", "fengliang", "开始运输", "PASS")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_transport_start",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="transport_in_progress"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_transport_start", anomalies, critical)
         report.add_step("wf_11", "fengliang", "开始运输", "FAIL",
                        details=f"status={status_code}, error={body}")
         print(f"   [ERROR] Transport start failed: {body}")
         return
 
     # 完成运输
-    if orchestrator:
-        orchestrator.set_user_context("fengliang", "PRODUCTION_PREP", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post(f"/tool-io-orders/{order_no}/transport-complete", {
         "operator_id": user_id_fl,
         "operator_name": "冯亮",
@@ -1557,26 +1164,8 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     }, token=token_fl)
 
     if status_code == 200 and body.get("success"):
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_transport_complete",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="transport_completed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_transport_complete", anomalies, critical)
         report.add_step("wf_12", "fengliang", "完成运输", "PASS")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_transport_complete",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="transport_completed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_transport_complete", anomalies, critical)
         report.add_step("wf_12", "fengliang", "完成运输", "FAIL",
                        details=f"status={status_code}, error={body}")
 
@@ -1586,11 +1175,6 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     print("\n--- Phase 2D: Final Confirmation (taidongxu) ---")
 
     # 最终确认（出库由班组长确认）
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.set_order_context(order_no, "transport_completed", "outbound")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post(f"/tool-io-orders/{order_no}/final-confirm", {
         "operator_id": user_id_td,
         "operator_name": "太东旭",
@@ -1598,76 +1182,26 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     }, token=token_td)
 
     if status_code == 200 and body.get("success"):
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_final_confirm",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="completed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_final_confirm", anomalies, critical)
         report.add_step("wf_13", "taidongxu", "最终确认", "PASS",
                        details=f"after_status={body.get('after_status')}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_final_confirm",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="completed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_final_confirm", anomalies, critical)
         report.add_step("wf_13", "taidongxu", "最终确认", "FAIL",
                        details=f"status={status_code}, error={body}")
         print(f"   [ERROR] Final confirm failed: {body}")
         return
 
     # 验证订单状态变为 completed
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.set_order_context(order_no, "completed", "outbound")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_get(f"/tool-io-orders/{order_no}", token=token_td)
     if status_code == 200:
         order_data = body.get("data", {})
         current_status = order_data.get("order_status", "")
         if current_status in ["completed", "已完成"]:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    None,
-                    operation="wf_verify_completed",
-                    api_response={"status_code": status_code, "body": body},
-                    expected_next_status="completed"
-                )
-                critical = sum(1 for a in anomalies if a.severity == "critical")
-                _sensing_advance(orchestrator, "wf_verify_completed", anomalies, critical)
             report.add_step("wf_14", "taidongxu", "验证订单完成", "PASS",
                            details=f"status={current_status}")
         else:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    None,
-                    operation="wf_verify_completed",
-                    api_response={"status_code": status_code, "body": body},
-                    expected_next_status="completed"
-                )
-                critical = sum(1 for a in anomalies if a.severity == "critical")
-                _sensing_advance(orchestrator, "wf_verify_completed", anomalies, critical)
             report.add_step("wf_14", "taidongxu", "验证订单完成", "FAIL",
                            details=f"expected=completed, actual={current_status}")
     else:
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="wf_verify_completed",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="completed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "wf_verify_completed", anomalies, critical)
         report.add_step("wf_14", "taidongxu", "验证订单完成", "FAIL",
                        details=f"status={status_code}")
 
@@ -1676,10 +1210,6 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Cleanup: Delete test order ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("admin", "SYS_ADMIN", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_admin, user_id_admin, _ = login_user("admin", "admin123")
     if token_admin:
         status_code, body = api_delete(f"/tool-io-orders/{order_no}", {
@@ -1687,15 +1217,6 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
             "operator_name": "管理员",
             "operator_role": "admin"
         }, token=token_admin)
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="cleanup_delete_order",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="deleted"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "cleanup_delete_order", anomalies, critical)
         if status_code == 200:
             if _test_data_manager:
                 _test_data_manager.remove_order(order_no)
@@ -1714,7 +1235,7 @@ def run_full_workflow_test(report: TestReport, orchestrator=None):
 # PHASE 3: 入库工作流测试
 # =============================================================================
 
-def run_inbound_workflow_test(report: TestReport, orchestrator=None):
+def run_inbound_workflow_test(report: TestReport):
     """
     入库工作流测试 - 入库由 KEEPER 最终确认
 
@@ -1729,10 +1250,6 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 3A: Order Creation (taidongxu) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_td, user_id_td, _ = ensure_user_session("taidongxu")
 
     if not token_td:
@@ -1741,10 +1258,6 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
 
     report.add_step("in_01", "taidongxu", "登录", "PASS", f"user_id={user_id_td}")
     # 创建入库订单
-    if orchestrator:
-        orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     status_code, body = api_post("/tool-io-orders", {
         "order_type": "inbound",
         "initiator_id": user_id_td,
@@ -1770,8 +1283,6 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
         global _test_data_manager
         if _test_data_manager:
             _test_data_manager.add_order(order_no)
-        if orchestrator:
-            orchestrator.set_order_context(order_no, "draft", "inbound")
         report.add_step("in_02", "taidongxu", "创建入库订单", "PASS", f"order_no={order_no}")
     else:
         report.add_step("in_02", "taidongxu", "创建入库订单", "FAIL",
@@ -1797,10 +1308,6 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 3B: Keeper Confirmation (hutingting) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_ht, user_id_ht, _ = ensure_user_session("hutingting")
 
     if not token_ht:
@@ -1822,7 +1329,6 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
         token_ht,
         user_id_ht,
         transport_assignee_id,
-        orchestrator=orchestrator,
         order_items=order_items
     )
 
@@ -1852,10 +1358,6 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 3C: Transport Execution (fengliang) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("fengliang", "PRODUCTION_PREP", "ORG001")
-        orchestrator.snapshot_before(None)
-
     token_fl, user_id_fl, _ = ensure_user_session("fengliang")
 
     if not token_fl:
@@ -1864,7 +1366,7 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
 
     report.add_step("in_07", "fengliang", "登录", "PASS", f"user_id={user_id_fl}")
     # 开始运输
-    status_code, body = step_transport_start(order_no, token_fl, user_id_fl, orchestrator=orchestrator)
+    status_code, body = step_transport_start(order_no, token_fl, user_id_fl)
 
     if status_code == 200 and body.get("success"):
         report.add_step("in_08", "fengliang", "开始运输", "PASS")
@@ -1874,7 +1376,7 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
         return
 
     # 完成运输
-    status_code, body = step_transport_complete(order_no, token_fl, user_id_fl, orchestrator=orchestrator)
+    status_code, body = step_transport_complete(order_no, token_fl, user_id_fl)
 
     if status_code == 200 and body.get("success"):
         report.add_step("in_09", "fengliang", "完成运输", "PASS")
@@ -1887,31 +1389,16 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
     # -------------------------------------------------------------------------
     print("\n--- Phase 3D: Final Confirmation (hutingting as KEEPER) ---")
 
-    if orchestrator:
-        orchestrator.set_user_context("hutingting", "KEEPER", "ORG001")
-        orchestrator.set_order_context(order_no, "transport_completed", "inbound")
-        orchestrator.snapshot_before(None)
-
     # 入库由保管员最终确认
     status_code, body = step_final_confirm(
         order_no,
         token_ht,
         user_id_ht,
         operator_role="keeper",
-        order_type="inbound",
-        orchestrator=orchestrator,
+        order_type="inbound"
     )
 
     if status_code == 200 and body.get("success"):
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation="in_final_confirm",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="completed"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, "in_final_confirm", anomalies, critical)
         report.add_step("in_10", "hutingting", "最终确认", "PASS",
                        details=f"after_status={body.get('after_status')}")
     else:
@@ -1964,7 +1451,7 @@ def run_inbound_workflow_test(report: TestReport, orchestrator=None):
 # PHASE 4: 驳回重提工作流测试
 # =============================================================================
 
-def run_reject_resubmit_workflow_test(report: TestReport, orchestrator=None):
+def run_reject_resubmit_workflow_test(report: TestReport):
     """
     驳回重提工作流测试 - 测试订单被驳回后的修改和重新提交流程
 
@@ -2141,7 +1628,6 @@ def run_reject_resubmit_workflow_test(report: TestReport, orchestrator=None):
         token_ht,
         user_id_ht,
         transport_assignee_id,
-        orchestrator=orchestrator,
         order_items=order_items
     )
 
@@ -2178,7 +1664,7 @@ def run_reject_resubmit_workflow_test(report: TestReport, orchestrator=None):
 
     report.add_step("rej_11", "fengliang", "登录", "PASS", f"user_id={user_id_fl}")
     # 开始运输
-    status_code, body = step_transport_start(order_no, token_fl, user_id_fl, orchestrator=orchestrator)
+    status_code, body = step_transport_start(order_no, token_fl, user_id_fl)
 
     if status_code == 200 and body.get("success"):
         report.add_step("rej_12", "fengliang", "开始运输", "PASS")
@@ -2188,7 +1674,7 @@ def run_reject_resubmit_workflow_test(report: TestReport, orchestrator=None):
         return
 
     # 完成运输
-    status_code, body = step_transport_complete(order_no, token_fl, user_id_fl, orchestrator=orchestrator)
+    status_code, body = step_transport_complete(order_no, token_fl, user_id_fl)
 
     if status_code == 200 and body.get("success"):
         report.add_step("rej_13", "fengliang", "完成运输", "PASS")
@@ -2206,8 +1692,7 @@ def run_reject_resubmit_workflow_test(report: TestReport, orchestrator=None):
         token_td,
         user_id_td,
         operator_role="team_leader",
-        order_type="outbound",
-        orchestrator=orchestrator,
+        order_type="outbound"
     )
 
     if status_code == 200 and body.get("success"):
@@ -2355,9 +1840,9 @@ def _infer_rbac_result(status_code: int, expected_status: int, expected_result: 
 def record_rbac_result(role: str, permission: str, expected: str, actual: str,
                        status: str, description: str = "", endpoint: str = "",
                        method: str = "", actual_status_code: int = None,
-                       details: str = "", orchestrator=None):
+                       details: str = ""):
     """
-    记录 RBAC 测试结果到感知数据库
+    记录 RBAC 测试结果（此功能已禁用，保留函数签名以保持兼容性）
 
     Args:
         role: 角色名称
@@ -2370,33 +1855,11 @@ def record_rbac_result(role: str, permission: str, expected: str, actual: str,
         method: HTTP 方法
         actual_status_code: 实际 HTTP 状态码
         details: 详细信息
-        orchestrator: 感知协调器
     """
-    if not orchestrator:
-        return
-
-    try:
-        result = RbacResultRecord(
-            rbac_id=f"rbac_{uuid.uuid4().hex[:12]}",
-            run_id=orchestrator.run_id,
-            created_at=datetime.now().isoformat(),
-            role=role,
-            permission=permission,
-            expected=expected,
-            actual=actual,
-            status=status,
-            description=description,
-            endpoint=endpoint,
-            method=method,
-            actual_status_code=actual_status_code,
-            details=details,
-        )
-        orchestrator.storage.insert_rbac_result(result)
-    except Exception as e:
-        print(f"   [WARN] Failed to record RBAC result: {e}")
+    pass
 
 
-def run_rbac_test(report: TestReport, orchestrator=None):
+def run_rbac_test(report: TestReport):
     """
     RBAC 权限测试 - 使用前置数据 + 明确预期响应模式
 
@@ -2414,22 +1877,7 @@ def run_rbac_test(report: TestReport, orchestrator=None):
     # 1. 前置数据准备 - 确保所有用户都已登录
     print("\n[Step 1] Precondition: Login all test users")
     for username, info in TEST_USERS.items():
-        if orchestrator:
-            role = info.get("role", "UNKNOWN")
-            orchestrator.set_user_context(username, role, "ORG001")
-            orchestrator.snapshot_before(None)
-
         token, user_id, _ = ensure_user_session(username)
-
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation=f"rbac_login_{username}",
-                api_response={"status_code": 200 if token else 401},
-                expected_next_status="logged_in"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, f"rbac_login_{username}", anomalies, critical)
 
         if token:
             print(f"   [OK] Logged in {username} as {info.get('role')} (user_id={user_id})")
@@ -2464,10 +1912,6 @@ def run_rbac_test(report: TestReport, orchestrator=None):
         token = info.get("token")
 
         # 3. 执行操作
-        if orchestrator:
-            orchestrator.set_user_context(username, role, "ORG001")
-            orchestrator.snapshot_before(None)
-
         if method == "GET":
             status_code, body = api_get(endpoint, token=token)
         elif method == "POST":
@@ -2485,31 +1929,19 @@ def run_rbac_test(report: TestReport, orchestrator=None):
         test_passed = (status_code == expected_status)
         test_status = "PASS" if test_passed else "FAIL"
 
-        # 5. 记录到感知数据库
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                None,
-                operation=f"rbac_test_{test_index}",
-                api_response={"status_code": status_code, "body": body},
-                expected_next_status="rbac_checked"
-            )
-            critical = sum(1 for a in anomalies if a.severity == "critical")
-            _sensing_advance(orchestrator, f"rbac_test_{test_index}", anomalies, critical)
-
-            # 记录 RBAC 结果
-            record_rbac_result(
-                role=role,
-                permission=permission,
-                expected=expected_result,
-                actual=actual_result,
-                status=test_status,
-                description=description,
-                endpoint=endpoint,
-                method=method,
-                actual_status_code=status_code,
-                details=f"expected_status={expected_status}",
-                orchestrator=orchestrator
-            )
+        # 5. 记录 RBAC 结果
+        record_rbac_result(
+            role=role,
+            permission=permission,
+            expected=expected_result,
+            actual=actual_result,
+            status=test_status,
+            description=description,
+            endpoint=endpoint,
+            method=method,
+            actual_status_code=status_code,
+            details=f"expected_status={expected_status}"
+        )
 
         # 更新报告
         details = (
@@ -2565,21 +1997,7 @@ def main():
 
     report = TestReport()
 
-    # P1-2: 初始化感知协调器
-    orchestrator = None
-    if SENSING_AVAILABLE:
-        try:
-            orchestrator = SensingOrchestrator(
-                db_path=str(E2E_SENSING_DB),
-                test_type="full_workflow",
-                checkpoint_interval=10,
-            )
-            print(f"[OK] Sensing orchestrator initialized (run_id={orchestrator.run_id})")
-        except Exception as e:
-            print(f"[WARN] Failed to init orchestrator: {e}")
-            orchestrator = None
-
-    # P1-2: 通知 agent 测试开始
+    # 通知 agent 测试开始
     try:
         start_result = start(test_type="full_workflow")
         print(f"   Agent start: {start_result.get('message', '')}")
@@ -2598,7 +2016,7 @@ def main():
         # 根据 --workflows 参数执行对应的测试
         if args.workflows in ["all", "smoke"]:
             # PHASE 1: 快速冒烟测试
-            run_quick_smoke_test(report, orchestrator)
+            run_quick_smoke_test(report)
             try:
                 advance("phase_1_quick_smoke", len(report.anomalies),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -2607,7 +2025,7 @@ def main():
 
         if args.workflows in ["all", "workflow"]:
             # PHASE 2: 完整出库工作流测试
-            run_full_workflow_test(report, orchestrator)
+            run_full_workflow_test(report)
             try:
                 advance("phase_2_full_workflow", len(report.anomalies),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -2616,7 +2034,7 @@ def main():
 
         if args.workflows in ["all", "rbac"]:
             # PHASE 3: RBAC 权限测试
-            run_rbac_test(report, orchestrator)
+            run_rbac_test(report)
             try:
                 advance("phase_3_rbac", len(report.anomalies),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -2625,7 +2043,7 @@ def main():
 
         if args.workflows in ["all", "inbound"]:
             # PHASE 4: 入库工作流测试
-            run_inbound_workflow_test(report, orchestrator)
+            run_inbound_workflow_test(report)
             try:
                 advance("phase_4_inbound", len(report.anomalies),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -2634,7 +2052,7 @@ def main():
 
         if args.workflows in ["all", "reject"]:
             # PHASE 5: 驳回重提工作流测试
-            run_reject_resubmit_workflow_test(report, orchestrator)
+            run_reject_resubmit_workflow_test(report)
             try:
                 advance("phase_5_reject", len(report.anomalies),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -2645,25 +2063,18 @@ def main():
         # teardown - 清理测试数据
         dm.teardown()
 
-        # P1-2: 确保 agent 状态推进即使失败
+        # 确保 agent 状态推进即使失败
         try:
             advance("test_completed", report.anomalies.__len__(),
                    len([a for a in report.anomalies if "critical" in str(a)]))
         except Exception as e:
             print(f"[WARN] Failed to final advance: {e}")
 
-        # P1-2: 停止 agent
+        # 停止 agent
         try:
             stop("Test completed")
         except Exception as e:
             print(f"[WARN] Failed to stop agent: {e}")
-
-        # P1-2: 关闭感知协调器
-        if orchestrator:
-            try:
-                orchestrator.finalize("completed")
-            except Exception as e:
-                print(f"[WARN] Failed to finalize orchestrator: {e}")
 
     # 输出报告
     success = report.print_summary()

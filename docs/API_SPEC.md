@@ -803,6 +803,104 @@
 - `mpl_enabled`: 是否启用保管员确认前的 MPL 检查
 - `mpl_strict_mode`: 缺少 MPL 时是否阻止确认
 
+### 3.4.4 角色管理与权限管理 API (2026-04-07)
+
+#### 查询角色列表
+
+**GET** `/api/admin/roles`
+
+**权限**: `admin:role_manage`
+
+**请求参数**:
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| keyword | string | 否 | 角色编码/名称模糊搜索 |
+| status | string | 否 | `active/disabled` |
+| role_type | string | 否 | `system/business` |
+
+#### 创建角色
+
+**POST** `/api/admin/roles`
+
+**权限**: `admin:role_manage`
+
+#### 更新角色
+
+**PUT** `/api/admin/roles/{role_id}`
+
+**权限**: `admin:role_manage`
+
+#### 删除角色
+
+**DELETE** `/api/admin/roles/{role_id}`
+
+**权限**: `admin:role_manage`
+
+**业务约束**:
+
+- `role_type=system` 的角色禁止删除
+- 已被用户关联的角色禁止删除
+
+#### 查询角色权限
+
+**GET** `/api/admin/roles/{role_id}/permissions`
+
+**权限**: `admin:role_manage`
+
+**响应字段**:
+
+- `data`: `permission_code` 数组
+
+#### 覆盖式分配角色权限
+
+**PUT** `/api/admin/roles/{role_id}/permissions`
+
+**权限**: `admin:role_manage`
+
+**请求参数**:
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| permission_codes | array[string] | 是 | 角色最终权限编码列表 |
+
+#### 查询权限列表
+
+**GET** `/api/admin/permissions`
+
+**权限**: `admin:role_manage`
+
+**请求参数**:
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| keyword | string | 否 | 权限编码/名称/资源/动作模糊搜索 |
+| status | string | 否 | `active/disabled` |
+| page | int | 否 | 页码，默认 1 |
+| page_size | int | 否 | 每页数量，默认 20 |
+
+#### 创建权限
+
+**POST** `/api/admin/permissions`
+
+**权限**: `admin:role_manage`
+
+#### 更新权限
+
+**PUT** `/api/admin/permissions/{permission_code}`
+
+**权限**: `admin:role_manage`
+
+#### 删除权限
+
+**DELETE** `/api/admin/permissions/{permission_code}`
+
+**权限**: `admin:role_manage`
+
+**业务约束**:
+
+- 已被角色关联的权限禁止删除
+
 ---
 
 ## 3. 文本生成 API

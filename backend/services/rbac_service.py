@@ -6,7 +6,7 @@ RBAC permission resolution helpers for the Tooling IO Management System.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Sequence, Set
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from database import DatabaseManager
 
@@ -741,3 +741,65 @@ def has_permission(user: Optional[Dict], permission_code: str) -> bool:
         return False
     permission_set: Set[str] = set(user.get("permissions") or [])
     return permission_code in permission_set
+
+
+def _get_rbac_repository():
+    from backend.database.repositories.rbac_repository import RbacRepository
+
+    ensure_rbac_tables()
+    return RbacRepository()
+
+
+def get_roles(keyword=None, status=None, role_type=None) -> List[Dict]:
+    """Get role list for RBAC management."""
+    return _get_rbac_repository().get_roles(keyword=keyword, status=status, role_type=role_type)
+
+
+def get_role_detail(role_id: str) -> Optional[Dict]:
+    """Get a single role by role_id."""
+    return _get_rbac_repository().get_role_by_id(role_id)
+
+
+def create_role(role_data: Dict, actor_user_id: str = "") -> Dict:
+    """Create an RBAC role."""
+    return _get_rbac_repository().create_role(role_data, actor_user_id=actor_user_id)
+
+
+def update_role(role_id: str, role_data: Dict, actor_user_id: str = "") -> Optional[Dict]:
+    """Update an RBAC role."""
+    return _get_rbac_repository().update_role(role_id, role_data, actor_user_id=actor_user_id)
+
+
+def delete_role(role_id: str) -> Tuple[bool, str]:
+    """Delete an RBAC role when business constraints allow."""
+    return _get_rbac_repository().delete_role(role_id)
+
+
+def get_role_permissions(role_id: str) -> List[str]:
+    """Load assigned permission codes for a role."""
+    return _get_rbac_repository().get_role_permissions(role_id)
+
+
+def assign_role_permissions(role_id: str, permission_codes: List[str], actor_user_id: str = "") -> bool:
+    """Replace role-permission assignments for a role."""
+    return _get_rbac_repository().assign_permissions(role_id, permission_codes, actor_user_id=actor_user_id)
+
+
+def get_permissions(keyword=None, status=None, page=1, page_size=20) -> Dict:
+    """Get paginated permission list for RBAC management."""
+    return _get_rbac_repository().get_permissions(keyword=keyword, status=status, page=page, page_size=page_size)
+
+
+def create_permission(permission_data: Dict, actor_user_id: str = "") -> Dict:
+    """Create an RBAC permission."""
+    return _get_rbac_repository().create_permission(permission_data, actor_user_id=actor_user_id)
+
+
+def update_permission(permission_code: str, permission_data: Dict, actor_user_id: str = "") -> Optional[Dict]:
+    """Update an RBAC permission."""
+    return _get_rbac_repository().update_permission(permission_code, permission_data, actor_user_id=actor_user_id)
+
+
+def delete_permission(permission_code: str) -> Tuple[bool, str]:
+    """Delete an RBAC permission when business constraints allow."""
+    return _get_rbac_repository().delete_permission(permission_code)

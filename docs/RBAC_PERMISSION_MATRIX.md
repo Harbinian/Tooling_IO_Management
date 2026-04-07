@@ -211,7 +211,16 @@
 
 | API 端点 | 方法 | 所需权限 | TEAM_LEADER | KEEPER | PLANNER | PRODUCTION_PREP | AUDITOR |
 |---------|------|---------|-------------|--------|---------|-----------------|---------|
-| `/api/admin/roles` | GET | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/roles` | GET | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/roles` | POST | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/roles/<id>` | PUT | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/roles/<id>` | DELETE | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/roles/<id>/permissions` | GET | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/roles/<id>/permissions` | PUT | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/permissions` | GET | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/permissions` | POST | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/permissions/<code>` | PUT | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `/api/admin/permissions/<code>` | DELETE | `admin:role_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `/api/admin/users` | GET | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `/api/admin/users/<id>` | GET | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `/api/admin/users` | POST | `admin:user_manage` | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -244,6 +253,7 @@
 
 | 日期 | 变更内容 | 变更人 |
 |------|---------|--------|
+| 2026-04-07 | 新增角色 CRUD、权限 CRUD、角色权限分配 API 映射，并将 `/api/admin/roles` 查询权限调整为 `admin:role_manage` | Codex |
 | 2026-04-02 | 新增 inspection 服务与路由权限矩阵，补充 inspection:* 权限目录和 API 映射 | Codex |
 | 2026-04-02 | MPL 权限从 `tool:view` 拆分为 `mpl:view` / `mpl:write`，新增 ENGINEERING 角色并限制 `/mpl` 仅工程技术部与系统管理员访问 | Codex |
 | 2026-04-02 | 新增 `POST /api/tool-io-orders/preview-keeper-text` 权限映射，供订单创建页生成不落库的保管员预览文本 | Codex |

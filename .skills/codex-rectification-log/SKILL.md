@@ -1,17 +1,24 @@
 ---
 name: codex-rectification-log
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/00_core.md
+version: 1.0.0
 description: 每次 Codex 发现缺陷、实现修复并在此仓库中完成相关纠正或审查驱动的更改时，记录纠正日志。当 Codex 完成更改代码或文档以纠正错误、bug、回归、验证问题或审查发现时使用，必须在关闭任务前将记录保存到 logs/codex_rectification。/ Record a rectification log whenever Codex identifies a defect, implements the fix, and completes the related correction or review-driven change in this repository. Use when Codex has finished changing code or docs to correct an error, bug, regression, validation issue, or review finding, and must save a record under logs/codex_rectification before closing the task.
 ---
 
-# Codex 纠正日志 / Codex Rectification Log
+# Codex 纠正日志技能 / Codex Rectification Log
 
-为每个完成的纠正写入一条纠正记录。 / Write one rectification record for every completed correction.
+为每个完成的纠正写入一条纠正记录。/ Write one rectification record for every completed correction.
 
-仅在所有请求的编辑完成后创建日志。 / Create the log only after all requested edits are finished.
+仅在所有请求的编辑完成后创建日志。/ Create the log only after all requested edits are finished.
 
-如果没有文件被更改，则不要创建纠正记录。 / If no file was changed, do not create a rectification record.
+如果没有文件被更改，则不要创建纠正记录。/ If no file was changed, do not create a rectification record.
 
-如果任务仅是审查且未实施纠正，则不要创建纠正记录。 / If the task is review-only and no correction was implemented, do not create a rectification record.
+如果任务仅是审查且未实施纠正，则不要创建纠正记录。/ If the task is review-only and no correction was implemented, do not create a rectification record.
 
 ## 日志位置 / Log location
 

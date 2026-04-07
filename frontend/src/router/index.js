@@ -121,6 +121,24 @@ const routes = [
         meta: { title: '账号管理', permission: 'admin:user_manage', group: 'system' }
       },
       {
+        path: 'admin/roles',
+        name: 'admin-roles',
+        component: () => import('@/pages/admin/RoleManagementPage.vue'),
+        meta: { title: '角色管理', permission: 'admin:role_manage', group: 'system' }
+      },
+      {
+        path: 'admin/roles/:roleId/permissions',
+        name: 'admin-role-permissions',
+        component: () => import('@/pages/admin/RolePermissionAssignment.vue'),
+        meta: { title: '权限分配', permission: 'admin:role_manage', group: 'system' }
+      },
+      {
+        path: 'admin/permissions',
+        name: 'admin-permissions',
+        component: () => import('@/pages/admin/PermissionManagementPage.vue'),
+        meta: { title: '权限管理', permission: 'admin:role_manage', group: 'system' }
+      },
+      {
         path: 'admin/feedback',
         name: 'admin-feedback',
         component: () => import('@/pages/admin/FeedbackAdminPage.vue'),

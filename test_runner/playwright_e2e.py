@@ -33,22 +33,6 @@ sys.path.insert(0, str(REPO_ROOT))
 from playwright.sync_api import sync_playwright, Page, Browser
 from test_runner.commands import start, advance, status, stop
 
-# P1-2: 集成感知层 (已禁用 - 2026-04-03)
-# 感知模块在并发运行时导致 SQLite 数据库锁定，此文件降级为手动测试模式
-# 统一数据库路径
-# E2E_SENSING_DB = REPO_ROOT / "test_reports" / "e2e_sensing.db"
-
-# 强制禁用感知模块 - 避免 SQLite 并发锁定
-SENSING_AVAILABLE = False
-
-# try:
-#     from sensing.storage import SQLiteStorage
-#     from sensing.orchestrator import SensingOrchestrator
-#     SENSING_AVAILABLE = True
-# except ImportError:
-#     SENSING_AVAILABLE = False
-#     print("[WARN] Sensing module not available, running without sensing")
-
 
 # =============================================================================
 # 端口检查
@@ -275,16 +259,7 @@ def logout(page: Page):
 # PHASE 1: 快速冒烟测试
 # =============================================================================
 
-def _pw_sensing_advance(orchestrator, operation, anomalies):
-    """Helper to call advance with error handling"""
-    try:
-        critical = sum(1 for a in anomalies if a.severity == "critical")
-        advance(operation, len(anomalies), critical)
-    except Exception:
-        pass
-
-
-def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None):
+def run_quick_smoke_test(browser: Browser, report: TestReport):
     """快速冒烟测试 - 验证基本功能"""
     print("\n" + "=" * 50)
     print("🚀 PHASE 1: 快速冒烟测试 / Quick Smoke Test")
@@ -295,20 +270,7 @@ def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None
 
     try:
         # 1. 登录
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page)
-
         login_success = login(page, "taidongxu", TEST_USERS["taidongxu"]["password"])
-
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                page,
-                operation="smoke_login",
-                api_response={"login_success": login_success},
-                expected_next_status="logged_in"
-            )
-            _pw_sensing_advance(orchestrator, "smoke_login", anomalies)
 
         report.add_step("smoke_01", "taidongxu", "登录", "PASS" if login_success else "FAIL")
 
@@ -317,110 +279,34 @@ def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None
             return
 
         # 2. 查看首页/Dashboard
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page)
-
         try:
             page.goto(f"{FRONTEND_URL}/", wait_until="networkidle", timeout=15000)
             time.sleep(1)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation="smoke_visit_dashboard",
-                    api_response=None,
-                    expected_next_status="dashboard_viewed"
-                )
-                _pw_sensing_advance(orchestrator, "smoke_visit_dashboard", anomalies)
-
             report.add_step("smoke_02", "taidongxu", "访问首页", "PASS", f"URL: {page.url}")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation="smoke_visit_dashboard",
-                    api_response={"error": str(e)},
-                    expected_next_status="dashboard_viewed"
-                )
-                _pw_sensing_advance(orchestrator, "smoke_visit_dashboard", anomalies)
             report.add_step("smoke_02", "taidongxu", "访问首页", "FAIL", str(e))
 
         # 3. 进入订单列表
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page)
-
         try:
             page.goto(f"{FRONTEND_URL}/inventory", wait_until="networkidle", timeout=15000)
             time.sleep(1)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation="smoke_visit_order_list",
-                    api_response=None,
-                    expected_next_status="order_list_viewed"
-                )
-                _pw_sensing_advance(orchestrator, "smoke_visit_order_list", anomalies)
-
             report.add_step("smoke_03", "taidongxu", "进入订单列表", "PASS", f"URL: {page.url}")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation="smoke_visit_order_list",
-                    api_response={"error": str(e)},
-                    expected_next_status="order_list_viewed"
-                )
-                _pw_sensing_advance(orchestrator, "smoke_visit_order_list", anomalies)
             report.add_step("smoke_03", "taidongxu", "进入订单列表", "FAIL", str(e))
 
         # 4. 进入创建订单页
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page)
-
         try:
             page.goto(f"{FRONTEND_URL}/inventory/create", wait_until="networkidle", timeout=15000)
             time.sleep(1)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation="smoke_visit_create_order",
-                    api_response=None,
-                    expected_next_status="order_create_viewed"
-                )
-                _pw_sensing_advance(orchestrator, "smoke_visit_create_order", anomalies)
-
             report.add_step("smoke_04", "taidongxu", "进入创建订单页", "PASS", f"URL: {page.url}")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation="smoke_visit_create_order",
-                    api_response={"error": str(e)},
-                    expected_next_status="order_create_viewed"
-                )
-                _pw_sensing_advance(orchestrator, "smoke_visit_create_order", anomalies)
             report.add_step("smoke_04", "taidongxu", "进入创建订单页", "FAIL", str(e))
 
         # 5. 登出
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page)
-
         logout(page)
-
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                page,
-                operation="smoke_logout",
-                api_response=None,
-                expected_next_status="logged_out"
-            )
-            _pw_sensing_advance(orchestrator, "smoke_logout", anomalies)
 
         report.add_step("smoke_05", "taidongxu", "登出", "PASS")
 
@@ -434,7 +320,7 @@ def run_quick_smoke_test(browser: Browser, report: TestReport, orchestrator=None
 # PHASE 2: 完整出库工作流测试
 # =============================================================================
 
-def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=None):
+def run_full_workflow_test(browser: Browser, report: TestReport):
     """完整出库工作流测试"""
     print("\n" + "=" * 50)
     print("🚀 PHASE 2: 完整出库工作流 / Full Workflow Test")
@@ -450,107 +336,35 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
 
     try:
         # 1. 太东旭登录
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         login(page_taidongxu, "taidongxu", TEST_USERS["taidongxu"]["password"])
-
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                page_taidongxu,
-                operation="pw_wf_login_taidongxu",
-                api_response={"login_success": True},
-                expected_next_status="logged_in"
-            )
-            _pw_sensing_advance(orchestrator, "pw_wf_login_taidongxu", anomalies)
 
         report.add_step("wf_01", "taidongxu", "登录", "PASS")
 
         # 2. 进入创建订单页
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         page_taidongxu.goto(f"{FRONTEND_URL}/inventory/create", wait_until="networkidle", timeout=15000)
         time.sleep(1)
-
-        if orchestrator:
-            snap, anomalies, checks = orchestrator.snapshot_after(
-                page_taidongxu,
-                operation="pw_wf_visit_create",
-                api_response=None,
-                expected_next_status="order_create_page"
-            )
-            _pw_sensing_advance(orchestrator, "pw_wf_visit_create", anomalies)
 
         report.add_step("wf_02", "taidongxu", "进入创建订单页", "PASS", f"URL: {page_taidongxu.url}")
 
         # 3. 选择出库类型
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             page_taidongxu.click('button:has-text("出库"), [value="outbound"]', timeout=5000)
             time.sleep(0.3)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_select_outbound",
-                    api_response=None,
-                    expected_next_status="outbound_selected"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_select_outbound", anomalies)
-
             report.add_step("wf_03", "taidongxu", "选择出库类型", "PASS")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_select_outbound",
-                    api_response={"error": str(e)},
-                    expected_next_status="outbound_selected"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_select_outbound", anomalies)
             report.add_step("wf_03", "taidongxu", "选择出库类型", "FAIL", str(e))
 
         # 4. 打开工装搜索对话框
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             page_taidongxu.click('.bg-white.font-bold.text-slate-900:has-text("搜索并添加工装"), button:has-text("搜索并添加工装")', timeout=5000)
             time.sleep(1)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_open_tool_search",
-                    api_response=None,
-                    expected_next_status="tool_search_opened"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_open_tool_search", anomalies)
-
             report.add_step("wf_04", "taidongxu", "打开工装搜索", "PASS")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_open_tool_search",
-                    api_response={"error": str(e)},
-                    expected_next_status="tool_search_opened"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_open_tool_search", anomalies)
             report.add_step("wf_04", "taidongxu", "打开工装搜索", "FAIL", str(e))
 
         # 5. 搜索测试工装
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             # 在搜索对话框中输入工装编码并点击搜索按钮
             # 使用 placeholder 匹配序列号输入框
@@ -566,32 +380,11 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             # 等待搜索结果加载
             page_taidongxu.wait_for_timeout(2000)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_search_tool",
-                    api_response={"search_term": TEST_TOOL["serial_no"]},
-                    expected_next_status="tool_searched"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_search_tool", anomalies)
-
             report.add_step("wf_05", "taidongxu", "搜索工装", "PASS", f"搜索: {TEST_TOOL['serial_no']}")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_search_tool",
-                    api_response={"error": str(e)},
-                    expected_next_status="tool_searched"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_search_tool", anomalies)
             report.add_step("wf_05", "taidongxu", "搜索工装", "FAIL", str(e))
 
         # 6. 选择工装
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             # 等待搜索结果表格出现，然后点击第一行的复选框
             # Element Plus 表格行选择器 - 需要点击 checkbox 才能选中行
@@ -602,32 +395,11 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             page_taidongxu.click('button:has-text("添加到明细")', timeout=5000)
             time.sleep(0.5)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_select_tool",
-                    api_response=None,
-                    expected_next_status="tool_selected"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_select_tool", anomalies)
-
             report.add_step("wf_06", "taidongxu", "选择工装", "PASS")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_select_tool",
-                    api_response={"error": str(e)},
-                    expected_next_status="tool_selected"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_select_tool", anomalies)
             report.add_step("wf_06", "taidongxu", "选择工装", "FAIL", str(e))
 
         # 7. 填写用途、目标位置和计划使用时间（出库必填）
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             # 使用 Playwright 标准 UI 交互替代 Vue 内部 API
             from datetime import datetime, timedelta
@@ -663,33 +435,11 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
             page_taidongxu.keyboard.press('Escape')
             time.sleep(0.5)
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_fill_usage",
-                    api_response=None,
-                    expected_next_status="usage_filled"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_fill_usage", anomalies)
-
             report.add_step("wf_07", "taidongxu", "填写用途", "PASS")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_fill_usage",
-                    api_response={"error": str(e)},
-                    expected_next_status="usage_filled"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_fill_usage", anomalies)
             report.add_step("wf_07", "taidongxu", "填写用途", "FAIL", str(e))
 
         # 8. 提交订单
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.set_order_context(order_no or "", "draft", "outbound")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             submit_btn = page_taidongxu.query_selector('button:has-text("提交单据")')
             if submit_btn:
@@ -728,42 +478,13 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
                 current_url = page_taidongxu.url
                 print(f"   DEBUG: URL after submit: {current_url}")
 
-                if orchestrator:
-                    snap, anomalies, checks = orchestrator.snapshot_after(
-                        page_taidongxu,
-                        operation="pw_wf_submit_order",
-                        api_response={"submitted": True, "url": current_url},
-                        expected_next_status="submitted"
-                    )
-                    _pw_sensing_advance(orchestrator, "pw_wf_submit_order", anomalies)
-
                 report.add_step("wf_08", "taidongxu", "提交订单", "PASS")
             else:
-                if orchestrator:
-                    snap, anomalies, checks = orchestrator.snapshot_after(
-                        page_taidongxu,
-                        operation="pw_wf_submit_order",
-                        api_response={"error": "submit button not found"},
-                        expected_next_status="submitted"
-                    )
-                    _pw_sensing_advance(orchestrator, "pw_wf_submit_order", anomalies)
                 report.add_step("wf_08", "taidongxu", "提交订单", "FAIL", "未找到提交按钮")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_submit_order",
-                    api_response={"error": str(e)},
-                    expected_next_status="submitted"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_submit_order", anomalies)
             report.add_step("wf_08", "taidongxu", "提交订单", "FAIL", str(e))
 
         # 9. 获取订单号
-        if orchestrator:
-            orchestrator.set_user_context("taidongxu", "TEAM_LEADER", "ORG001")
-            orchestrator.snapshot_before(page_taidongxu)
-
         try:
             # 从 URL 或页面元素获取订单号
             # 等待页面导航完成
@@ -790,26 +511,9 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
                 order_no = order_no_text.strip() if order_no_text else None
                 print(f"   DEBUG: Extracted order_no from page: {order_no}")
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_get_order_no",
-                    api_response={"order_no": order_no},
-                    expected_next_status="order_no_obtained"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_get_order_no", anomalies)
-
             report.add_step("wf_09", "taidongxu", "获取订单号", "PASS" if order_no else "FAIL",
                            details=f"订单号: {order_no}")
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page_taidongxu,
-                    operation="pw_wf_get_order_no",
-                    api_response={"error": str(e)},
-                    expected_next_status="order_no_obtained"
-                )
-                _pw_sensing_advance(orchestrator, "pw_wf_get_order_no", anomalies)
             report.add_step("wf_09", "taidongxu", "获取订单号", "FAIL", str(e))
 
     finally:
@@ -961,7 +665,7 @@ def run_full_workflow_test(browser: Browser, report: TestReport, orchestrator=No
 # PHASE 3: RBAC 权限测试
 # =============================================================================
 
-def run_rbac_test(browser: Browser, report: TestReport, orchestrator=None):
+def run_rbac_test(browser: Browser, report: TestReport):
     """RBAC 权限测试"""
     print("\n" + "=" * 50)
     print("🚀 PHASE 3: RBAC 权限测试 / RBAC Permission Test")
@@ -986,26 +690,9 @@ def run_rbac_test(browser: Browser, report: TestReport, orchestrator=None):
 
         try:
             # 登录
-            if orchestrator:
-                orchestrator.set_user_context(username, role, "ORG001")
-                orchestrator.snapshot_before(page)
-
             login(page, username, TEST_USERS[username]["password"])
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation=f"pw_rbac_login_{username}",
-                    api_response={"login_success": True},
-                    expected_next_status="logged_in"
-                )
-                _pw_sensing_advance(orchestrator, f"pw_rbac_login_{username}", anomalies)
-
             # 尝试访问页面
-            if orchestrator:
-                orchestrator.set_user_context(username, role, "ORG001")
-                orchestrator.snapshot_before(page)
-
             page.goto(f"{FRONTEND_URL}{path}", wait_until="networkidle", timeout=10000)
             time.sleep(0.5)
 
@@ -1024,29 +711,12 @@ def run_rbac_test(browser: Browser, report: TestReport, orchestrator=None):
                 except:
                     actual = "allow"
 
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation=f"pw_rbac_access_{username}_{path.replace('/', '_')}",
-                    api_response={"actual": actual, "expected": expected},
-                    expected_next_status=f"rbac_{expected}"
-                )
-                _pw_sensing_advance(orchestrator, f"pw_rbac_access_{username}_{path.replace('/', '_')}", anomalies)
-
             result = "PASS" if actual == expected else "FAIL"
             report.add_step(f"rbac_{username}_{path}", username,
                           f"访问{path}", result,
                           details=f"预期:{expected} 实际:{actual}")
 
         except Exception as e:
-            if orchestrator:
-                snap, anomalies, checks = orchestrator.snapshot_after(
-                    page,
-                    operation=f"pw_rbac_access_{username}_{path.replace('/', '_')}",
-                    api_response={"error": str(e)},
-                    expected_next_status=f"rbac_{expected}"
-                )
-                _pw_sensing_advance(orchestrator, f"pw_rbac_access_{username}_{path.replace('/', '_')}", anomalies)
             report.add_step(f"rbac_{username}_{path}", username,
                           f"访问{path}", "FAIL", str(e))
 
@@ -1074,21 +744,7 @@ def main():
 
     report = TestReport()
 
-    # P1-2: 初始化感知协调器
-    orchestrator = None
-    if SENSING_AVAILABLE:
-        try:
-            orchestrator = SensingOrchestrator(
-                db_path=str(E2E_SENSING_DB),
-                test_type="full_workflow",
-                checkpoint_interval=10,
-            )
-            print(f"✅ 感知协调器已初始化 (run_id={orchestrator.run_id})")
-        except Exception as e:
-            print(f"[WARN] Failed to init orchestrator: {e}")
-            orchestrator = None
-
-    # P1-2: 通知 agent 测试开始
+    # 通知 agent 测试开始
     try:
         start_result = start(test_type="full_workflow")
         print(f"   Agent start: {start_result.get('message', '')}")
@@ -1102,8 +758,8 @@ def main():
 
         try:
             # PHASE 1: 快速冒烟测试
-            run_quick_smoke_test(browser, report, orchestrator)
-            # P1-2: 推进 agent 状态
+            run_quick_smoke_test(browser, report)
+            # 推进 agent 状态
             try:
                 advance("phase_1_quick_smoke", report.anomalies.__len__(),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -1111,8 +767,8 @@ def main():
                 print(f"[WARN] Failed to advance after phase 1: {e}")
 
             # PHASE 2: 完整工作流测试
-            run_full_workflow_test(browser, report, orchestrator)
-            # P1-2: 推进 agent 状态
+            run_full_workflow_test(browser, report)
+            # 推进 agent 状态
             try:
                 advance("phase_2_full_workflow", report.anomalies.__len__(),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -1120,8 +776,8 @@ def main():
                 print(f"[WARN] Failed to advance after phase 2: {e}")
 
             # PHASE 3: RBAC 权限测试
-            run_rbac_test(browser, report, orchestrator)
-            # P1-2: 推进 agent 状态
+            run_rbac_test(browser, report)
+            # 推进 agent 状态
             try:
                 advance("phase_3_rbac", report.anomalies.__len__(),
                        len([a for a in report.anomalies if "critical" in str(a)]))
@@ -1129,25 +785,18 @@ def main():
                 print(f"[WARN] Failed to advance after phase 3: {e}")
 
         finally:
-            # P1-2: 确保 agent 状态推进即使失败
+            # 确保 agent 状态推进即使失败
             try:
                 advance("test_completed", report.anomalies.__len__(),
                        len([a for a in report.anomalies if "critical" in str(a)]))
             except Exception as e:
                 print(f"[WARN] Failed to final advance: {e}")
 
-            # P1-2: 停止 agent
+            # 停止 agent
             try:
                 stop("Test completed")
             except Exception as e:
                 print(f"[WARN] Failed to stop agent: {e}")
-
-            # P1-2: 关闭感知协调器
-            if orchestrator:
-                try:
-                    orchestrator.finalize("completed")
-                except Exception as e:
-                    print(f"[WARN] Failed to finalize orchestrator: {e}")
 
             browser.close()
             print("\n✅ 浏览器已关闭")

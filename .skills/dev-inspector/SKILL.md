@@ -1,4 +1,15 @@
-# 开发检查器 / Dev Inspector Skill
+---
+name: dev-inspector
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# 开发检查器技能 / Dev Inspector Skill
 
 **规则约束**: 本技能在生成任务时，必须遵循 `.claude/rules/05_task_convention.md` 中的提示词编号约定（00001-09999 功能、10101-19999 Bug、20101-29999 重构、30101-39999 测试）。
 
@@ -6,21 +17,13 @@
 
 ## 目的 / Purpose
 
-开发检查器技能使 AI 代理（尤其是 Gemini）能够分析运行时错误、浏览器控制台日志、API 失败或开发过程中的意外 UI 行为，并将它们转换为结构化的开发任务。
+开发检查器技能使 AI 代理（尤其是 Gemini）能够分析运行时错误、浏览器控制台日志、API 失败或开发过程中的意外 UI 行为，并将它们转换为结构化的开发任务。/ The Dev Inspector skill enables AI agents (especially Gemini) to analyze runtime errors, browser console logs, API failures, or unexpected UI behavior during development and convert them into structured development tasks.
 
-The Dev Inspector skill enables AI agents (especially Gemini) to analyze runtime errors, browser console logs, API failures, or unexpected UI behavior during development and convert them into structured development tasks.
+此技能作为 AI DevOps 管道的**第一诊断层**工作。/ This skill works as the **first diagnostic layer** of the AI DevOps pipeline.
 
-此技能作为 AI DevOps 管道的**第一诊断层**工作。
+它在调试期间观察问题，并确定是否应触发 bug 调查提示词或功能改进提示词。/ It observes problems during debugging and determines whether they should trigger a bug investigation prompt or a feature improvement prompt.
 
-This skill works as the **first diagnostic layer** of the AI DevOps pipeline.
-
-它在调试期间观察问题，并确定是否应触发 bug 调查提示词或功能改进提示词。
-
-It observes problems during debugging and determines whether they should trigger a bug investigation prompt or a feature improvement prompt.
-
-此技能本身不直接修改代码。相反，它分析问题，然后调用**自动任务生成器技能**来创建正确的开发提示词。
-
-The skill itself does not directly modify code. Instead, it analyzes the issue and then invokes the **Auto Task Generator skill** to create the correct development prompt.
+此技能本身不直接修改代码。相反，它分析问题，然后调用**自动任务生成器技能**来创建正确的开发提示词。/ The skill itself does not directly modify code. Instead, it analyzes the issue and then invokes the **Auto Task Generator skill** to create the correct development prompt.
 
 ---
 

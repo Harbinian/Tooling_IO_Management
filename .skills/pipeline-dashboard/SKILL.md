@@ -1,17 +1,29 @@
-# 流水线仪表盘 / PIPELINE DASHBOARD
+---
+name: pipeline-dashboard
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers:
+  - /pipeline-dashboard
+rules_ref:
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# 流水线仪表盘技能 / PIPELINE DASHBOARD
 
 **规则约束**: 本技能识别任务类型时，必须遵循 `.claude/rules/05_task_convention.md` 中的编号体系（00001-09999 功能、10101-19999 Bug、20101-29999 重构、30101-39999 测试）。
 
-命令触发: /pipeline-dashboard / Command Trigger: /pipeline-dashboard
+命令触发: /pipeline-dashboard
 
 ---
 
 ## 目的 / Purpose
 
-显示当前流水线状态并确定要执行的下一个任务。 / Show the current pipeline status and determine the next task to execute.
+显示当前流水线状态并确定要执行的下一个任务。/ Show the current pipeline status and determine the next task to execute.
 
-此技能不执行任务。 / This skill does NOT execute tasks.
-它仅报告流水线状态并推荐下一个提示词。 / It only reports pipeline status and recommends the next prompt.
+此技能不执行任务。/ This skill does NOT execute tasks.
+它仅报告流水线状态并推荐下一个提示词。/ It only reports pipeline status and recommends the next prompt.
 
 ---
 

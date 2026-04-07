@@ -48,8 +48,6 @@ promptsRec/archive/
 docs/archive/
 
 # Large development context docs
-ChatGPT_Dev_Context.md
-Harness\ Engineering\ 架构应用指南.md
 AGENTS.md
 
 # ============================================================
@@ -78,7 +76,7 @@ AGENTS.md
 !docs/DB_SCHEMA.md
 !docs/RBAC_DESIGN.md
 !docs/RBAC_PERMISSION_MATRIX.md
-!docs/PROMPT_TASK_CONVENTION.md
+!docs/archive/PROMPT_TASK_CONVENTION.md
 
 # Current config
 !.claude/commands.md

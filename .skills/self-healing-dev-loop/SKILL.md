@@ -1,3 +1,18 @@
+---
+name: self-healing-dev-loop
+executor: Claude Code
+auto_invoke: false
+depends_on:
+  - dev-inspector
+triggers: []
+rules_ref:
+  - .claude/rules/02_debug.md
+  - .claude/rules/03_hotfix.md
+  - .claude/rules/01_workflow.md
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
 # 自愈开发循环技能 / Self Healing Dev Loop Skill
 
 **规则约束**: 本技能协调问题修复时，根据问题类型调用相应规则：
@@ -64,10 +79,9 @@ Phase 4 完成 → 通知 tester 执行 E2E 验证
 
 ## 目的 / Purpose
 
-自愈开发循环技能使系统能够自动检测开发问题、生成结构化的开发提示词、执行修复并更新项目任务管道。
+自愈开发循环技能使系统能够自动检测开发问题、生成结构化的开发提示词、执行修复并更新项目任务管道。/ The Self Healing Dev Loop skill enables the system to automatically detect development issues, generate structured development prompts, execute fixes, and update project task pipelines.
 
-此技能集成了以下子系统：
-
+此技能集成了以下子系统：/ This skill integrates the following subsystems:
 - Dev Inspector / 开发检查器
 - Auto Task Generator / 自动任务生成器
 - RUNPROMPT / 运行提示词

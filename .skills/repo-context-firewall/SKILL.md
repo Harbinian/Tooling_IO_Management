@@ -1,5 +1,11 @@
 name: repo-context-firewall
 executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/00_core.md
+version: 1.0.0
 description: 检测超大文件和上下文繁重的仓库区域，然后推荐或应用上下文优化规则，以减少 Trae token 使用并提高 AI 开发速度。/ Detect oversized files and context-heavy repository areas, then recommend or apply context optimization rules to reduce Trae token usage and improve AI development speed.
 
 ---

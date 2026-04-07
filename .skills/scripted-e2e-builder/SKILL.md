@@ -1,5 +1,12 @@
 name: scripted-e2e-builder
 executor: Codex
+auto_invoke: false
+depends_on:
+  - human-e2e-tester
+triggers: []
+rules_ref:
+  - .claude/rules/06_testing.md
+version: 1.0.0
 description: 将已验证的人工工作流转换为前端和后端的自动化端到端和回归测试脚本。/ Convert validated human workflows into automated end-to-end and regression test scripts for frontend and backend.
 
 ---

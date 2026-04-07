@@ -1,7 +1,13 @@
 ---
 name: frontend-design
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/04_frontend.md
+version: 1.0.0
 description: 创建独特、生产级的前端界面，具有高设计质量。当用户要求构建 Web 组件、页面或应用程序时使用。生成创意精致的代码，避免通用的 AI 美学。/ Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications. Generates creative, polished code that avoids generic AI aesthetics.
-license: Complete terms in LICENSE.txt
 ---
 
 # 前端设计技能 / Frontend Design Skill

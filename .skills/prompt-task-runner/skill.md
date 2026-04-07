@@ -1,4 +1,18 @@
-# RUNPROMPT / 运行提示词任务
+---
+name: prompt-task-runner
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/01_workflow.md
+  - .claude/rules/02_debug.md
+  - .claude/rules/03_hotfix.md
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# 运行提示词任务技能 / RUNPROMPT
 
 **规则约束**: 本技能执行提示词时，根据任务类型调用相应规则：
 - 功能任务 (00001-09999) → `.claude/rules/01_workflow.md` (ADP)
@@ -14,10 +28,9 @@
 
 ## 目的 / Purpose
 
-从 `promptsRec/active/` 目录执行一个提示词任务，并通过移动到 `promptsRec/archive/` 目录来标记完成。 / Execute one prompt task from the `promptsRec/active/` directory and mark completion by moving to `promptsRec/archive/` directory.
+从 `promptsRec/active/` 目录执行一个提示词任务，并通过移动到 `promptsRec/archive/` 目录来标记完成。/ Execute one prompt task from the `promptsRec/active/` directory and mark completion by moving to `promptsRec/archive/` directory.
 
-支持的执行者: / Supported executors:
-
+支持的执行者：/ Supported executors:
 - Claude Code
 - Codex
 - Gemini

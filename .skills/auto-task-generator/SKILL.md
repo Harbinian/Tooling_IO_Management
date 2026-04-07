@@ -1,12 +1,21 @@
-# 自动任务生成器 / Auto Task Generator Skill
+---
+name: auto-task-generator
+executor: Claude Code
+auto_invoke: false
+depends_on: []
+triggers: []
+rules_ref:
+  - .claude/rules/05_task_convention.md
+version: 1.0.0
+---
+
+# 自动任务生成器技能 / Auto Task Generator Skill
 
 **规则约束**: 本技能受 `.claude/rules/05_task_convention.md` 约束，必须遵循提示词编号约定和执行者分配规则。
 
 ## 目的 / Purpose
 
-本技能使 AI 代理能够自动将发现的问题、开发需求或改进机会转换为标准化的开发提示词。
-
-This skill enables AI agents to automatically convert discovered problems, development needs, or improvement opportunities into standardized development prompts.
+本技能使 AI 代理能够自动将发现的问题、开发需求或改进机会转换为标准化的开发提示词。/ This skill enables AI agents to automatically convert discovered problems, development needs, or improvement opportunities into standardized development prompts.
 
 ---
 
@@ -227,6 +236,19 @@ Execution: RUNPROMPT
 执行模型：<Agent>
 
 Then output the full prompt content.
+
+---
+
+---
+
+## 与相邻技能的边界 / Boundary with Adjacent Skills
+
+| 维度 | 本技能 | prompt-generator |
+|------|--------|-------------------|
+| 输入 | 结构化问题检测（错误日志、UI 问题等） | 自由文本需求描述 |
+| 输出 | 自动编号的批量任务队列 | 单个提示词文件 |
+| 使用场景 | 自动检测触发、流水线集成 | 单次临时任务、用户触发 |
+| 触发方式 | 自动检测 + 手动调用 | 手动调用 |
 
 ---
 

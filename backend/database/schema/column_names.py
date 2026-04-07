@@ -447,6 +447,70 @@ SYS_USER_COLUMNS = {
 }
 
 # =============================================================================
+# sys_role
+# =============================================================================
+ROLE_COLUMNS = {
+    'id': 'id',
+    'role_id': 'role_id',
+    'role_code': 'role_code',
+    'role_name': 'role_name',
+    'role_type': 'role_type',
+    'status': 'status',
+    'remark': 'remark',
+    'created_at': 'created_at',
+    'created_by': 'created_by',
+    'updated_at': 'updated_at',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
+# sys_permission
+# =============================================================================
+PERMISSION_COLUMNS = {
+    'id': 'id',
+    'permission_code': 'permission_code',
+    'permission_name': 'permission_name',
+    'resource_name': 'resource_name',
+    'action_name': 'action_name',
+    'status': 'status',
+    'remark': 'remark',
+    'created_at': 'created_at',
+    'created_by': 'created_by',
+    'updated_at': 'updated_at',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
+# sys_user_role_rel
+# =============================================================================
+USER_ROLE_REL_COLUMNS = {
+    'id': 'id',
+    'user_id': 'user_id',
+    'role_id': 'role_id',
+    'org_id': 'org_id',
+    'is_primary': 'is_primary',
+    'status': 'status',
+    'created_at': 'created_at',
+    'created_by': 'created_by',
+    'updated_at': 'updated_at',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
+# sys_role_permission_rel
+# =============================================================================
+ROLE_PERMISSION_REL_COLUMNS = {
+    'id': 'id',
+    'role_id': 'role_id',
+    'permission_code': 'permission_code',
+    'status': 'status',
+    'created_at': 'created_at',
+    'created_by': 'created_by',
+    'updated_at': 'updated_at',
+    'updated_by': 'updated_by',
+}
+
+# =============================================================================
 # User Organization Relation (placeholder - table not found in DB)
 # =============================================================================
 USER_ORG_REL_COLUMNS = {
