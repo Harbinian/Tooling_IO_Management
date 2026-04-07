@@ -61,6 +61,12 @@ sql = "SELECT \u51fa\u5165\u5e93\u5355\u53f7 FROM tool_io_order"
 
 ## 代码完整性 / Code Integrity
 
+## Zero-Assumption Policy（零假设原则）
+
+1. **禁止占位符代码**：AI 严禁生成 `pass`、`TODO`、`...` 等未实现代码
+2. **禁止假设验证**：操作前后必须实际运行验证，不假定代码一写就对
+3. **禁止假设结构**：测试和实现必须基于真实代码结构，不假设接口存在
+
 AI 严禁生成占位符代码。所有代码必须完整且可执行。
 
 ---
@@ -152,6 +158,7 @@ fix: correct tool reservation logic
 | `tool_io_notification` | 通知发送历史 |
 | `tool_io_location` | 工装位置信息 |
 | `tool_io_transport_issue` | 运输异常记录 |
+| `tool_io_mpl` | 工装可拆卸件清单 |
 
 ### 系统表
 
@@ -189,3 +196,19 @@ fix: correct tool reservation logic
 - 允许重试
 
 数据表：`tool_io_notification`
+
+---
+
+## 依赖管理 / Dependency Management
+
+- Python 依赖必须锁定版本：`requirements.txt` 使用 `==` 精确版本
+- Node 依赖必须提交 `package-lock.json` 或 `pnpm-lock.yaml`
+- 禁止在生产代码中使用 `latest` 或无版本约束的依赖
+
+---
+
+## 敏感信息处理 / Secrets Management
+
+- 禁止将密钥、Token、密码硬编码在任何代码文件中
+- 所有敏感信息必须通过环境变量或 `.env` 文件注入
+- `.env` 文件禁止提交到版本控制，必须在 `.gitignore` 中声明

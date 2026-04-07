@@ -28,7 +28,7 @@
 
 在动手写代码前，必须审视数据 Schema：
 
-- **数据来源**: 后端 `database.py` (SQL Server) / 前端 `frontend/src/api/`
+- **数据来源**: 后端 `web_server.py` (SQL Server) / 前端 `frontend/src/api/`
 - **主键校验**: 如果涉及数据修改，必须严格基于 UUID/ID 进行比对和落盘
 - **生命周期防御**:
   - Vue 前端：Pinia store 状态持久化 + 组件卸载清理

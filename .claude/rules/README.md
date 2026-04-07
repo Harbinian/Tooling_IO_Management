@@ -16,6 +16,33 @@
 | `04_frontend.md` | 前端开发规范（页面、搜索、主题、RBAC） |
 | `05_task_convention.md` | 提示词任务编号约定 + 归档前置条件 |
 | `06_testing.md` | 测试任务规范（30101-39999） |
+| `07_ci_gates.md` | CI 自动化门禁规范（替代人工评分/检查） |
+| `08_skill_convention.md` | 技能文件约定规范（结构、体积、触发命令） |
+
+---
+
+## 流程选择决策树 / Workflow Decision Tree
+
+收到任务时，按以下顺序判断应使用哪个协议：
+
+```
+收到任务
+ │
+ ├─ 生产环境紧急故障？
+ │   └─ YES → 🚑 HOTFIX SOP (03_hotfix.md)
+ │
+ ├─ 已有功能出现 Bug / 回归问题？
+ │   └─ YES → 🐛 8D 协议 (02_debug.md)
+ │
+ ├─ 新功能 / 重构 / UI 迁移？
+ │   └─ YES → 🔄 ADP 四阶段 (01_workflow.md)
+ │
+ └─ 纯测试任务？
+     └─ YES → 🧪 测试规范 (06_testing.md)
+```
+
+> ⚠️ 若任务横跨多个类型（如修 Bug 时发现需重构），**以最高优先级流程为主**，
+> 子任务拆分为独立编号单独执行。
 
 ---
 
@@ -28,7 +55,10 @@
 | `01_workflow.md` | `prompt-task-runner` - 四阶段流程执行 |
 | `02_debug.md` | `self-healing-dev-loop` - 8D 问题解决 |
 | `03_hotfix.md` | `self-healing-dev-loop` - 热修复流程 |
+| `04_frontend.md` | 手动执行 / Manual |
 | `05_task_convention.md` | `auto-task-generator` - 任务生成与编号 |
+| `06_testing.md` | 手动执行 / Manual |
+| `07_ci_gates.md` | 手动执行 / Manual（CI 配置由人工维护） |
 
 ---
 
@@ -52,6 +82,17 @@ Phase 1: PRD → Phase 2: Data → Phase 3: Architecture → Phase 4: Execution
 
 - 8D: D1-D8 问题解决
 - 热修复: 识别 → RFC → 分步执行 → 回滚预案 → 归档
+
+### CI 门禁 (07_ci_gates.md)
+
+```
+L1: pre-commit → L2: 静态分析 → L3: 测试覆盖 → L4: 结构检查 → L5: 归档守卫
+```
+- G1/G2: 替代人工 Code Review
+- G3: 替代 tester 测试确认
+- G4: 替代 reviewer D3/D5/D6 评分
+- G5: 替代人工归档检查
+- H1-H5: 保留人工节点（业务语义无法自动化）
 
 ### 任务编号 (05_task_convention.md)
 
