@@ -43,7 +43,7 @@ This validation covers the integrated system across these layers:
 | Login with valid credentials | ✅ Implemented | auth_routes.py /api/auth/login |
 | Invalid credentials rejected | ✅ Implemented | Returns error response |
 | Current user endpoint works | ✅ Implemented | /api/auth/me returns user info |
-| Logout works | ✅ Implemented | /api/auth/logout clears session |
+| Logout works | ✅ Implemented | Client-side session clear (localStorage), no backend endpoint |
 
 ### Frontend Authentication
 
