@@ -202,7 +202,7 @@
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-border">
-                        <tr v-for="item in confirmItems" :key="item.toolCode" class="group hover:bg-muted/20 transition-colors">
+                        <tr v-for="item in confirmItems" :key="item.item_id" class="group hover:bg-muted/20 transition-colors">
                           <td class="px-4 py-4">
                             <p class="font-semibold text-foreground font-mono text-xs">{{ item.serial_no || '-' }}</p>
                           </td>
@@ -318,12 +318,12 @@
               <div v-if="selectedTools.length" class="divide-y divide-border/50">
                 <div
                   v-for="tool in selectedTools"
-                  :key="tool.toolCode"
+                  :key="tool.serialNo"
                   class="p-5 transition-all hover:bg-accent/50 group relative"
                 >
                   <div class="flex items-start justify-between gap-3 mb-2">
                     <div>
-                      <p class="text-sm font-bold text-foreground font-mono">{{ tool.toolCode }}</p>
+                      <p class="text-sm font-bold text-foreground font-mono">{{ tool.serialNo }}</p>
                       <p class="text-[11px] text-muted-foreground mt-0.5">{{ tool.toolName }}</p>
                     </div>
                     <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10" @click="removeTool(tool)">
@@ -334,7 +334,7 @@
                     <Badge variant="secondary" class="text-[10px] bg-muted/50 border-border/50">
                       {{ tool.statusText || tool.currentStatus || '未知状态' }}
                     </Badge>
-                    <Button variant="link" size="sm" class="h-auto p-0 text-[10px] text-primary/70 hover:text-primary flex items-center gap-1" @click="loadToolHistory(tool.toolCode)">
+                    <Button variant="link" size="sm" class="h-auto p-0 text-[10px] text-primary/70 hover:text-primary flex items-center gap-1" @click="loadToolHistory(tool.serialNo)">
                       <History class="h-3 w-3" /> 查看历史
                     </Button>
                   </div>
@@ -434,13 +434,13 @@
                       <tbody class="divide-y divide-border/50">
                         <tr v-for="h in statusHistory" :key="h.id" class="hover:bg-muted/20 transition-colors">
                           <td class="px-4 py-4 align-top">
-                            <span class="font-mono font-bold">{{ h.tool_code }}</span>
+                            <span class="font-mono font-bold">{{ h.serial_no || h.tool_code }}</span>
                           </td>
                           <td class="px-4 py-4">
                             <div class="flex items-center gap-2 mb-1">
-                              <span class="text-muted-foreground">{{ getStatusLabel(h.old_status) }}</span>
+                              <span class="text-muted-foreground">{{ toolStatusLabel(h.old_status) }}</span>
                               <span class="text-primary">→</span>
-                              <span class="font-bold text-foreground">{{ getStatusLabel(h.new_status) }}</span>
+                              <span class="font-bold text-foreground">{{ toolStatusLabel(h.new_status) }}</span>
                             </div>
                             <p class="text-[10px] text-muted-foreground italic truncate max-w-[150px]" :title="h.remark">
                               {{ h.remark || '无备注' }}
@@ -507,7 +507,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   RefreshCw,
@@ -532,11 +532,10 @@ import {
   getPendingKeeperOrders,
   keeperConfirmOrder,
   notifyTransport,
-  rejectOrder
+  rejectOrder,
+  getFinalConfirmAvailability
 } from '@/api/orders'
-import { getFinalConfirmAvailability } from '@/api/orders'
 import { getMplByTool } from '@/api/mpl'
-import { searchTools, batchUpdateToolStatus, getToolStatusHistory } from '@/api/tools'
 import { getUsersByRole } from '@/api/users'
 import { useSessionStore } from '@/store/session'
 import { DEBUG_IDS } from '@/debug/debugIds'
@@ -552,6 +551,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Input from '@/components/ui/Input.vue'
 import Textarea from '@/components/ui/Textarea.vue'
 import Select from '@/components/ui/Select.vue'
+import { useToolStatus } from '@/composables/useToolStatus'
 
 const session = useSessionStore()
 const activeTab = ref('orders')
@@ -568,107 +568,27 @@ const selectedMplItem = ref(null)
 const selectedMplGroup = ref(null)
 const productionPrepUsers = ref([])
 
-// Tool Status Management State
-const toolSearchKeyword = ref('')
-const selectedTools = ref([])
-const newToolStatus = ref('in_storage')
-const statusRemark = ref('')
-const submittingStatus = ref(false)
-const statusHistory = ref([])
-const historyLoading = ref(false)
-const searchLoading = ref(false)
-
-const toolStatusOptions = [
-  { label: '在库', value: 'in_storage' },
-  { label: '已出库', value: 'outbounded' },
-  { label: '维修中', value: 'maintain' },
-  { label: '已报废', value: 'scrapped' }
-]
+// Tool Status Management — delegated to composable
+const {
+  toolSearchKeyword,
+  selectedTools,
+  newToolStatus,
+  statusRemark,
+  submittingStatus,
+  statusHistory,
+  historyLoading,
+  searchLoading,
+  toolStatusOptions,
+  handleSearchTools,
+  removeTool,
+  applyStatusChange,
+  loadToolHistory,
+  toolStatusLabel
+} = useToolStatus(session)
 
 const showToolStatusTab = computed(() => {
   return session.role === 'keeper' || session.role === 'admin'
 })
-
-async function handleSearchTools(query) {
-  if (!query) return
-  searchLoading.value = true
-  try {
-    const result = await searchTools({ keyword: query })
-    if (result.success && result.data.length > 0) {
-      // For now, let's just add the first one if it's not already there
-      const tool = result.data[0]
-      if (!selectedTools.value.some((t) => t.toolCode === tool.toolCode)) {
-        selectedTools.value.push(tool)
-        // Auto-load history for the newly added tool
-        loadToolHistory(tool.toolCode)
-      }
-    } else {
-      ElMessage.info('未找到匹配的工装')
-    }
-  } finally {
-    searchLoading.value = false
-    toolSearchKeyword.value = ''
-  }
-}
-
-function removeTool(tool) {
-  selectedTools.value = selectedTools.value.filter((t) => t.toolCode !== tool.toolCode)
-}
-
-async function applyStatusChange() {
-  if (selectedTools.value.length === 0) {
-    ElMessage.warning('请先选择工装')
-    return
-  }
-  if (!newToolStatus.value) {
-    ElMessage.warning('请选择新状态')
-    return
-  }
-
-  submittingStatus.value = true
-  try {
-    const result = await batchUpdateToolStatus({
-      tool_codes: selectedTools.value.map((t) => t.toolCode),
-      new_status: newToolStatus.value,
-      remark: statusRemark.value,
-      operator_id: session.userId,
-      operator_name: session.userName,
-      operator_role: session.role
-    })
-
-    if (result.data.success) {
-      ElMessage.success('状态更新成功')
-      statusRemark.value = ''
-      // Refresh history for the first selected tool as a sample
-      if (selectedTools.value.length > 0) {
-        loadToolHistory(selectedTools.value[0].toolCode)
-      }
-      // Update local status display
-      selectedTools.value.forEach((t) => {
-        t.currentStatus = newToolStatus.value
-        t.statusText = toolStatusOptions.find(opt => opt.value === newToolStatus.value)?.label || newToolStatus.value
-      })
-    }
-  } finally {
-    submittingStatus.value = false
-  }
-}
-
-async function loadToolHistory(toolCode) {
-  historyLoading.value = true
-  try {
-    const result = await getToolStatusHistory(toolCode)
-    if (result.data.success) {
-      statusHistory.value = result.data.data
-    }
-  } finally {
-    historyLoading.value = false
-  }
-}
-
-function getStatusLabel(status) {
-  return toolStatusOptions.find((opt) => opt.value === status)?.label || status
-}
 
 const confirmForm = reactive({
   transportType: '叉车',
@@ -721,7 +641,9 @@ function buildEditableItems(order) {
   return (order.items || []).map((item) => {
     return {
       ...item,
-      serial_no: item.toolCode || '',
+      // 显式保留 item_id 和 serial_no，确保 API 调用时必填字段明确可见
+      item_id: item.id,
+      serial_no: item.serialNo || item.serial_no || '',
       drawing_no: item.drawingNo || '',
       tool_name: item.toolName || '',
       locationText: resolveItemLocationText(item),
@@ -736,11 +658,11 @@ async function loadMplStatuses(items) {
   const results = await Promise.all(
     (items || []).map(async (item) => {
       if (!item.drawingNo || !item.currentVersion) {
-        return { key: item.toolCode, exists: false, message: `工装 ${item.drawingNo || item.toolCode || '-'} 缺少版次，无法匹配 MPL`, group: null }
+        return { key: item.serialNo || item.serial_no, exists: false, message: `工装 ${item.drawingNo || item.serialNo || item.serial_no || '-'} 缺少版次，无法匹配 MPL`, group: null }
       }
       const result = await getMplByTool(item.drawingNo, item.currentVersion).catch(() => ({ success: false }))
       return {
-        key: item.toolCode,
+        key: item.serialNo || item.serial_no,
         exists: !!result.success,
         message: result.success ? '' : `工装 ${item.drawingNo} (版次 ${item.currentVersion}) 缺少可拆卸件清单`,
         group: result.data || null
@@ -750,7 +672,7 @@ async function loadMplStatuses(items) {
 
   const groupMap = new Map(results.map((entry) => [entry.key, entry]))
   confirmItems.value = confirmItems.value.map((item) => {
-    const match = groupMap.get(item.toolCode)
+    const match = groupMap.get(item.serialNo || item.serial_no)
     return { ...item, mplExists: !!match?.exists, mplGroup: match?.group || null }
   })
   mplWarnings.value = results.filter((entry) => !entry.exists && entry.message).map((entry) => entry.message)
@@ -837,6 +759,13 @@ async function previewTransport() {
 }
 
 async function approveOrder() {
+  // 防御性校验：确保所有 items 都有 item_id
+  const invalidItems = confirmItems.value.filter(item => !item.item_id)
+  if (invalidItems.length > 0) {
+    ElMessage.error(`工装明细缺少关键标识，请刷新页面后重试。缺失项: ${invalidItems.map(i => i.serial_no || i.serialNo).join(', ')}`)
+    return
+  }
+
   const payload = {
     keeper_id: session.userId,
     keeper_name: session.userName,
@@ -845,7 +774,9 @@ async function approveOrder() {
     transport_assignee_name: confirmForm.transportAssigneeName,
     keeper_remark: confirmForm.keeperRemark,
     items: confirmItems.value.map((item) => ({
-      tool_code: item.toolCode,
+      // 显式使用 item_id 和 serial_no（由 buildEditableItems 明确保留）
+      item_id: item.item_id,
+      serial_no: item.serial_no,
       location_id: null,
       location_text: resolveItemLocationText(item),
       check_result: item.status,

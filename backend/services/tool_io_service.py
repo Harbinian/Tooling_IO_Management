@@ -1289,7 +1289,7 @@ def search_tool_inventory(filters: Dict) -> Dict:
 
 
 def batch_update_tool_status(
-    tool_codes: List[str],
+    serial_nos: List[str],
     new_status: str,
     remark: str,
     operator: Dict,
@@ -1298,7 +1298,7 @@ def batch_update_tool_status(
     """Batch update tool status and write status change history."""
     cleaned_codes: List[str] = []
     seen_codes = set()
-    for code in tool_codes or []:
+    for code in serial_nos or []:
         normalized_code = str(code).strip()
         if not normalized_code or normalized_code in seen_codes:
             continue
@@ -1306,7 +1306,7 @@ def batch_update_tool_status(
         cleaned_codes.append(normalized_code)
 
     if not cleaned_codes:
-        return {"success": False, "error": "tool_codes must contain at least one code"}
+        return {"success": False, "error": "serial_nos must contain at least one code"}
 
     normalized_status = str(new_status or "").strip().lower()
     if normalized_status not in ALLOWED_BATCH_TOOL_STATUSES:
@@ -1334,10 +1334,10 @@ def get_tool_status_history(serial_no: str, page_no: int = 1, page_size: int = 2
     return repo.get_tool_status_history(normalized_code, page_no=page_no, page_size=page_size)
 
 
-def batch_query_tools(tool_codes: List[str]) -> Dict:
-    cleaned_codes = [code.strip() for code in tool_codes if isinstance(code, str) and code.strip()]
+def batch_query_tools(serial_nos: List[str]) -> Dict:
+    cleaned_codes = [code.strip() for code in serial_nos if isinstance(code, str) and code.strip()]
     if not cleaned_codes:
-        return {"success": False, "error": "tool_codes must contain at least one code", "data": []}
+        return {"success": False, "error": "serial_nos must contain at least one code", "data": []}
 
     rows = list(ToolRepository().load_tool_master_map(cleaned_codes).values())
     return {"success": True, "data": rows}

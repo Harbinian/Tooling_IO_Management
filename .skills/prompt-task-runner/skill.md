@@ -3,11 +3,11 @@ name: prompt-task-runner
 executor: Claude Code
 auto_invoke: false
 depends_on: []
-triggers: []
+triggers:
+  - /prompt-task-runner
 rules_ref:
   - .claude/rules/01_workflow.md
   - .claude/rules/02_debug.md
-  - .claude/rules/03_hotfix.md
   - .claude/rules/05_task_convention.md
 version: 1.0.0
 ---
@@ -19,8 +19,8 @@ version: 1.0.0
 - Bug修复任务 (10101-19999) → `.claude/rules/02_debug.md` (8D)
 - 重构任务 (20101-29999) → `.claude/rules/01_workflow.md` (ADP)
 - 测试任务 (30101-39999) → `.claude/rules/01_workflow.md` (ADP)
-- 生产环境紧急修复 → `.claude/rules/03_hotfix.md` (HOTFIX)
 - 编号约定 → `.claude/rules/05_task_convention.md`
+- 生产环境紧急修复 → `.claude/rules/03_hotfix.md` (由 `self-healing-dev-loop` 处理)
 
 命令触发: RUNPROMPT / Command Trigger: RUNPROMPT
 

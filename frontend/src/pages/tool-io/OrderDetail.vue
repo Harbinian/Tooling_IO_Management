@@ -173,12 +173,12 @@
           <div v-if="order.items?.length" class="divide-y divide-border">
             <article
               v-for="(item, index) in order.items"
-              :key="item.toolCode || item.toolId || index"
+              :key="item.serialNo || item.toolId || index"
               class="grid gap-4 px-6 py-5 lg:grid-cols-[1.6fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr]"
             >
               <div class="space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-sm font-semibold text-foreground">{{ item.toolCode || item.toolId || '-' }}</p>
+                  <p class="text-sm font-semibold text-foreground">{{ item.serialNo || item.toolId || '-' }}</p>
                   <OrderStatusTag v-if="item.itemStatus" :status="item.itemStatus" item />
                 </div>
                 <p class="text-sm text-muted-foreground">{{ item.toolName || '-' }}</p>
@@ -506,28 +506,33 @@ async function loadOrder() {
   errorMessage.value = ''
 
   try {
-    const [detailResult, logResult, issueResult] = await Promise.all([
-      getOrderDetail(props.orderNo),
-      getOrderLogs(props.orderNo),
-      getTransportIssues(props.orderNo).catch(() => ({ success: false, data: [] }))
-    ])
+    // Step 1: 先查订单详情
+    const detailResult = await getOrderDetail(props.orderNo)
 
-    order.value = detailResult.success
-      ? detailResult.data
-      : {
-          items: []
-        }
-    logs.value = logResult.success ? logResult.data : []
-    issues.value = issueResult.success ? issueResult.data : []
-
+    // 订单不存在则终止，不再发送无意义的请求
     if (!detailResult.success) {
+      order.value = { items: [] }
+      logs.value = []
+      issues.value = []
       errorMessage.value = detailResult.error || '单据详情加载失败。'
       finalConfirmState.value = { available: false, reason: '', expected_role: '' }
       keeperText.value = ''
       transportText.value = ''
       wechatText.value = ''
+      loading.value = false
       return
     }
+
+    order.value = detailResult.data
+
+    // Step 2: 订单存在，并行查日志和运输异常
+    const [logResult, issueResult] = await Promise.all([
+      getOrderLogs(props.orderNo),
+      getTransportIssues(props.orderNo).catch(() => ({ success: false, data: [] }))
+    ])
+
+    logs.value = logResult.success ? logResult.data : []
+    issues.value = issueResult.success ? issueResult.data : []
 
     const availability = await getFinalConfirmAvailability(props.orderNo, {
       operator_id: session.userId,
@@ -554,6 +559,7 @@ async function loadOrder() {
   } catch (error) {
     order.value = { items: [] }
     logs.value = []
+    issues.value = []
     finalConfirmState.value = { available: false, reason: '', expected_role: '' }
     keeperText.value = ''
     transportText.value = ''

@@ -81,7 +81,7 @@ function selectRole(role) {
 async function loadRoles() {
   loading.value = true
   try {
-    roles.value = await rolesApi.getAdminRoles()
+    roles.value = (await rolesApi.getAdminRoles()).data || []
     if (selectedRoleId.value) {
       const refreshed = roles.value.find((r) => r.role_id === selectedRoleId.value)
       if (refreshed) {

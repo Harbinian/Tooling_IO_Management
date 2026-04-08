@@ -52,8 +52,8 @@ async function loadData() {
       rolesApi.getAdminRoles(),
       permissionsApi.getPermissions()
     ])
-    roles.value = rolesData
-    permissions.value = permsData
+    roles.value = rolesData.data || []
+    permissions.value = permsData.data || []
     
     if (selectedRoleId.value) {
       await loadRolePermissions(selectedRoleId.value)
@@ -69,8 +69,8 @@ async function loadData() {
 async function loadRolePermissions(roleId) {
   try {
     const rolePerms = await rolesApi.getRolePermissions(roleId)
-    currentRolePermissions.value = rolePerms
-    selectedPermissionCodes.value = rolePerms.map(p => p.permission_code)
+    currentRolePermissions.value = rolePerms.data || []
+    selectedPermissionCodes.value = rolePerms.data || []
   } catch (err) {
     showToast('加载角色权限失败')
     console.error(err)

@@ -548,10 +548,7 @@ print("[PASS] Archive preconditions OK")
 
 ## Layer 6 — 技能文件门禁 / Skill File Gates
 
-**触发条件**: `.claude/skills/` 目录下有文件变更时执行
-**执行者**: CI 自动执行，无需人工介入
-
-**触发条件**: `.claude/skills/` 目录下有文件变更时执行
+**触发条件**: `.skills/` 目录下有文件变更时执行
 **执行者**: CI 自动执行，无需人工介入
 
 ---
@@ -595,7 +592,7 @@ print("[PASS] Archive preconditions OK")
 
 ### G6-3｜触发命令全局唯一性检查
 
-**检查范围**: `.claude/skills/` 目录所有技能文件（全量扫描，非仅变更文件）
+**检查范围**: `.skills/` 目录所有技能文件（全量扫描，非仅变更文件）
 
 | 检查项 | 规则 | 不通过时 |
 |--------|------|---------|
@@ -615,12 +612,12 @@ print("[PASS] Archive preconditions OK")
 
 | 检查项 | 规则 | 不通过时 |
 |--------|------|---------|
-| 依赖引用 | `depends_on` 中声明的技能名称在 `.claude/skills/` 目录中不存在对应文件 → 阻断合并 | 阻断 |
+| 依赖引用 | `depends_on` 中声明的技能名称在 `.skills/` 目录中不存在对应文件 → 阻断合并 | 阻断 |
 
 **错误信息**:
 ```
 [G6-4] {filename} 声明依赖 {skill_name}，
-但 .claude/skills/{skill_name}.md 不存在，请先创建依赖技能或修正 depends_on
+但 .skills/{skill_name}/ 不存在，请先创建依赖技能或修正 depends_on
 ```
 
 ---

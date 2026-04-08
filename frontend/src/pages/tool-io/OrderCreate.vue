@@ -128,9 +128,9 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
-                  <tr v-for="(item, index) in selectedTools" :key="item.toolCode" class="group hover:bg-muted/30 transition-colors">
+                  <tr v-for="(item, index) in selectedTools" :key="item.serialNo" class="group hover:bg-muted/30 transition-colors">
                     <td class="px-6 py-4">
-                      <div class="font-semibold text-foreground">{{ item.toolCode }}</div>
+                      <div class="font-semibold text-foreground">{{ item.serialNo }}</div>
                       <div class="mt-0.5 max-w-[200px] truncate text-xs text-muted-foreground">{{ item.toolName }}</div>
                     </td>
                     <td class="px-6 py-4">
@@ -230,7 +230,7 @@
 
     <ToolSearchDialog
       v-model:visible="searchDialogVisible"
-      :selected-tool-codes="selectedToolCodes"
+      :selected-serial-nos="selectedSerialNos"
       @confirm="appendTools"
     />
   </div>
@@ -285,17 +285,17 @@ const savingDraft = ref(false)
 const submittingOrder = ref(false)
 const createdOrderNo = ref('')
 
-const selectedToolCodes = computed(() => selectedTools.value.map((tool) => tool.toolCode).filter(Boolean))
+const selectedSerialNos = computed(() => selectedTools.value.map((tool) => tool.serialNo).filter(Boolean))
 
 function appendTools(tools) {
   const nextTools = [...selectedTools.value]
-  const selectedCodeSet = new Set(selectedToolCodes.value)
+  const selectedCodeSet = new Set(selectedSerialNos.value)
   let addedCount = 0
   let duplicateCount = 0
 
   for (const tool of tools) {
-    if (!tool?.toolCode) continue
-    if (selectedCodeSet.has(tool.toolCode)) {
+    if (!tool?.serialNo) continue
+    if (selectedCodeSet.has(tool.serialNo)) {
       duplicateCount += 1
       continue
     }
@@ -304,7 +304,7 @@ function appendTools(tools) {
       ...tool,
       applyQty: 1
     })
-    selectedCodeSet.add(tool.toolCode)
+    selectedCodeSet.add(tool.serialNo)
     addedCount += 1
   }
 
@@ -367,7 +367,7 @@ function buildPayload() {
     remark: form.remark,
     items: sanitizedItems.map((item) => ({
       tool_id: item.toolId,
-      tool_code: item.toolCode,
+      serial_no: item.serialNo,
       tool_name: item.toolName,
       drawing_no: item.drawingNo,
       spec_model: item.specModel,

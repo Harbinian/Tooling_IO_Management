@@ -36,7 +36,16 @@
       "Bash(netstat -ano)",
       "Bash(ls -la promptsRec/archive/*.md)",
       "Bash(cd:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git reset:*)",
+      "Bash(mv .skills/skill-audit-and-fix/skill.md .skills/skill-audit-and-fix.md)",
+      "Bash(mv .skills/prompt-task-runner/skill.md .skills/prompt-task-runner.md)",
+      "Bash(mv .skills/human-e2e-tester/skill.md .skills/human-e2e-tester.md)",
+      "Bash(rmdir .skills/skill-audit-and-fix .skills/prompt-task-runner .skills/human-e2e-tester)",
+      "Read(//c/Users/charl/.claude/skills/**)",
+      "Bash(mv \"E:/CA001/Tooling_IO_Management/.skills/SKILL_STANDARD.md\" \"E:/CA001/Tooling_IO_Management/.skills/meta/\")",
+      "Bash(mv \"E:/CA001/Tooling_IO_Management/.skills/SKILL_REVIEW_CHECKLIST.md\" \"E:/CA001/Tooling_IO_Management/.skills/meta/\")",
+      "Bash(mv \"E:/CA001/Tooling_IO_Management/.skills/SKILL_DEPENDENCY_MAP.md\" \"E:/CA001/Tooling_IO_Management/.skills/meta/\")"
     ]
   }
 }

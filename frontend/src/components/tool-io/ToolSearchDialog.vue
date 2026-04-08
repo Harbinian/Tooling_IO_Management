@@ -28,7 +28,7 @@
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5" v-debug-id="DEBUG_IDS.ORDER_CREATE.TS_FILTER_SECTION">
         <div class="space-y-1.5" v-debug-id="DEBUG_IDS.ORDER_CREATE.TS_TOOL_CODE_FILTER">
           <label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">序列号</label>
-          <Input v-model="filters.toolCode" placeholder="输入序列号" @keyup.enter="runSearch" class="h-9 text-xs" />
+          <Input v-model="filters.serialNo" placeholder="输入序列号" @keyup.enter="runSearch" class="h-9 text-xs" />
         </div>
         <div class="space-y-1.5" v-debug-id="DEBUG_IDS.ORDER_CREATE.TS_TOOL_NAME_FILTER">
           <label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">工装名称</label>
@@ -70,10 +70,10 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="52" :selectable="isSelectable" reserve-selection />
-          <el-table-column prop="toolCode" label="序列号" width="220">
+          <el-table-column prop="serialNo" label="序列号" width="220">
             <template #default="{ row }">
               <div class="flex items-center gap-2">
-                <span class="font-mono text-xs font-semibold text-foreground">{{ row.toolCode }}</span>
+                <span class="font-mono text-xs font-semibold text-foreground">{{ row.serialNo }}</span>
                 <el-tooltip
                   v-if="row.disabled"
                   :content="row.disabled_reason"
@@ -128,9 +128,9 @@
             <div class="h-2 w-2 rounded-full bg-primary" />
             <span>当前选中: <b class="text-foreground">{{ selection.length }}</b> 项</span>
           </div>
-          <div v-if="selectedToolCodes.length" class="flex items-center gap-1.5 border-l border-border pl-4">
+          <div v-if="selectedSerialNos.length" class="flex items-center gap-1.5 border-l border-border pl-4">
             <div class="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>已加入明细: <b class="text-foreground">{{ selectedToolCodes.length }}</b> 项</span>
+            <span>已加入明细: <b class="text-foreground">{{ selectedSerialNos.length }}</b> 项</span>
           </div>
         </div>
         <div class="flex items-center gap-3">
@@ -164,7 +164,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  selectedToolCodes: {
+  selectedSerialNos: {
     type: Array,
     default: () => []
   }
@@ -173,7 +173,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'confirm'])
 
 const filters = reactive({
-  toolCode: '',
+  serialNo: '',
   toolName: '',
   drawingNo: '',
   workPackage: ''
@@ -184,14 +184,14 @@ const results = ref([])
 const selection = ref([])
 const tableRef = ref(null)
 
-const selectedToolCodeSet = computed(() => new Set(props.selectedToolCodes.filter(Boolean)))
+const selectedSerialNoSet = computed(() => new Set(props.selectedSerialNos.filter(Boolean)))
 
 function getRowKey(row) {
-  return row.toolCode
+  return row.serialNo
 }
 
 function isSelectable(row) {
-  return !row.disabled && !selectedToolCodeSet.value.has(row.toolCode)
+  return !row.disabled && !selectedSerialNoSet.value.has(row.serialNo)
 }
 
 function tableRowClassName({ row }) {
@@ -204,7 +204,7 @@ function handleSelectionChange(rows) {
 
 function buildKeyword() {
   return [
-    filters.toolCode.trim(),
+    filters.serialNo.trim(),
     filters.toolName.trim(),
     filters.drawingNo.trim(),
     filters.workPackage.trim()
@@ -219,7 +219,7 @@ function includesFilter(source, keyword) {
 function applyClientFilters(items) {
   return items.filter((item) => {
     return (
-      includesFilter(item.toolCode, filters.toolCode.trim()) &&
+      includesFilter(item.serialNo, filters.serialNo.trim()) &&
       includesFilter(item.toolName, filters.toolName.trim()) &&
       includesFilter(item.drawingNo, filters.drawingNo.trim()) &&
       includesFilter(item.workPackage, filters.workPackage.trim())
@@ -256,7 +256,7 @@ async function runSearch() {
 }
 
 function resetFilters() {
-  filters.toolCode = ''
+  filters.serialNo = ''
   filters.toolName = ''
   filters.drawingNo = ''
   filters.workPackage = ''

@@ -51,7 +51,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS serial_no" in sql_text and "Tooling_ID_Main" in sql_text:
+            if "Tooling_ID_Main" in sql_text and ("AS serial_no" in sql_text or "AS tool_code" in sql_text):
                 return [
                     {
                         "serial_no": "T000001",
@@ -97,7 +97,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS serial_no" in sql_text and "Tooling_ID_Main" in sql_text:
+            if "Tooling_ID_Main" in sql_text and ("AS serial_no" in sql_text or "AS tool_code" in sql_text):
                 return [
                     {
                         "serial_no": "T000001",

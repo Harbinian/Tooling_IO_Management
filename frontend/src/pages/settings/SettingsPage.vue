@@ -358,22 +358,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Trash2 } from 'lucide-vue-next'
 
 import { useSessionStore } from '@/store/session'
-import { changePassword } from '@/api/auth'
-import {
-  submitFeedback,
-  getUserFeedback,
-  deleteFeedback,
-  FeedbackCategory,
-  FeedbackCategoryLabels,
-  FeedbackStatus,
-  FeedbackStatusLabels,
-  validateFeedback
-} from '@/api/feedback'
-import { getSystemConfigs, updateSystemConfig, getFeatureFlags, updateFeatureFlag } from '@/api/systemConfig'
+import { useTheme } from '@/composables/useTheme'
+import { usePasswordChange } from '@/composables/usePasswordChange'
+import { useFeedback } from '@/composables/useFeedback'
+import { useSystemSettings } from '@/composables/useSystemSettings'
 
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
@@ -417,293 +408,48 @@ function formatPermission(perm) {
   return permMap[perm] || perm
 }
 
-const passwordForm = ref({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
-const passwordLoading = ref(false)
+// Composables
+const {
+  isDarkMode,
+  toggleTheme,
+  initTheme,
+  bindSystemThemeListener,
+  unbindSystemThemeListener
+} = useTheme()
 
-async function handlePasswordChange() {
-  if (!passwordForm.value.oldPassword) {
-    ElMessage.warning('请输入当前密码')
-    return
-  }
-  if (passwordForm.value.newPassword.length < 8) {
-    ElMessage.warning('新密码长度至少为 8 位')
-    return
-  }
-  const hasUpper = /[A-Z]/.test(passwordForm.value.newPassword)
-  const hasLower = /[a-z]/.test(passwordForm.value.newPassword)
-  const hasDigit = /\d/.test(passwordForm.value.newPassword)
-  if (!(hasUpper && hasLower && hasDigit)) {
-    ElMessage.warning('新密码必须包含大小写字母和数字')
-    return
-  }
-  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    ElMessage.warning('两次输入的新密码不一致')
-    return
-  }
+const {
+  passwordForm,
+  passwordLoading,
+  handlePasswordChange
+} = usePasswordChange()
 
-  passwordLoading.value = true
-  try {
-    await changePassword({
-      old_password: passwordForm.value.oldPassword,
-      new_password: passwordForm.value.newPassword
-    })
-    ElMessage.success('密码修改成功')
-    passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
-  } catch (error) {
-    ElMessage.error(error.message || '密码修改失败')
-  } finally {
-    passwordLoading.value = false
-  }
-}
+const {
+  feedbackCategories,
+  feedbackForm,
+  feedbackLoading,
+  userFeedbackList,
+  getCategoryLabel,
+  getStatusLabel,
+  formatDateTime,
+  loadUserFeedback,
+  handleFeedbackSubmit,
+  handleDeleteFeedback
+} = useFeedback(session)
 
-// Theme
-const isDarkMode = ref(false)
-let userManualOverride = false
-let mediaQuery = null
-let mediaQueryHandler = null
-
-function toggleTheme(value) {
-  userManualOverride = true // 用户手动选择后不再响应系统
-  const theme = value ? 'dark' : 'light'
-  localStorage.setItem('theme', theme)
-  applyTheme(value)
-}
-
-function applyTheme(isDark) {
-  document.documentElement.classList.toggle('dark', isDark)
-}
-
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme) {
-    isDarkMode.value = savedTheme === 'dark'
-    userManualOverride = true // 如果有保存的主题，视为已手动覆盖
-  } else {
-    // No saved preference, use system preference
-    isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-  }
-  applyTheme(isDarkMode.value)
-}
-
-function bindSystemThemeListener() {
-  mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  mediaQueryHandler = (event) => {
-    if (!userManualOverride) {
-      isDarkMode.value = event.matches
-      applyTheme(event.matches)
-    }
-  }
-  if (mediaQuery.addEventListener) {
-    mediaQuery.addEventListener('change', mediaQueryHandler)
-  } else if (mediaQuery.addListener) {
-    mediaQuery.addListener(mediaQueryHandler)
-  }
-}
-
-// Feedback
-const feedbackCategories = computed(() => [
-  { value: FeedbackCategory.BUG, label: FeedbackCategoryLabels[FeedbackCategory.BUG] },
-  { value: FeedbackCategory.FEATURE, label: FeedbackCategoryLabels[FeedbackCategory.FEATURE] },
-  { value: FeedbackCategory.UX, label: FeedbackCategoryLabels[FeedbackCategory.UX] },
-  { value: FeedbackCategory.OTHER, label: FeedbackCategoryLabels[FeedbackCategory.OTHER] }
-])
-
-const feedbackForm = ref({
-  category: FeedbackCategory.BUG,
-  subject: '',
-  content: ''
-})
-const feedbackLoading = ref(false)
-const userFeedbackList = ref([])
-const systemConfigLoading = ref(false)
-const systemConfig = ref({
-  mpl_enabled: false,
-  mpl_strict_mode: false
-})
-const featureFlagsLoading = ref(false)
-const featureFlags = ref([])
-
-// URL config keys that should NOT use el-switch
-const urlConfigKeys = new Set([
-  'feishu_webhook_supply_team',
-  'feishu_webhook_transport',
-  'feishu_webhook_url'
-])
-
-// URL edit dialog state
-const urlEditDialog = ref({
-  visible: false,
-  loading: false,
-  key: '',
-  value: '',
-  description: ''
-})
-
-function getCategoryLabel(category) {
-  return FeedbackCategoryLabels[category] || category
-}
-
-function getStatusLabel(status) {
-  return FeedbackStatusLabels[status] || status
-}
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-async function loadUserFeedback() {
-  if (!session.loginName) return
-  userFeedbackList.value = await getUserFeedback(session.loginName)
-}
-
-async function handleFeedbackSubmit() {
-  const validation = validateFeedback(feedbackForm.value)
-  if (!validation.valid) {
-    ElMessage.warning(validation.error)
-    return
-  }
-
-  feedbackLoading.value = true
-  try {
-    const result = await submitFeedback(feedbackForm.value, {
-      loginName: session.loginName,
-      userName: session.userName
-    })
-
-    if (result.success) {
-      ElMessage.success('反馈提交成功')
-      feedbackForm.value = { category: FeedbackCategory.BUG, subject: '', content: '' }
-      await loadUserFeedback()
-    } else {
-      ElMessage.error(result.error || '反馈提交失败')
-    }
-  } catch (error) {
-    ElMessage.error(error.message || '反馈提交失败')
-  } finally {
-    feedbackLoading.value = false
-  }
-}
-
-async function handleDeleteFeedback(id) {
-  const result = await deleteFeedback(id)
-  if (result.success) {
-    ElMessage.success('反馈已删除')
-    await loadUserFeedback()
-  } else {
-    ElMessage.error(result.error || '删除失败')
-  }
-}
-
-async function loadSystemConfig() {
-  if (!session.hasPermission('admin:user_manage')) return
-  systemConfigLoading.value = true
-  try {
-    const result = await getSystemConfigs()
-    const rows = Array.isArray(result.data) ? result.data : []
-    systemConfig.value = {
-      mpl_enabled: rows.find((item) => item.config_key === 'mpl_enabled')?.config_value === 'true',
-      mpl_strict_mode: rows.find((item) => item.config_key === 'mpl_strict_mode')?.config_value === 'true'
-    }
-  } finally {
-    systemConfigLoading.value = false
-  }
-}
-
-async function updateMplConfig(configKey, value) {
-  systemConfigLoading.value = true
-  try {
-    const result = await updateSystemConfig(configKey, { config_value: value ? 'true' : 'false' })
-    if (result.success) {
-      ElMessage.success('系统配置已更新')
-    }
-  } catch (error) {
-    ElMessage.error(error.message || '系统配置更新失败')
-    await loadSystemConfig()
-  } finally {
-    systemConfigLoading.value = false
-  }
-}
-
-async function loadFeatureFlags() {
-  if (!session.hasPermission('admin:user_manage')) return
-  featureFlagsLoading.value = true
-  try {
-    const result = await getFeatureFlags()
-    featureFlags.value = Array.isArray(result.data) ? result.data.map(f => ({ ...f, _loading: false })) : []
-  } catch (error) {
-    ElMessage.error(error.message || '获取功能开关列表失败')
-  } finally {
-    featureFlagsLoading.value = false
-  }
-}
-
-async function updateFeatureFlagHandler(flagKey, value) {
-  const flag = featureFlags.value.find(f => f.config_key === flagKey)
-  if (flag) {
-    flag._loading = true
-  }
-  try {
-    const result = await updateFeatureFlag(flagKey, value ? 'true' : 'false')
-    if (result.success) {
-      ElMessage.success('功能开关已更新')
-      await loadFeatureFlags()
-    } else {
-      ElMessage.error(result.error || '功能开关更新失败')
-    }
-  } catch (error) {
-    ElMessage.error(error.message || '功能开关更新失败')
-  } finally {
-    if (flag) {
-      flag._loading = false
-    }
-  }
-}
-
-function openUrlEditDialog(row) {
-  urlEditDialog.value = {
-    visible: true,
-    loading: false,
-    key: row.config_key,
-    value: row.config_value,
-    description: row.description || ''
-  }
-}
-
-async function saveUrlConfig() {
-  if (!urlEditDialog.value.value) {
-    ElMessage.warning('请输入 Webhook URL')
-    return
-  }
-  urlEditDialog.value.loading = true
-  try {
-    const result = await updateSystemConfig(urlEditDialog.value.key, {
-      config_value: urlEditDialog.value.value
-    })
-    if (result.success) {
-      ElMessage.success('Webhook URL 已保存')
-      urlEditDialog.value.visible = false
-      await loadFeatureFlags()
-    } else {
-      ElMessage.error(result.error || '保存失败')
-    }
-  } catch (error) {
-    ElMessage.error(error.message || '保存失败')
-  } finally {
-    urlEditDialog.value.loading = false
-  }
-}
+const {
+  systemConfigLoading,
+  systemConfig,
+  featureFlagsLoading,
+  featureFlags,
+  urlConfigKeys,
+  urlEditDialog,
+  loadSystemConfig,
+  updateMplConfig,
+  loadFeatureFlags,
+  updateFeatureFlagHandler,
+  openUrlEditDialog,
+  saveUrlConfig
+} = useSystemSettings(session)
 
 onMounted(async () => {
   initTheme()
@@ -714,13 +460,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  if (mediaQuery && mediaQueryHandler) {
-    if (mediaQuery.removeEventListener) {
-      mediaQuery.removeEventListener('change', mediaQueryHandler)
-    } else if (mediaQuery.removeListener) {
-      mediaQuery.removeListener(mediaQueryHandler)
-    }
-  }
+  unbindSystemThemeListener()
 })
 </script>
 

@@ -23,8 +23,8 @@
             <tr v-if="!modelValue.length">
               <td colspan="5" class="px-4 py-10 text-center text-muted-foreground">尚未选择工装</td>
             </tr>
-            <tr v-for="(item, index) in modelValue" :key="item.toolCode" class="hover:bg-muted/30 transition-colors">
-              <td class="px-4 py-3 font-mono text-xs font-semibold text-foreground">{{ item.toolCode }}</td>
+            <tr v-for="(item, index) in modelValue" :key="item.serialNo" class="hover:bg-muted/30 transition-colors">
+              <td class="px-4 py-3 font-mono text-xs font-semibold text-foreground">{{ item.serialNo }}</td>
               <td class="px-4 py-3 text-muted-foreground truncate max-w-[200px]" :title="item.toolName">{{ item.toolName }}</td>
               <td class="px-4 py-3 text-muted-foreground truncate max-w-[200px]" :title="item.drawingNo">{{ item.drawingNo || '-' }}</td>
               <td class="px-4 py-3 text-muted-foreground">{{ item.workPackage || '-' }}</td>
