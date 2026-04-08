@@ -269,9 +269,25 @@
                         <Info class="h-3 w-3 text-primary" />
                       </div>
                     </div>
-                    <p class="text-sm font-medium">保管员确认已完成，可点击右侧按钮发送飞书通知。</p>
+                    <p class="text-sm font-medium">{{ transportNotified ? '运输通知已发送' : '保管员确认已完成，可点击右侧按钮发送飞书通知。' }}</p>
                   </div>
-                  <Button variant="default" size="sm" class="bg-primary hover:bg-primary/90 text-primary-foreground border-none" @click="sendTransportNotify">
+                  <Button
+                    v-if="transportNotified"
+                    variant="default"
+                    size="sm"
+                    class="bg-emerald-500/20 text-emerald-600 cursor-default border-none"
+                    disabled
+                  >
+                    <CheckCircle class="mr-1 h-3 w-3" />
+                    已发送
+                  </Button>
+                  <Button
+                    v-else
+                    variant="default"
+                    size="sm"
+                    class="bg-primary hover:bg-primary/90 text-primary-foreground border-none"
+                    @click="sendTransportNotify"
+                  >
                     发送飞书通知
                   </Button>
                 </div>
@@ -522,12 +538,14 @@ import {
   History,
   Trash2,
   CheckCircle2,
+  CheckCircle,
   Truck
 } from 'lucide-vue-next'
 import {
   assignTransport,
   finalConfirmOrder,
   generateTransportText,
+  getNotificationRecords,
   getOrderDetail,
   getPendingKeeperOrders,
   keeperConfirmOrder,
@@ -539,6 +557,10 @@ import { getMplByTool } from '@/api/mpl'
 import { getUsersByRole } from '@/api/users'
 import { useSessionStore } from '@/store/session'
 import { DEBUG_IDS } from '@/debug/debugIds'
+import {
+  buildKeeperConfirmPayload,
+  collectKeeperConfirmItemsMissingId
+} from './keeperConfirmPayload'
 import NotificationPreview from '@/components/tool-io/NotificationPreview.vue'
 
 import OrderStatusTag from '@/components/tool-io/OrderStatusTag.vue'
@@ -567,6 +589,9 @@ const mplDialogVisible = ref(false)
 const selectedMplItem = ref(null)
 const selectedMplGroup = ref(null)
 const productionPrepUsers = ref([])
+
+// Feishu Notification Anti-Duplicate State
+const transportNotified = ref(false)
 
 // Tool Status Management — delegated to composable
 const {
@@ -743,6 +768,15 @@ async function selectOrder(row) {
   await loadMplStatuses(confirmItems.value)
   await loadProductionPrepUsers()
   resetPreview()
+
+  // Check if transport notification was already sent (anti-duplicate)
+  transportNotified.value = false
+  const notifyResult = await getNotificationRecords(row.orderNo).catch(() => ({ success: false, data: [] }))
+  if (notifyResult.success && notifyResult.data) {
+    transportNotified.value = notifyResult.data.some(
+      n => n.notifyType === 'transport_notice' && n.sendStatus === 'sent'
+    )
+  }
 }
 
 function openMplDetail(item) {
@@ -760,34 +794,18 @@ async function previewTransport() {
 
 async function approveOrder() {
   // 防御性校验：确保所有 items 都有 item_id
-  const invalidItems = confirmItems.value.filter(item => !item.item_id)
+  const invalidItems = collectKeeperConfirmItemsMissingId(confirmItems.value)
   if (invalidItems.length > 0) {
     ElMessage.error(`工装明细缺少关键标识，请刷新页面后重试。缺失项: ${invalidItems.map(i => i.serial_no || i.serialNo).join(', ')}`)
     return
   }
 
-  const payload = {
-    keeper_id: session.userId,
-    keeper_name: session.userName,
-    transport_type: confirmForm.transportType,
-    transport_assignee_id: confirmForm.transportAssigneeId,
-    transport_assignee_name: confirmForm.transportAssigneeName,
-    keeper_remark: confirmForm.keeperRemark,
-    items: confirmItems.value.map((item) => ({
-      // 显式使用 item_id 和 serial_no（由 buildEditableItems 明确保留）
-      item_id: item.item_id,
-      serial_no: item.serial_no,
-      location_id: null,
-      location_text: resolveItemLocationText(item),
-      check_result: item.status,
-      check_remark: item.checkRemark || confirmForm.keeperRemark,
-      approved_qty: item.status === 'approved' ? (item.split_quantity ?? item.applyQty ?? 1) : 0,
-      status: item.status
-    })),
-    operator_id: session.userId,
-    operator_name: session.userName,
-    operator_role: session.role
-  }
+  const payload = buildKeeperConfirmPayload({
+    confirmItems: confirmItems.value,
+    confirmForm,
+    resolveItemLocationText,
+    session
+  })
 
   const result = await keeperConfirmOrder(selectedOrder.value.orderNo, payload)
   if (!result.success) return
@@ -859,6 +877,8 @@ async function rejectCurrentOrder() {
 }
 
 async function sendTransportNotify() {
+  // 立即加锁，防止重复点击
+  transportNotified.value = true
   const result = await notifyTransport(selectedOrder.value.orderNo, {
     notify_type: 'transport_notice',
     notify_channel: 'feishu',
@@ -867,7 +887,11 @@ async function sendTransportNotify() {
     operator_name: session.userName,
     operator_role: session.role
   })
-  if (!result.success) return
+  if (!result.success) {
+    // 发送失败时释放锁
+    transportNotified.value = false
+    return
+  }
 
   wechatPreview.value = result.wechat_text || ''
   ElMessage.success('运输通知已处理')

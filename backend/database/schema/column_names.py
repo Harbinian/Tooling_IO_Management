@@ -296,7 +296,7 @@ TOOL_MASTER_TABLE = 'Tooling_ID_Main'
 TOOL_MASTER_COLUMNS = {
     'tool_name': '工装名称',
     'drawing_no': '工装图号',
-    'tool_code': 'serial_no',
+    'tool_code': '序列号',
     'original_tool_serial_no': '原样工装序列号',
     'manufacturing_date': '制造日期',
     'manufacturing_version': '制造版次',

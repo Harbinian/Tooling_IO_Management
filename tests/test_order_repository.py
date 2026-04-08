@@ -146,6 +146,22 @@ class OrderRepositoryPendingKeeperTests(unittest.TestCase):
         self.assertIn("order_status = 'submitted' OR keeper_id = ? OR keeper_id IS NULL", sql)
         self.assertEqual(params, ("U_KEEPER_001",))
 
+    def test_get_order_joins_tool_master_by_physical_sequence_column(self):
+        db = Mock()
+        db.execute_query.side_effect = [
+            [{"order_no": "TO-OUT-20260403-001", "order_status": "submitted"}],
+            [{"serial_no": "T-001", "split_quantity": 2}],
+        ]
+        repo = OrderRepository(db_manager=db)
+
+        result = repo.get_order("TO-OUT-20260403-001")
+
+        self.assertEqual(result["order_no"], "TO-OUT-20260403-001")
+        self.assertEqual(result["items"], [{"serial_no": "T-001", "split_quantity": 2}])
+        items_sql = db.execute_query.call_args_list[1].args[0]
+        self.assertIn("m.[序列号]", items_sql)
+        self.assertNotIn("m.[serial_no]", items_sql)
+
 
 class OrderRepositoryCancellationAndResetTests(unittest.TestCase):
     def test_update_order_persists_header_fields_for_existing_draft(self):

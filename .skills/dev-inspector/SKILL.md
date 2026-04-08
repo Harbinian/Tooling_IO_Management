@@ -70,6 +70,28 @@ Examples:
 
 ### 浏览器控制台错误 / Browser console errors
 
+**触发此技能时，如果发现控制台报错（Vue 运行时错误、JavaScript 异常等），必须先向用户询问以下信息，不得擅自假设或跳过：**
+
+| 必问项 | 说明 |
+|--------|------|
+| 报告人账号 | 出现问题的用户名、角色、组织 |
+| 哪一步操作时出现错误 | 从初始状态到 bug 出现的每一步操作序列 |
+| 控制台错误信息/截图 | 完整的错误日志或截图附件 |
+
+**模板**：
+```
+【Dev Inspector】检测到控制台错误，需要补充以下信息：
+
+1. 报告人账号：[username] / 角色：[role] / 组织：[org]
+2. 哪一步操作时出现错误：
+   Step 1: ...
+   Step 2: ...
+   Step 3: ...
+3. 控制台错误信息或截图：[附件]
+
+收到以上信息前，禁止进入问题分析和任务生成。
+```
+
 示例：
 
 Examples:
@@ -282,43 +304,132 @@ Executor:
 
 # 根本原因分析要求 / Root Cause Analysis Requirement
 
-在生成任务之前，开发检查器必须尝试识别根本原因。
+**重要**：本章节严格遵循 `.claude/rules/02_debug.md` 中 D2 问题解决阶段的要求。
 
-Before generating a task, Dev Inspector must attempt to identify the root cause.
+---
 
-可能的根本原因层包括：
+## D2 阶段：证据驱动的诊断（禁止根因推测）
 
-Possible root cause layers include:
+Dev Inspector 在 D2 阶段的任务是**忠实记录现象，不解释原因**。
 
-### 前端层 / Frontend layer
+In D2, the task is to **faithfully record what happened, not why it happened**.
 
-- API 路径错误 / incorrect API path
-- 缺少组件导入 / missing component import
-- 状态管理错误 / state management error
-- 渲染逻辑错误 / rendering logic mistake
+### 第一步：收集证据清单 / Evidence Collection
 
-### 网络层 / Network layer
+在分析之前，必须收集以下证据（至少三项）：
 
-- 缺少 Vite 代理 / missing Vite proxy
-- 基础 URL 错误 / incorrect base URL
-- 请求头错误 / incorrect request headers
+| 证据类型 | 说明 | 来源 |
+|----------|------|------|
+| 错误日志 | 完整的 error/exception 输出 | 服务器日志、控制台 |
+| 堆栈跟踪 | 异常堆栈或调用链路 | Stack trace、Debug 日志 |
+| 复现步骤 | 从初始状态到 bug 出现的完整操作序列 | 测试记录、用户报告 |
+| 影响范围 | 受影响的用户数、功能模块、订单范围 | 监控、用户反馈 |
+| 对比基准 | 正常行为 vs 异常行为的差异点 | 测试环境、Prod 对比 |
 
-### 后端层 / Backend layer
+**证据不足的处理**：
 
-- 缺少路由 / missing route
-- 参数不匹配 / parameter mismatch
-- SQL 错误 / SQL error
-- 未处理的异常 / unhandled exception
+If evidence is insufficient, you MUST ask the user before proceeding:
 
-### 数据库层 / Database layer
+```
+【Dev Inspector】D2 信息缺口 - 以下证据未提供，请补充：
 
-- 表不匹配 / table mismatch
-- 缺少数据 / missing data
-- 错误的架构假设 / incorrect schema assumption
+1. 报告人账号：[username] / 角色：[role] / 组织：[org]
+2. 触发操作的完整步骤：
+   Step 1: ...
+   Step 2: ...
+   Step 3: ...
+3. 错误日志/控制台截图：[附件]
 
-技能必须识别最可能的层。
+在收到以上信息前，禁止进入问题分析和任务生成。
+```
 
-The skill must identify the most likely layer.
+**唯一可跳过追问的情况**：
+- 证据链已完整（≥3项证据齐全）
+- 复现路径清晰、可在测试环境独立验证
+
+---
+
+## 第二步：描述事实（What），不解释原因（Why）
+
+基于收集的证据，描述**观察到的现象**，格式如下：
+
+**描述模板**：
+```
+## D2 问题描述 / D2 Problem Description
+
+### What（是什么）
+[具体描述发生了什么 - 使用证据链中的事实]
+
+### Where（在哪里）
+[受影响的模块/页面/功能]
+
+### When（何时发生）
+[首次发现时间、复现频率、订单号/用户账号等]
+
+### Impact（影响范围）
+[受影响的用户数、功能范围、数据异常程度]
+```
+
+**D2 阶段禁止出现的内容**：
+- ❌ "可能是 XXX 导致的"
+- ❌ "根据经验判断是 YYY"
+- ❌ "根因是 ZZZ"
+
+---
+
+## 第三步：定位可疑层（基于证据，不推测）
+
+仅基于已收集的证据，标记可疑的层（不是根因，只是待验证的怀疑方向）：
+
+| 可疑层 | 证据表现 | 排查方向 |
+|--------|----------|----------|
+| 前端层 | 控制台报错、组件渲染异常、API请求发出但格式错误 | 检查前端代码、状态管理、API调用 |
+| 网络层 | 请求未发出、代理404、跨域错误、CORS报错 | 检查 Vite proxy、网络请求配置 |
+| 后端层 | API返回5xx、路由不存在、参数验证失败 | 检查后端路由、服务层逻辑 |
+| 数据库层 | SQL执行报错、数据查询结果异常、连接失败 | 检查SQL、schema、数据存在性 |
+
+**注意**：定位可疑层是"在哪里查"，不是"为什么坏"。Why 是 D4 阶段的产物。
+
+---
+
+## 示例修正对比 / Example Correction
+
+### 错误示例（违反 D2）
+
+```
+Browser console shows HTTP 500.
+Problem likely in backend service layer.  ← 这是 Why 推测，违反 D2
+Root cause is missing parameter validation.  ← 根因推测，违反 D2
+```
+
+### 正确示例（符合 D2）
+
+```
+## D2 问题描述
+
+### What
+浏览器控制台显示 GET /api/tool-io-orders 返回 HTTP 500，
+响应体为 "Internal Server Error"。
+
+### Where
+订单列表页面 /api/tool-io-orders API 调用
+
+### When
+2026-04-08 14:30，首次发现，操作人员报告
+
+### Impact
+订单列表页面无法加载，影响所有用户
+
+### 可疑层
+后端层 / Backend layer
+（基于 HTTP 500 响应，无前端报错）
+```
+
+---
+
+技能必须识别最可能的层，但必须基于证据。
+
+The skill must identify the most likely layer, but based on evidence only.
 
 ---
 
@@ -332,10 +443,9 @@ Once the issue is classified and analyzed, Dev Inspector must invoke the Auto Ta
 
 Information passed to the generator must include:
 
-- 检测到的问题描述 / detected problem description
-- 错误日志 / error logs
-- 受影响的模块 / affected module
-- 怀疑的根本原因层 / suspected root cause layer
+- D2 问题描述 / D2 Problem Description（What/Where/When/Impact）
+- 证据清单 / evidence list
+- 可疑层 / suspected layer（基于证据，非根因推测）
 - 推荐的执行器（Gemini 或 Codex）/ recommended executor (Gemini or Codex)
 
 然后自动任务生成器将生成标准化的提示词。
@@ -368,7 +478,7 @@ Dev Inspector analysis:
 
 - 请求路径有效 / request path valid
 - 后端返回 500 / backend returned 500
-- 问题可能在后端服务层 / problem likely in backend service layer
+- 可疑层：后端层 / Backend layer（基于 HTTP 500 响应，无前端报错）
 
 分类：
 
@@ -406,14 +516,29 @@ Instead it produces an **inspection report** and then triggers Auto Task Generat
 
 Example output:
 
+```
+## Dev Inspector 检查报告
+
+### 问题分类
 Issue Type: Bug
-Layer: Backend
-Affected Module: tool_io_order API
-Detected Error: HTTP 500
 
-Next Step:
+### D2 问题描述
+What: GET /api/tool-io-orders 返回 HTTP 500，响应体 "Internal Server Error"
+Where: 订单列表页面 /api/tool-io-orders API
+When: 2026-04-08 14:30，操作人员首次报告
+Impact: 订单列表页面无法加载，影响所有用户
 
-Invoke Auto Task Generator
+### 证据清单
+- [x] 错误日志: HTTP 500 Internal Server Error
+- [x] 堆栈跟踪: Flask exception stack in server log
+- [x] 复现步骤: 打开订单列表页面 → API 返回 500
+
+### 可疑层
+Backend layer（基于 HTTP 500 响应，无前端控制台报错）
+
+### 触发
+Invoke Auto Task Generator (Bug, 10101-19999, Codex)
+```
 
 ---
 
