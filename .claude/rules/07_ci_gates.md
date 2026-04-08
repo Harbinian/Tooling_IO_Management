@@ -330,7 +330,8 @@ if violations:
 
 ## Layer 4 — CI Structure Checks
 
-**说明**: 替代 `02_debug.md` 中的 reviewer 主观评分，转为客观结构验证
+**说明**: `02_debug.md` D3/D5/D6 挂起节点的自动化预检，替代人工对文档结构的初步检查。**不替代 reviewer 评分**，两者独立。
+**触发**: Push / PR（8D 任务）
 **不通过**: 自动阻断，无需人工介入
 
 ### G4-1｜8D 文档结构检测
@@ -343,7 +344,7 @@ if violations:
 
 ```python
 # scripts/check_8d_structure.py
-# 替代 02_debug.md 中 D3/D5/D6 的 reviewer 评分
+# CI 自动执行的 8D 文档结构预检
 # 检测 8D 文档是否包含所有必要章节
 
 import sys, pathlib, re
@@ -375,8 +376,7 @@ for f in pathlib.Path("prompts/active").glob("1*.md"):
 print("[PASS] 8D document structure OK")
 ```
 
-**对应规则**: `02_debug.md` — D3/D5/D6 挂起节点
-**说明**: 结构检测通过 = 原 reviewer 评分 ≥ 门槛，无需人工打分
+**对应规则**: `02_debug.md` — D3/D5/D6 挂起节点（与 reviewer 评分互为独立环节）
 
 ---
 
@@ -524,7 +524,7 @@ print("[PASS] Archive preconditions OK")
 | G3-2 | tester 集成测试确认 | `06_testing.md` | pytest-cov |
 | G3-3 | tester 前端测试确认 | `06_testing.md` | Vitest |
 | G3-4 | tester E2E 冒烟测试 | `06_testing.md` | Playwright |
-| G4-1 | reviewer D3/D5/D6 评分 | `02_debug.md` | 自定义脚本 |
+| G4-1 | reviewer D3/D5/D6 评分前的结构预检 | `02_debug.md` | 自定义脚本 |
 | G4-2 | tester HOTFIX 冒烟确认 | `03_hotfix.md` | 自定义脚本 |
 | G5-1 | 归档命名人工检查 | `05_task_convention.md` | 自定义脚本 |
 | G5-2 | 归档序号人工检查 | `05_task_convention.md` | 自定义脚本 |
