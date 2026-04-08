@@ -14,6 +14,10 @@ from pathlib import Path
 from typing import Optional
 
 HTTP_200_LINE_PATTERN = re.compile(r'"\w+\s+[^"]+\s+HTTP/\d(?:\.\d+)?"\s+200\b')
+REQUIRED_PYTHON_IMPORTS = (
+    "requests",
+    "flask_limiter",
+)
 
 
 def get_base_dir() -> Path:
@@ -105,6 +109,22 @@ def python_candidates() -> list[str]:
     return candidates
 
 
+def has_required_modules(python_cmd: str) -> bool:
+    """Return whether the interpreter can import launcher/backend prerequisites."""
+    try:
+        result = subprocess.run(
+            [python_cmd, "-c", f"import {', '.join(REQUIRED_PYTHON_IMPORTS)}"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=5,
+            **windows_hidden_process_kwargs(),
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 def validate_installation() -> list[str]:
     """Validate that all required files and interpreters exist."""
     errors = []
@@ -123,25 +143,14 @@ def validate_installation() -> list[str]:
     python_ok = False
     for candidate in py_candidates:
         if candidate and is_python_runnable(candidate):
-            try:
-                result = subprocess.run(
-                    [candidate, "-c", "import requests"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    check=False,
-                    timeout=5,
-                    **windows_hidden_process_kwargs(),
-                )
-                if result.returncode == 0:
-                    python_ok = True
-                    break
-            except Exception:
-                pass
+            if has_required_modules(candidate):
+                python_ok = True
+                break
     if not python_ok:
         errors.append(
-            f"Python interpreter with 'requests' module not found. "
+            f"Python interpreter with required modules {list(REQUIRED_PYTHON_IMPORTS)!r} not found. "
             f"Checked: {py_candidates}. "
-            f"Ensure .venv is activated or requests is installed."
+            f"Ensure .venv is activated and dependencies are installed."
         )
 
     return errors
@@ -176,23 +185,12 @@ def is_python_runnable(python_cmd: str) -> bool:
 
 
 def resolve_python() -> str:
-    """Find a Python interpreter that (a) runs and (b) has the requests module."""
+    """Find a Python interpreter that can run backend/launcher prerequisites."""
     candidates = python_candidates()
     for candidate in candidates:
         if candidate and is_python_runnable(candidate):
-            try:
-                result = subprocess.run(
-                    [candidate, "-c", "import requests"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    check=False,
-                    timeout=5,
-                    **windows_hidden_process_kwargs(),
-                )
-                if result.returncode == 0:
-                    return candidate
-            except Exception:
-                pass
+            if has_required_modules(candidate):
+                return candidate
     return ""
 
 
