@@ -126,6 +126,15 @@ const toggleSidebar = () => {
 }
 
 const logout = async () => {
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.token}` }
+    })
+  } catch (e) {
+    // logout API call failure should not block client-side cleanup
+    console.warn('Logout API call failed:', e)
+  }
   session.clear()
   await router.replace('/login')
 }
