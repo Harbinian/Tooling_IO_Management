@@ -45,3 +45,4 @@ promptsRec/.sequence
 
 # Windows special files
 nul
+.devserver.*.log
