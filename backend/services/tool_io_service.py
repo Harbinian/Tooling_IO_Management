@@ -62,6 +62,19 @@ from backend.services.tool_io_runtime import (
     keeper_confirm_runtime,
     list_pending_keeper_orders,
 )
+from backend.services.order_workflow_service import (
+    assign_transport as _assign_transport,
+    cancel_order as _cancel_order,
+    complete_transport as _complete_transport,
+    final_confirm as _final_confirm,
+    get_final_confirm_availability as _get_final_confirm_availability,
+    get_order_logs as _get_order_logs,
+    get_pending_keeper_list as _get_pending_keeper_list,
+    keeper_confirm as _keeper_confirm,
+    reject_order as _reject_order,
+    start_transport as _start_transport,
+    submit_order as _submit_order,
+)
 
 logger = logging.getLogger(__name__)
 ALLOWED_BATCH_TOOL_STATUSES = {"in_storage", "outbounded", "maintain", "scrapped"}
@@ -480,174 +493,18 @@ def get_order_detail(order_no: str, current_user: Optional[Dict] = None) -> Dict
 
 
 def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    if not get_order_detail(order_no, current_user=current_user):
-        return _order_not_found_response()
-    result = submit_tool_io_order(
-        order_no,
-        payload.get("operator_id", ""),
-        payload.get("operator_name", ""),
-        payload.get("operator_role", ""),
-    )
-    if result.get("success") and not result.get("idempotent"):
-        actor = _build_actor_context(payload)
-        order = get_order_detail(order_no, current_user=current_user)
-        if order:
-            # Notify initiator about submission
-            _emit_internal_notification(
-                ORDER_SUBMITTED,
-                order=order,
-                actor=actor,
-                target_user_id=order.get("initiator_id", ""),
-                target_user_name=order.get("initiator_name", ""),
-                target_role="initiator",
-                metadata={"trigger": "submit_order"},
-            )
-
-            # Department auto-assignment: notify ALL keepers in the order's org
-            from backend.services.rbac_data_scope_service import load_keeper_ids_for_org_ids
-            order_org_id = order.get("org_id", "")
-            if order_org_id:
-                all_keepers = load_keeper_ids_for_org_ids([order_org_id])
-                for keeper_info in all_keepers:
-                    _emit_internal_notification(
-                        KEEPER_CONFIRM_REQUIRED,
-                        order=order,
-                        actor=actor,
-                        target_user_id=keeper_info.get("user_id", ""),
-                        target_user_name=keeper_info.get("display_name", ""),
-                        target_role="keeper",
-                        metadata={
-                            "required_action": "keeper_confirm",
-                            "auto_assigned": True,  # Mark as auto-assigned by department
-                            "org_id": order_org_id,
-                        },
-                    )
-
-            # Notify supply team (物资保障部) with tool list in Markdown format
-            _emit_internal_notification(
-                ORDER_SUBMITTED_TO_SUPPLY_TEAM,
-                order=order,
-                actor=actor,
-                metadata={"trigger": "submit_order", "notify_channel": "supply_team"},
-            )
-    return result
+    """Delegate to order_workflow_service.submit_order."""
+    return _submit_order(order_no, payload, current_user)
 
 
 def keeper_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    order = get_order_detail(order_no, current_user=current_user)
-    if not order:
-        return _order_not_found_response()
-    system_config_repo = SystemConfigRepository()
-    mpl_repo = MplRepository()
-    mpl_enabled = _normalize_bool_text(system_config_repo.get_config("mpl_enabled"))
-    if mpl_enabled == "true":
-        mpl_strict_mode = _normalize_bool_text(system_config_repo.get_config("mpl_strict_mode"))
-        violations = check_order_mpl_violations(order, mpl_repo)
-        if violations:
-            if mpl_strict_mode == "true":
-                return {"success": False, "error": violations[0], "mpl_missing": True, "mpl_warnings": violations}
-            payload["mpl_warnings"] = violations
-    confirm_data = {
-        "transport_type": payload.get("transport_type"),
-        "transport_assignee_id": payload.get("transport_assignee_id"),
-        "transport_assignee_name": payload.get("transport_assignee_name"),
-        "keeper_remark": payload.get("keeper_remark"),
-        "items": payload.get("items"),
-    }
-    result = keeper_confirm_runtime(
-        order_no=order_no,
-        keeper_id=payload.get("keeper_id", ""),
-        keeper_name=payload.get("keeper_name", ""),
-        confirm_data=confirm_data,
-        operator_id=payload.get("operator_id", payload.get("keeper_id", "")),
-        operator_name=payload.get("operator_name", payload.get("keeper_name", "")),
-        operator_role=payload.get("operator_role", "keeper"),
-    )
-    if result.get("success"):
-        approved_count = result.get("approved_count", 0)
-        total_count = len(confirm_data.get("items") or [])
-        keeper_remark = result.get("keeper_remark") or payload.get("keeper_remark", "")
-        actor = _build_actor_context(payload)
-        remark = f"keeper confirmed {approved_count}/{total_count} items"
-        if keeper_remark:
-            remark = f"{remark}; remark: {keeper_remark}"
-        write_order_audit_log(
-            order_no=order_no,
-            operation_type=OPERATION_KEEPER_CONFIRM,
-            operator_user_id=actor["user_id"],
-            operator_name=actor["user_name"],
-            operator_role=actor["user_role"],
-            previous_status=result.get("before_status", ""),
-            new_status=result.get("after_status", result.get("status", "")),
-            remark=remark,
-        )
-        order = get_order_detail(order_no, current_user=current_user)
-        if order:
-            _emit_internal_notification(
-                TRANSPORT_REQUIRED,
-                order=order,
-                actor=actor,
-                target_user_id=order.get("transport_assignee_id", ""),
-                target_user_name=order.get("transport_assignee_name", ""),
-                target_role="transport_operator",
-                metadata={"required_action": "transport"},
-            )
-    if payload.get("mpl_warnings"):
-        result["mpl_warnings"] = payload["mpl_warnings"]
-    return result
+    """Delegate to order_workflow_service.keeper_confirm."""
+    return _keeper_confirm(order_no, payload, current_user)
 
 
 def final_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    availability = get_final_confirm_availability(
-        order_no,
-        payload.get("operator_id", ""),
-        payload.get("operator_role", ""),
-        current_user=current_user,
-    )
-    if not availability.get("success"):
-        return availability
-    if not availability.get("available"):
-        return {"success": False, "error": availability.get("reason") or "final confirmation is not available"}
-
-    result = final_confirm_order(
-        order_no,
-        payload.get("operator_id", ""),
-        payload.get("operator_name", ""),
-        payload.get("operator_role", ""),
-    )
-    if not result.get("success"):
-        return result
-
-    detail = get_order_detail(order_no, current_user=current_user)
-    actor = _build_actor_context(payload)
-    if detail:
-        apply_order_location_updates(
-            order=detail,
-            milestone="final_confirm",
-            operator_user_id=actor["user_id"],
-            operator_name=actor["user_name"],
-            operator_role=actor["user_role"],
-        )
-        target_user_id = detail.get("initiator_id", "") if availability.get("order_type") == "outbound" else detail.get("keeper_id", "")
-        target_user_name = detail.get("initiator_name", "") if availability.get("order_type") == "outbound" else detail.get("keeper_name", "")
-        target_role = "initiator" if availability.get("order_type") == "outbound" else "keeper"
-        _emit_internal_notification(
-            ORDER_COMPLETED,
-            order=detail,
-            actor=actor,
-            target_user_id=target_user_id,
-            target_user_name=target_user_name,
-            target_role=target_role,
-            metadata={"trigger": "final_confirm"},
-        )
-    return {
-        **result,
-        "available": False,
-        "data": detail,
-        "order_type": availability.get("order_type"),
-        "before_status": availability.get("current_status"),
-        "after_status": "completed",
-    }
+    """Delegate to order_workflow_service.final_confirm."""
+    return _final_confirm(order_no, payload, current_user)
 
 
 def get_final_confirm_availability(
@@ -656,193 +513,28 @@ def get_final_confirm_availability(
     operator_role: str = "",
     current_user: Optional[Dict] = None,
 ) -> Dict:
-    order = _get_runtime_order_summary(order_no, current_user=current_user)
-    if not order:
-        return {"success": False, "error": "order not found", "available": False}
-
-    availability = _evaluate_final_confirm_availability(order, operator_id, operator_role)
-    return {"success": True, **availability}
+    """Delegate to order_workflow_service.get_final_confirm_availability."""
+    return _get_final_confirm_availability(order_no, operator_id, operator_role, current_user)
 
 
 def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    order = get_order_detail(order_no, current_user=current_user)
-    if not order:
-        return _order_not_found_response()
-
-    current_status = _pick_value(order, ["order_status"], "")
-    if current_status not in {"keeper_confirmed", "partially_confirmed", "transport_notified", "transport_in_progress"}:
-        return {"success": False, "error": f"current status does not allow transport assignment: {current_status}"}
-
-    transport_assignee_id = payload.get("transport_assignee_id", "")
-    transport_assignee_name = payload.get("transport_assignee_name", "")
-    transport_type = payload.get("transport_type", "")
-    if not transport_assignee_id and not transport_assignee_name:
-        return {"success": False, "error": "transport assignee is required"}
-
-    DatabaseManager().execute_query(
-        f"""
-        UPDATE tool_io_order
-        SET {ORDER_COLUMNS['transport_assignee_id']} = ?,
-            {ORDER_COLUMNS['transport_assignee_name']} = ?,
-            {ORDER_COLUMNS['transport_type']} = ?,
-            {ORDER_COLUMNS['updated_at']} = GETDATE()
-        WHERE {ORDER_COLUMNS['order_no']} = ?
-        """,
-        (transport_assignee_id, transport_assignee_name, transport_type, order_no),
-        fetch=False,
-    )
-    actor = _build_actor_context(payload)
-    write_order_audit_log(
-        order_no=order_no,
-        operation_type=OPERATION_TRANSPORT_ASSIGN,
-        operator_user_id=actor["user_id"],
-        operator_name=actor["user_name"],
-        operator_role=actor["user_role"],
-        previous_status=current_status,
-        new_status=current_status,
-        remark=f"transport assigned to {transport_assignee_name or transport_assignee_id}",
-    )
-    updated_order = get_order_detail_runtime(order_no)
-    if updated_order:
-        _emit_internal_notification(
-            TRANSPORT_REQUIRED,
-            order=updated_order,
-            actor=actor,
-            target_user_id=transport_assignee_id,
-            target_user_name=transport_assignee_name,
-            target_role="transport_operator",
-            metadata={"required_action": "transport", "trigger": "assign_transport"},
-        )
-    return {"success": True, "data": updated_order}
+    """Delegate to order_workflow_service.assign_transport."""
+    return _assign_transport(order_no, payload, current_user)
 
 
 def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    order = get_order_detail(order_no, current_user=current_user)
-    if not order:
-        return _order_not_found_response()
-
-    current_status = _pick_value(order, ["order_status"], "")
-    if current_status not in {"keeper_confirmed", "partially_confirmed", "transport_notified"}:
-        return {"success": False, "error": f"current status does not allow transport start: {current_status}"}
-
-    actor = _build_actor_context(payload)
-    DatabaseManager().execute_query(
-        f"""
-        UPDATE tool_io_order
-        SET {ORDER_COLUMNS['order_status']} = 'transport_in_progress',
-            {ORDER_COLUMNS['transport_operator_id']} = COALESCE(NULLIF(?, ''), {ORDER_COLUMNS['transport_operator_id']}),
-            {ORDER_COLUMNS['transport_operator_name']} = COALESCE(NULLIF(?, ''), {ORDER_COLUMNS['transport_operator_name']}),
-            {ORDER_COLUMNS['updated_at']} = GETDATE()
-        WHERE {ORDER_COLUMNS['order_no']} = ?
-        """,
-        (payload.get("operator_id", ""), payload.get("operator_name", ""), order_no),
-        fetch=False,
-    )
-    write_order_audit_log(
-        order_no=order_no,
-        operation_type=OPERATION_TRANSPORT_START,
-        operator_user_id=actor["user_id"],
-        operator_name=actor["user_name"],
-        operator_role=actor["user_role"],
-        previous_status=current_status,
-        new_status="transport_in_progress",
-        remark="transport started",
-    )
-    updated_order = get_order_detail_runtime(order_no)
-    if updated_order:
-        target_user_id = updated_order.get("initiator_id", "") if updated_order.get("order_type") == "outbound" else updated_order.get("keeper_id", "")
-        target_user_name = updated_order.get("initiator_name", "") if updated_order.get("order_type") == "outbound" else updated_order.get("keeper_name", "")
-        target_role = "initiator" if updated_order.get("order_type") == "outbound" else "keeper"
-        _emit_internal_notification(
-            TRANSPORT_STARTED,
-            order=updated_order,
-            actor=actor,
-            target_user_id=target_user_id,
-            target_user_name=target_user_name,
-            target_role=target_role,
-            metadata={"trigger": "start_transport"},
-        )
-    return {"success": True, "data": updated_order, "before_status": current_status, "after_status": "transport_in_progress"}
+    """Delegate to order_workflow_service.start_transport."""
+    return _start_transport(order_no, payload, current_user)
 
 
 def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    order = get_order_detail(order_no, current_user=current_user)
-    if not order:
-        return _order_not_found_response()
-
-    current_status = _pick_value(order, ["order_status"], "")
-    if current_status not in {"transport_in_progress", "transport_notified"}:
-        return {"success": False, "error": f"current status does not allow transport completion: {current_status}"}
-
-    actor = _build_actor_context(payload)
-    DatabaseManager().execute_query(
-        f"""
-        UPDATE tool_io_order
-        SET {ORDER_COLUMNS['order_status']} = 'transport_completed',
-            {ORDER_COLUMNS['updated_at']} = GETDATE()
-        WHERE {ORDER_COLUMNS['order_no']} = ?
-        """,
-        (order_no,),
-        fetch=False,
-    )
-    write_order_audit_log(
-        order_no=order_no,
-        operation_type=OPERATION_TRANSPORT_COMPLETE,
-        operator_user_id=actor["user_id"],
-        operator_name=actor["user_name"],
-        operator_role=actor["user_role"],
-        previous_status=current_status,
-        new_status="transport_completed",
-        remark="transport completed",
-    )
-    updated_order = get_order_detail_runtime(order_no)
-    if updated_order:
-        apply_order_location_updates(
-            order=updated_order,
-            milestone="transport_complete",
-            operator_user_id=actor["user_id"],
-            operator_name=actor["user_name"],
-            operator_role=actor["user_role"],
-        )
-        target_user_id = updated_order.get("initiator_id", "") if updated_order.get("order_type") == "outbound" else updated_order.get("keeper_id", "")
-        target_user_name = updated_order.get("initiator_name", "") if updated_order.get("order_type") == "outbound" else updated_order.get("keeper_name", "")
-        target_role = "initiator" if updated_order.get("order_type") == "outbound" else "keeper"
-        _emit_internal_notification(
-            TRANSPORT_COMPLETED,
-            order=updated_order,
-            actor=actor,
-            target_user_id=target_user_id,
-            target_user_name=target_user_name,
-            target_role=target_role,
-            metadata={"trigger": "complete_transport", "next_action": "final_confirm"},
-        )
-    return {"success": True, "data": updated_order, "before_status": current_status, "after_status": "transport_completed"}
+    """Delegate to order_workflow_service.complete_transport."""
+    return _complete_transport(order_no, payload, current_user)
 
 
 def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    if not get_order_detail(order_no, current_user=current_user):
-        return _order_not_found_response()
-    result = reject_tool_io_order(
-        order_no,
-        payload.get("operator_id", ""),
-        payload.get("operator_name", ""),
-        payload.get("operator_role", ""),
-        payload.get("reject_reason", ""),
-    )
-    if result.get("success"):
-        actor = _build_actor_context(payload)
-        order = get_order_detail_runtime(order_no)
-        if order:
-            _emit_internal_notification(
-                ORDER_REJECTED,
-                order=order,
-                actor=actor,
-                target_user_id=order.get("initiator_id", ""),
-                target_user_name=order.get("initiator_name", ""),
-                target_role="initiator",
-                metadata={"reject_reason": payload.get("reject_reason", "")},
-            )
-    return result
+    """Delegate to order_workflow_service.reject_order."""
+    return _reject_order(order_no, payload, current_user)
 
 
 def reset_order_to_draft(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
@@ -871,43 +563,8 @@ def reset_order_to_draft(order_no: str, payload: Dict, current_user: Optional[Di
 
 
 def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
-    order = get_order_detail(order_no, current_user=current_user)
-    if not order:
-        return _order_not_found_response()
-    result = cancel_tool_io_order(
-        order_no,
-        payload.get("operator_id", ""),
-        payload.get("operator_name", ""),
-        payload.get("operator_role", ""),
-        payload.get("cancel_reason", ""),
-    )
-    if not result.get("success") and order.get("order_status") in {
-        "keeper_confirmed",
-        "partially_confirmed",
-        "transport_notified",
-        "transport_in_progress",
-        "transport_completed",
-        "final_confirmation_pending",
-        "completed",
-        "rejected",
-        "cancelled",
-    }:
-        result.setdefault("error_code", "ORDER_STATUS_CONFLICT")
-        result.setdefault("current_status", order.get("order_status"))
-    if result.get("success"):
-        actor = _build_actor_context(payload)
-        order = get_order_detail_runtime(order_no)
-        if order:
-            _emit_internal_notification(
-                ORDER_CANCELLED,
-                order=order,
-                actor=actor,
-                target_user_id=order.get("initiator_id", ""),
-                target_user_name=order.get("initiator_name", ""),
-                target_role="initiator",
-                metadata={"trigger": "cancel_order"},
-            )
-    return result
+    """Delegate to order_workflow_service.cancel_order."""
+    return _cancel_order(order_no, payload, current_user)
 
 
 def delete_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
@@ -928,14 +585,13 @@ def delete_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
 
 
 def get_order_logs(order_no: str, current_user: Optional[Dict] = None) -> Dict:
-    if not get_order_detail(order_no, current_user=current_user):
-        return _order_not_found_response()
-    return {"success": True, "data": get_order_logs_runtime(order_no)}
+    """Delegate to order_workflow_service.get_order_logs."""
+    return _get_order_logs(order_no, current_user)
 
 
 def get_pending_keeper_list(keeper_id: str = None, current_user: Optional[Dict] = None) -> List[Dict]:
-    scope_context = _resolve_scope_context(current_user)
-    return [order for order in list_pending_keeper_orders(keeper_id) if order_matches_scope(order, scope_context)]
+    """Delegate to order_workflow_service.get_pending_keeper_list."""
+    return _get_pending_keeper_list(keeper_id, current_user)
 
 
 MATERIAL_SUPPORT_ORG_ID = "ORG_DEPT_001"
