@@ -56,7 +56,9 @@ failures=0
 for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py)$'); do
     if [ -f "$file" ]; then
         # Check for Chinese characters in SQL keywords (SELECT, INSERT, UPDATE, DELETE, WHERE, FROM)
-        if grep -E '(SELECT|INSERT|UPDATE|DELETE|WHERE|FROM).*[\u4e00-\u9fff]' "$file" 2>/dev/null | grep -v "column_names.py" > /dev/null; then
+        # Uses grep -P (Perl regex) with \p{Han} to correctly match CJK Unified Ideographs
+        # LANG=C.UTF-8 is required because -P only supports unibyte/UTF-8 locales
+        if LANG=C.UTF-8 grep -P '(SELECT|INSERT|UPDATE|DELETE|WHERE|FROM).*[\p{Han}]' "$file" 2>/dev/null | grep -v "column_names.py" > /dev/null; then
             echo "${RED}[G1-2] FAIL: $file contains Chinese field name in SQL${NC}"
             failures=$((failures + 1))
         fi
