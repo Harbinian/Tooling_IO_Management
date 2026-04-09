@@ -40,5 +40,8 @@ frontend/dist/
 test_reports/
 promptsRec/.sequence
 
+# Git worktrees
+.claude/worktrees/
+
 # Windows special files
 nul
