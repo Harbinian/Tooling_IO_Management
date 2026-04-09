@@ -17,7 +17,10 @@ def get_summary(current_user: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
     """
     _ = current_user
     from backend.services.inspection_task_service import _ensure_inspection_schema
-    _ensure_inspection_schema()
+    try:
+        _ensure_inspection_schema()
+    except Exception as exc:
+        raise RuntimeError("stats summary: schema check failed: " + str(exc)) from exc
     db = DatabaseManager()
 
     today = date.today()
