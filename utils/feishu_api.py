@@ -18,9 +18,10 @@ class FeishuBase:
     """飞书 API 基础类"""
 
     def __init__(self):
-        self.app_id = os.getenv("FEISHU_APP_ID")
-        self.app_secret = os.getenv("FEISHU_APP_SECRET")
-        self.app_token = os.getenv("FEISHU_APP_TOKEN")
+        from config.settings import settings
+        self.app_id = settings.FEISHU_APP_ID
+        self.app_secret = settings.FEISHU_APP_SECRET
+        self.app_token = settings.FEISHU_APP_TOKEN
         self.token = self.get_tenant_access_token(self.app_id, self.app_secret)
         self.headers = {
             "Authorization": f"Bearer {self.token}",
@@ -99,5 +100,6 @@ class FeishuBase:
 联系人：{contacts.get('initiator', '-')} / {contacts.get('keeper', '-')}
 """
 
-        webhook_url = os.getenv("FEISHU_WEBHOOK_TRANSPORT", os.getenv("FEISHU_WEBHOOK_URL"))
+        from config.settings import settings
+        webhook_url = settings.FEISHU_WEBHOOK_TRANSPORT or settings.FEISHU_WEBHOOK_URL
         return self.send_webhook_message(webhook_url, message, "text")

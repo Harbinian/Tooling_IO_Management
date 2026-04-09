@@ -49,123 +49,23 @@ from backend.services.tool_io_runtime import (
     keeper_confirm_runtime,
     list_pending_keeper_orders,
 )
+from backend.services.tool_location_service import apply_order_location_updates
+from backend.services._shared_utils import (
+    _build_actor_context,
+    _normalize_bool_text,
+    _pick_value,
+)
+from backend.services._order_shared import (
+    _is_order_accessible,
+    _resolve_scope_context,
+)
 
 logger = logging.getLogger(__name__)
-
-# Helper functions extracted from tool_io_service.py
-# (to be made self-contained; original definitions remain in tool_io_service.py for Unit 2)
-
-
-def _build_actor_context(
-    payload: Dict,
-    *,
-    actor_id_key: str = "operator_id",
-    actor_name_key: str = "operator_name",
-    actor_role_key: str = "operator_role",
-) -> Dict:
-    return {
-        "user_id": payload.get(actor_id_key, ""),
-        "user_name": payload.get(actor_name_key, ""),
-        "user_role": payload.get(actor_role_key, ""),
-    }
-
-
-def _resolve_scope_context(current_user: Optional[Dict]) -> Dict:
-    if not current_user:
-        return {
-            "scope_types": ["ALL"],
-            "all_access": True,
-            "org_ids": [],
-            "org_user_ids": [],
-            "self_user_ids": [],
-            "assigned_user_ids": [],
-            "current_user_id": "",
-        }
-    return resolve_order_data_scope(current_user or {})
-
-
-def _order_not_found_response() -> Dict:
-    return {"success": False, "error": "order not found"}
-
-
-def _is_order_accessible(order: Dict, current_user: Optional[Dict]) -> bool:
-    if not current_user:
-        return True
-    scope_context = _resolve_scope_context(current_user)
-    if not order_matches_scope(order, scope_context):
-        return False
-    # Restrict "all-access" users (for example admins) from viewing draft orders.
-    if scope_context.get("all_access"):
-        return (order.get("order_status") or "").strip().lower() != "draft"
-    return True
-
-
-def _evaluate_final_confirm_availability(order: Dict, operator_id: str, operator_role: str) -> Dict:
-    current_status = order.get("order_status") or ""
-    order_type = order.get("order_type") or ""
-    allowed_statuses = {"transport_notified", "transport_completed", "final_confirmation_pending"}
-
-    if current_status == "completed":
-        return {
-            "available": False,
-            "reason": "order is already completed",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": "initiator" if order_type == "outbound" else "keeper",
-        }
-
-    if current_status not in allowed_statuses:
-        return {
-            "available": False,
-            "reason": f"current status does not allow final confirmation: {current_status}",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": "initiator" if order_type == "outbound" else "keeper",
-        }
-
-    expected_role = "initiator" if order_type == "outbound" else "keeper" if order_type == "inbound" else ""
-    if not expected_role:
-        return {
-            "available": False,
-            "reason": f"unsupported order type: {order_type or '-'}",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": "",
-        }
-
-    if operator_role and operator_role != expected_role:
-        return {
-            "available": False,
-            "reason": f"final confirmation requires role {expected_role}",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": expected_role,
-        }
-
-    if operator_id:
-        owner_key = "initiator_id" if order_type == "outbound" else "keeper_id"
-        owner_value = order.get(owner_key)
-        if owner_value and owner_value != operator_id:
-            return {
-                "available": False,
-                "reason": f"operator does not match the assigned {expected_role}",
-                "order_type": order_type,
-                "current_status": current_status,
-                "expected_role": expected_role,
-            }
-
-    return {
-        "available": True,
-        "reason": "",
-        "order_type": order_type,
-        "current_status": current_status,
-        "expected_role": expected_role,
-    }
 
 
 def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Submit an order for processing."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification
+    from backend.services.tool_io_service import _emit_internal_notification
 
     # Check order exists first
     order = get_order_detail_runtime(order_no)
@@ -230,10 +130,7 @@ def keeper_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = 
     """Keeper confirms an order."""
     # Deferred imports to avoid circular dependency
     from backend.services.tool_io_service import (
-        _build_actor_context,
         _emit_internal_notification,
-        _is_order_accessible,
-        _normalize_bool_text,
         check_order_mpl_violations,
     )
 
@@ -308,7 +205,7 @@ def keeper_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = 
 
 def final_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Perform final confirmation on an order."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification, apply_order_location_updates
+    from backend.services.tool_io_service import _emit_internal_notification
 
     availability = get_final_confirm_availability(
         order_no,
@@ -370,7 +267,7 @@ def get_final_confirm_availability(
     current_user: Optional[Dict] = None,
 ) -> Dict:
     """Check if final confirmation is available for an order."""
-    from backend.services.tool_io_service import _evaluate_final_confirm_availability, _is_order_accessible
+    from backend.services._order_shared import _evaluate_final_confirm_availability
 
     order = get_order_detail_runtime(order_no)
     if not order or not _is_order_accessible(order, current_user):
@@ -391,7 +288,7 @@ def get_final_confirm_availability(
 
 def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Assign transport operator to an order."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification, _pick_value
+    from backend.services.tool_io_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order:
@@ -446,7 +343,7 @@ def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
 
 def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Start transport for an order."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification, _pick_value
+    from backend.services.tool_io_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order:
@@ -498,7 +395,7 @@ def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] =
 
 def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Complete transport for an order."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification, _pick_value, apply_order_location_updates
+    from backend.services.tool_io_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order:
@@ -555,7 +452,7 @@ def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict
 
 def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Reject an order."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification, _is_order_accessible
+    from backend.services.tool_io_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order or not _is_order_accessible(order, current_user):
@@ -586,7 +483,7 @@ def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
 
 def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Cancel an order."""
-    from backend.services.tool_io_service import _build_actor_context, _emit_internal_notification, _is_order_accessible
+    from backend.services.tool_io_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order or not _is_order_accessible(order, current_user):
@@ -638,7 +535,5 @@ def get_order_logs(order_no: str, current_user: Optional[Dict] = None) -> Dict:
 
 def get_pending_keeper_list(keeper_id: str = None, current_user: Optional[Dict] = None) -> List[Dict]:
     """Get list of orders pending keeper confirmation."""
-    from backend.services.tool_io_service import _resolve_scope_context
-
     scope_context = _resolve_scope_context(current_user)
     return [order for order in list_pending_keeper_orders(keeper_id) if order_matches_scope(order, scope_context)]

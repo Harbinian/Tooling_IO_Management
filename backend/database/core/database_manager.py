@@ -53,14 +53,14 @@ class DatabaseManager:
         if _USE_UNIFIED_CONFIG and getattr(settings, 'db', None) is not None:
             db_settings = settings.db
             self.db_config = {
-                'server': getattr(db_settings, 'server', os.getenv('CESOFT_DB_SERVER', '192.168.19.220,1433')),
-                'database': getattr(db_settings, 'database', os.getenv('CESOFT_DB_DATABASE', 'CXSYSYS')),
-                'username': getattr(db_settings, 'username', os.getenv('CESOFT_DB_USERNAME', 'sa')),
-                'password': getattr(db_settings, 'password', os.getenv('CESOFT_DB_PASSWORD', '')),
-                'driver': getattr(db_settings, 'driver', os.getenv('CESOFT_DB_DRIVER', '{SQL Server}')),
-                'timeout': getattr(db_settings, 'timeout_seconds', int(os.getenv('CESOFT_DB_TIMEOUT', '30')))
+                'server': db_settings.server,
+                'database': db_settings.database,
+                'username': db_settings.username,
+                'password': db_settings.password,
+                'driver': db_settings.driver,
+                'timeout': db_settings.timeout_seconds
             }
-            pool_size = getattr(db_settings, 'pool_size', int(os.getenv('CESOFT_DB_POOL_SIZE', '5')))
+            pool_size = db_settings.pool_size
         else:
             self.db_config = {
                 'server': os.getenv('CESOFT_DB_SERVER', '192.168.19.220,1433'),
