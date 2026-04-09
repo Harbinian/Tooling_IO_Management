@@ -14,7 +14,7 @@ from backend.services.rbac_data_scope_service import (
     build_order_scope_sql,
     resolve_order_data_scope,
 )
-from backend.services.tool_io_service import _resolve_scope_context
+from backend.services._order_shared import _resolve_scope_context
 
 logger = logging.getLogger(__name__)
 

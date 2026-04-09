@@ -125,6 +125,69 @@ def _extract_order_values(record: Dict) -> Dict:
     }
 
 
+def _evaluate_final_confirm_availability(order: Dict, operator_id: str, operator_role: str) -> Dict:
+    current_status = order.get("order_status") or ""
+    order_type = order.get("order_type") or ""
+    allowed_statuses = {"transport_notified", "transport_completed", "final_confirmation_pending"}
+
+    if current_status == "completed":
+        return {
+            "available": False,
+            "reason": "order is already completed",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": "initiator" if order_type == "outbound" else "keeper",
+        }
+
+    if current_status not in allowed_statuses:
+        return {
+            "available": False,
+            "reason": f"current status does not allow final confirmation: {current_status}",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": "initiator" if order_type == "outbound" else "keeper",
+        }
+
+    expected_role = "initiator" if order_type == "outbound" else "keeper" if order_type == "inbound" else ""
+    if not expected_role:
+        return {
+            "available": False,
+            "reason": f"unsupported order type: {order_type or '-'}",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": "",
+        }
+
+    if operator_role and operator_role != expected_role:
+        return {
+            "available": False,
+            "reason": f"final confirmation requires role {expected_role}",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": expected_role,
+        }
+
+    if operator_id:
+        owner_key = "initiator_id" if order_type == "outbound" else "keeper_id"
+        owner_value = order.get(owner_key)
+        if owner_value and owner_value != operator_id:
+            return {
+                "available": False,
+                "reason": f"operator does not match the assigned {expected_role}",
+                "order_type": order_type,
+                "current_status": current_status,
+                "expected_role": expected_role,
+            }
+
+    return {
+        "available": True,
+        "reason": "",
+        "order_type": order_type,
+        "current_status": current_status,
+        "expected_role": expected_role,
+    }
+
+
 def _extract_item_values(item: Dict) -> Dict:
     return {
         "serial_no": _pick_value(item, [ITEM_COLUMNS["serial_no"], "serial_no", "tool_code"], ""),

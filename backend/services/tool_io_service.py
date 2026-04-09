@@ -75,24 +75,24 @@ from backend.services.order_workflow_service import (
     start_transport as _start_transport,
     submit_order as _submit_order,
 )
+from backend.services._shared_utils import (
+    _build_actor_context,
+    _normalize_bool_text,
+    _pick_value,
+    _to_iso8601,
+    _format_order_datetime,
+)
+from backend.services._order_shared import (
+    _resolve_scope_context,
+    _is_order_accessible,
+    _normalize_runtime_order,
+    _extract_order_values,
+    _extract_item_values,
+)
 
 logger = logging.getLogger(__name__)
 ALLOWED_BATCH_TOOL_STATUSES = {"in_storage", "outbounded", "maintain", "scrapped"}
 MPL_MAX_PHOTO_BYTES = 2 * 1024 * 1024
-
-
-def _build_actor_context(
-    payload: Dict,
-    *,
-    actor_id_key: str = "operator_id",
-    actor_name_key: str = "operator_name",
-    actor_role_key: str = "operator_role",
-) -> Dict:
-    return {
-        "user_id": payload.get(actor_id_key, ""),
-        "user_name": payload.get(actor_name_key, ""),
-        "user_role": payload.get(actor_role_key, ""),
-    }
 
 
 def _emit_internal_notification(
@@ -112,7 +112,7 @@ def _emit_internal_notification(
         {
             "notification_id": result.get("notification_id", 0),
             "order_no": order.get("order_no", ""),
-            "order": order,  # 传递完整订单对象，用于 Markdown 消息构建
+            "order": order,
             "notification_type": notification_type,
             "receiver": result.get("receiver", ""),
             "title": result.get("title", ""),
@@ -127,11 +127,6 @@ def _emit_internal_notification(
             notification_type,
             delivery_result.get("send_result") or delivery_result.get("response_summary", ""),
         )
-
-
-def _normalize_bool_text(value: Optional[str], default: str = "false") -> str:
-    normalized = str(value if value is not None else default).strip().lower()
-    return "true" if normalized in {"1", "true", "yes", "on"} else "false"
 
 
 def _build_mpl_validation_message(drawing_no: str, revision: str) -> str:
@@ -360,22 +355,19 @@ def update_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         Result dictionary with success status
     """
     if not get_order_detail(order_no, current_user=current_user):
-        return _order_not_found_response()
+        return {"success": False, "error": "order not found"}
 
-    # Check if order is in draft status
     from backend.services.order_query_service import get_order_detail as get_order_detail_runtime
     order = get_order_detail_runtime(order_no)
     if not order:
-        return _order_not_found_response()
+        return {"success": False, "error": "order not found"}
 
     current_status = order.get("order_status", "")
     if current_status != "draft":
         return {"success": False, "error": f"只有草稿状态的订单可以编辑，当前状态：{current_status}"}
 
-    # Build actor context for audit
     actor = _build_actor_context(payload)
 
-    # Delegate to repository layer
     from backend.database.repositories.order_repository import OrderRepository
     from backend.database.db_pool import get_db_connection
 
@@ -387,41 +379,9 @@ def update_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
         db.close()
 
     if result.get("success"):
-        # Log the update
         from backend.database.repositories.order_repository import ToolIOAction
         logger.info(f"Order {order_no} updated by {actor['user_name']}")
     return result
-
-
-def _resolve_scope_context(current_user: Optional[Dict]) -> Dict:
-    if not current_user:
-        return {
-            "scope_types": ["ALL"],
-            "all_access": True,
-            "org_ids": [],
-            "org_user_ids": [],
-            "self_user_ids": [],
-            "assigned_user_ids": [],
-            "current_user_id": "",
-        }
-    return resolve_order_data_scope(current_user or {})
-
-
-def _order_not_found_response() -> Dict:
-    return {"success": False, "error": "order not found"}
-
-
-def _is_order_accessible(order: Dict, current_user: Optional[Dict]) -> bool:
-    if not current_user:
-        return True
-    scope_context = _resolve_scope_context(current_user)
-    if not order_matches_scope(order, scope_context):
-        return False
-
-    # Restrict "all-access" users (for example admins) from viewing draft orders.
-    if scope_context.get("all_access"):
-        return (order.get("order_status") or "").strip().lower() != "draft"
-    return True
 
 
 def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
@@ -456,33 +416,9 @@ def list_orders(filters: Dict, current_user: Optional[Dict] = None) -> Dict:
 
 
 def get_dashboard_stats(current_user: Optional[Dict] = None) -> Dict:
-    """Return dashboard metrics without depending on a missing database export."""
-    all_orders_result = get_tool_io_orders(page=1, page_size=5000)
-    scoped_orders = [
-        order for order in (all_orders_result.get("data") or []) if _is_order_accessible(order, current_user)
-    ]
-
-    def _count(*, order_status: str = "") -> int:
-        return sum(1 for order in scoped_orders if (order.get("order_status") or "") == order_status)
-
-    data = {
-        "today_outbound_orders": 0,
-        "today_inbound_orders": 0,
-        "orders_pending_keeper_confirmation": _count(order_status="submitted") + _count(order_status="partially_confirmed"),
-        "orders_in_transport": _count(order_status="transport_notified") + _count(order_status="transport_in_progress"),
-        "orders_pending_final_confirmation": _count(order_status="transport_completed") + _count(order_status="final_confirmation_pending"),
-        "active_orders_total": (
-            _count(order_status="draft")
-            + _count(order_status="submitted")
-            + _count(order_status="keeper_confirmed")
-            + _count(order_status="partially_confirmed")
-            + _count(order_status="transport_notified")
-            + _count(order_status="transport_in_progress")
-            + _count(order_status="transport_completed")
-            + _count(order_status="final_confirmation_pending")
-        ),
-    }
-    return {"success": True, "data": data}
+    """Delegate to dashboard_service.get_dashboard_stats."""
+    from backend.services.dashboard_service import get_dashboard_stats as _get_dashboard_stats
+    return _get_dashboard_stats(current_user)
 
 
 def get_order_detail(order_no: str, current_user: Optional[Dict] = None) -> Dict:
@@ -539,8 +475,11 @@ def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
 
 def reset_order_to_draft(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     if not get_order_detail(order_no, current_user=current_user):
-        return _order_not_found_response()
-    result = reset_order_to_draft_order(
+        return {"success": False, "error": "order not found"}
+
+    from backend.database.repositories.order_repository import OrderRepository
+    repo = OrderRepository()
+    result = repo.reset_order_to_draft(
         order_no,
         payload.get("operator_id", ""),
         payload.get("operator_name", ""),
@@ -570,7 +509,7 @@ def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
 def delete_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Delete an order through the admin cascade cleanup path."""
     if not get_order_detail(order_no, current_user=current_user):
-        return _order_not_found_response()
+        return {"success": False, "error": "order not found"}
 
     from backend.database.repositories.order_repository import OrderRepository
     repo = OrderRepository()
@@ -605,15 +544,12 @@ def get_pre_transport_orders(current_user: Optional[Dict] = None) -> Dict:
     if not current_user:
         return {"success": False, "error": "authentication required", "orders": []}
 
-    # Verify user is PRODUCTION_PREP role
     role_codes = current_user.get("role_codes", [])
     if not role_codes:
         role_codes = [r.get("role_code") for r in current_user.get("roles", []) if r.get("role_code")]
-    # role_codes comes from RBAC role_code and must be compared case-insensitively.
     if not any(str(role_code).strip().lower() == "production_prep_worker" for role_code in role_codes):
         return {"success": False, "error": "missing production_prep_worker role", "orders": []}
 
-    # Verify user belongs to Material Support Department (物资保障部)
     current_org = current_user.get("current_org") or {}
     default_org = current_user.get("default_org") or {}
     user_org_id = str(
@@ -629,8 +565,6 @@ def get_pre_transport_orders(current_user: Optional[Dict] = None) -> Dict:
     scope_context = _resolve_scope_context(current_user)
     org_ids = [str(org_id).strip() for org_id in (scope_context.get("org_ids") or []) if str(org_id).strip()]
     if not org_ids and not scope_context.get("all_access"):
-        current_org = current_user.get("current_org") or {}
-        default_org = current_user.get("default_org") or {}
         fallback_org_id = str(
             current_org.get("org_id")
             or default_org.get("org_id")
@@ -682,14 +616,6 @@ def mark_current_user_notification_read(notification_id: int, current_user: Opti
     return mark_notification_as_read(notification_id, current_user)
 
 
-def _pick_value(record: Dict, keys: List[str], default: Optional[str] = ""):
-    for key in keys:
-        value = record.get(key)
-        if value not in (None, ""):
-            return value
-    return default
-
-
 def _load_order_scope_projection(order_no: str) -> Dict:
     rows = DatabaseManager().execute_query(
         f"""
@@ -709,14 +635,6 @@ def _load_order_scope_projection(order_no: str) -> Dict:
     if not rows:
         return {}
     return rows[0]
-
-
-def _to_iso8601(value) -> Optional[str]:
-    if value in (None, ""):
-        return None
-    if hasattr(value, "isoformat"):
-        return value.isoformat()
-    return str(value)
 
 
 def _format_pre_transport_order(row: Dict) -> Dict:
@@ -749,61 +667,6 @@ def _format_pre_transport_order(row: Dict) -> Dict:
     }
 
 
-def _normalize_runtime_order(order: Dict) -> Dict:
-    if not order:
-        return {}
-
-    normalized_items = []
-    approved_count_from_items = 0
-    for item in order.get("items", []) or []:
-        item_status = _pick_value(item, ["item_status", "status"], "")
-        normalized_items.append(
-            {
-                **item,
-                "serial_no": _pick_value(item, ["serial_no", "tool_code"], ""),
-                "tool_name": _pick_value(item, ["tool_name", "工装名称"], ""),
-                "drawing_no": _pick_value(item, ["drawing_no", "工装图号"], ""),
-                "spec_model": _pick_value(item, ["spec_model", "机型", "规格型号"], ""),
-                "location_text": _pick_value(item, ["location_text"], ""),
-                "apply_qty": _pick_value(item, ["apply_qty", "申请数量"], 1),
-                "approved_qty": _pick_value(item, ["approved_qty", "确认数量"], 0),
-                "item_status": item_status,
-            }
-        )
-        if item_status == "approved":
-            approved_count_from_items += 1
-
-    # Tool count is always derived from items.length (tools are identified by serial number, not quantity)
-    tool_count = len(normalized_items)
-    approved_count = _pick_value(order, ["approved_count"], approved_count_from_items)
-    try:
-        approved_count = int(approved_count or 0)
-    except (TypeError, ValueError):
-        approved_count = 0
-    return {
-        **order,
-        "order_no": _pick_value(order, ["order_no", "出入库单号"], ""),
-        "order_type": _pick_value(order, ["order_type", "单据类型"], ""),
-        "order_status": _pick_value(order, ["order_status", "单据状态"], ""),
-        "initiator_id": _pick_value(order, ["initiator_id", "发起人ID"], ""),
-        "initiator_name": _pick_value(order, ["initiator_name", "发起人姓名"], ""),
-        "keeper_id": _pick_value(order, ["keeper_id", "保管员ID"], ""),
-        "keeper_name": _pick_value(order, ["keeper_name", "保管员姓名"], ""),
-        "transport_type": _pick_value(order, ["transport_type", "运输类型"], ""),
-        "transport_assignee_id": _pick_value(order, ["transport_assignee_id", "运输AssigneeID", "运输人ID"], ""),
-        "transport_assignee_name": _pick_value(order, ["transport_assignee_name", "运输AssigneeName", "运输人姓名"], ""),
-        "department": _pick_value(order, ["department", "部门"], ""),
-        "remark": _pick_value(order, ["remark", "备注"], ""),
-        "target_location_text": _pick_value(order, ["target_location_text", "目标位置文本"], ""),
-        "created_at": _pick_value(order, ["created_at", "创建时间"]),
-        "submitted_at": _pick_value(order, ["submit_time", "submitted_at", "提交时间"]),
-        "tool_count": tool_count,
-        "approved_count": approved_count,
-        "items": normalized_items,
-        "notification_records": order.get("notification_records", []) or [],
-    }
-
-
 def _get_runtime_order_summary(order_no: str, current_user: Optional[Dict] = None) -> Optional[Dict]:
     order = get_order_detail(order_no, current_user=current_user)
     if not order:
@@ -817,69 +680,6 @@ def _get_runtime_order_summary(order_no: str, current_user: Optional[Dict] = Non
         "keeper_id": _pick_value(order, ["keeper_id"]),
         "transport_assignee_id": _pick_value(order, ["transport_assignee_id"]),
         "approved_count": _pick_value(order, ["approved_count"], 0),
-    }
-
-
-def _evaluate_final_confirm_availability(order: Dict, operator_id: str, operator_role: str) -> Dict:
-    current_status = order.get("order_status") or ""
-    order_type = order.get("order_type") or ""
-    allowed_statuses = {"transport_notified", "transport_completed", "final_confirmation_pending"}
-
-    if current_status == "completed":
-        return {
-            "available": False,
-            "reason": "order is already completed",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": "team_leader" if order_type == "outbound" else "keeper",
-        }
-
-    if current_status not in allowed_statuses:
-        return {
-            "available": False,
-            "reason": f"current status does not allow final confirmation: {current_status}",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": "team_leader" if order_type == "outbound" else "keeper",
-        }
-
-    expected_role = "team_leader" if order_type == "outbound" else "keeper" if order_type == "inbound" else ""
-    if not expected_role:
-        return {
-            "available": False,
-            "reason": f"unsupported order type: {order_type or '-'}",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": "",
-        }
-
-    if operator_role and operator_role != expected_role:
-        return {
-            "available": False,
-            "reason": f"final confirmation requires role {expected_role}",
-            "order_type": order_type,
-            "current_status": current_status,
-            "expected_role": expected_role,
-        }
-
-    if operator_id:
-        owner_key = "initiator_id" if order_type == "outbound" else "keeper_id"
-        owner_value = order.get(owner_key)
-        if owner_value and owner_value != operator_id:
-            return {
-                "available": False,
-                "reason": f"operator does not match the assigned {expected_role}",
-                "order_type": order_type,
-                "current_status": current_status,
-                "expected_role": expected_role,
-            }
-
-    return {
-        "available": True,
-        "reason": "",
-        "order_type": order_type,
-        "current_status": current_status,
-        "expected_role": expected_role,
     }
 
 
@@ -997,62 +797,6 @@ def batch_query_tools(serial_nos: List[str]) -> Dict:
 
     rows = list(ToolRepository().load_tool_master_map(cleaned_codes).values())
     return {"success": True, "data": rows}
-
-
-def _format_order_datetime(value) -> str:
-    if value is None:
-        return "-"
-    if hasattr(value, "strftime"):
-        return value.strftime("%Y-%m-%d %H:%M:%S")
-    return str(value)
-
-
-def _extract_order_values(record: Dict) -> Dict:
-    return {
-        "order_no": _pick_value(record, [ORDER_COLUMNS["order_no"], "order_no"], ""),
-        "order_type": _pick_value(record, [ORDER_COLUMNS["order_type"], "order_type"], ""),
-        "order_status": _pick_value(record, [ORDER_COLUMNS["order_status"], "order_status"], ""),
-        "initiator_name": _pick_value(record, [ORDER_COLUMNS["initiator_name"], "initiator_name"], ""),
-        "initiator_id": _pick_value(record, [ORDER_COLUMNS["initiator_id"], "initiator_id"], ""),
-        "department": _pick_value(record, [ORDER_COLUMNS["department"], "department"], ""),
-        "required_by": _pick_value(
-            record,
-            ["required_by", ORDER_COLUMNS["planned_use_time"], ORDER_COLUMNS["planned_return_time"]],
-            "",
-        ),
-        "remark": _pick_value(record, [ORDER_COLUMNS["remark"], "remark"], ""),
-        "created_at": _pick_value(record, [ORDER_COLUMNS["created_at"], "created_at"]),
-        "submitted_at": _pick_value(record, ["submit_time", "submitted_at"]),
-        "transport_type": _pick_value(record, [ORDER_COLUMNS["transport_type"], "transport_type"], ""),
-        "transport_assignee_name": _pick_value(
-            record,
-            [ORDER_COLUMNS["transport_assignee_name"], "transport_assignee_name", "receiver"],
-            "",
-        ),
-        "keeper_name": _pick_value(record, [ORDER_COLUMNS["keeper_name"], "keeper_name"], ""),
-        "transport_receiver": _pick_value(
-            record,
-            ["receiver", ORDER_COLUMNS["transport_assignee_name"], "transport_assignee_name"],
-            "",
-        ),
-    }
-
-
-def _extract_item_values(item: Dict) -> Dict:
-    return {
-        "serial_no": _pick_value(item, [ITEM_COLUMNS["serial_no"], "serial_no", "tool_code"], ""),
-        "tool_name": _pick_value(item, [ITEM_COLUMNS["tool_name"], "tool_name"], ""),
-        "drawing_no": _pick_value(item, [ITEM_COLUMNS["drawing_no"], "drawing_no"], ""),
-        "location_text": _pick_value(
-            item,
-            ["location_text", ITEM_COLUMNS["keeper_confirm_location_text"], ITEM_COLUMNS["tool_snapshot_location_text"]],
-            "",
-        ),
-        "apply_qty": _pick_value(item, [ITEM_COLUMNS["apply_qty"], "apply_qty"], 1),
-        "approved_qty": _pick_value(item, ["approved_qty", ITEM_COLUMNS["confirmed_qty"], "confirmed_qty"], 0),
-        "split_quantity": _pick_value(item, ["split_quantity"], 0),
-        "item_status": _pick_value(item, [ITEM_COLUMNS["item_status"], "item_status", "status"], ""),
-    }
 
 
 def _build_keeper_text(summary: Dict, items: List[Dict], order_no: str) -> str:
@@ -1255,8 +999,6 @@ def notify_keeper(order_no: str, payload: Dict, current_user: Optional[Dict] = N
     title = payload.get("title") or "保管员确认请求"
     content = payload.get("content") or generated["text"]
 
-    # Get the notification record that was just created by generate_keeper_text
-    # We need to query for the most recent keeper_request notification for this order
     delivery_result = deliver_notification_to_feishu(
         {
             "order_no": order_no,
@@ -1289,4 +1031,3 @@ def notify_keeper(order_no: str, payload: Dict, current_user: Optional[Dict] = N
         "send_status": final_status,
         "send_result": send_result,
     }
-
