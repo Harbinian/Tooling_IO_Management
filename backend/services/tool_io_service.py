@@ -831,7 +831,7 @@ def _evaluate_final_confirm_availability(order: Dict, operator_id: str, operator
             "reason": "order is already completed",
             "order_type": order_type,
             "current_status": current_status,
-            "expected_role": "initiator" if order_type == "outbound" else "keeper",
+            "expected_role": "team_leader" if order_type == "outbound" else "keeper",
         }
 
     if current_status not in allowed_statuses:
@@ -840,10 +840,10 @@ def _evaluate_final_confirm_availability(order: Dict, operator_id: str, operator
             "reason": f"current status does not allow final confirmation: {current_status}",
             "order_type": order_type,
             "current_status": current_status,
-            "expected_role": "initiator" if order_type == "outbound" else "keeper",
+            "expected_role": "team_leader" if order_type == "outbound" else "keeper",
         }
 
-    expected_role = "initiator" if order_type == "outbound" else "keeper" if order_type == "inbound" else ""
+    expected_role = "team_leader" if order_type == "outbound" else "keeper" if order_type == "inbound" else ""
     if not expected_role:
         return {
             "available": False,

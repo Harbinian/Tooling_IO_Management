@@ -84,11 +84,10 @@ def get_order_detail(order_no: str, current_user: Optional[Dict] = None) -> Dict
     """Get detailed order information including items."""
     from backend.services.tool_io_runtime import get_order_detail_runtime
 
-    runtime_result = get_order_detail_runtime(order_no, current_user)
-    if not runtime_result.get("success"):
-        return runtime_result
+    order = get_order_detail_runtime(order_no)
+    if not order:
+        return {"success": False, "error": "order not found"}
 
-    order = runtime_result.get("order", {})
     if not _is_order_accessible(order, current_user):
         return {
             "success": False,
