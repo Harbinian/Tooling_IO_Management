@@ -3,6 +3,8 @@ import types
 import unittest
 from unittest.mock import patch
 
+import pytest
+
 sys.modules.setdefault("requests", types.SimpleNamespace())
 sys.modules.setdefault("dotenv", types.SimpleNamespace(load_dotenv=lambda *args, **kwargs: None))
 
@@ -302,6 +304,7 @@ class ToolIORuntimeTests(unittest.TestCase):
         self.assertIn("does not belong to order", result["error"])
 
 
+@pytest.mark.integration
 class ToolIOFinalConfirmationServiceTests(unittest.TestCase):
     def test_get_final_confirm_availability_allows_outbound_initiator(self):
         with patch(
@@ -428,6 +431,7 @@ class ToolIONotificationUsageTests(unittest.TestCase):
 
         self.assertEqual(result, {})
 
+    @pytest.mark.integration
     def test_generate_keeper_text_creates_internal_notification_record(self):
         order = {
             "order_no": "TO-006",
@@ -447,6 +451,7 @@ class ToolIONotificationUsageTests(unittest.TestCase):
         self.assertEqual(create_record.call_args.kwargs["notify_type"], "keeper_request")
         self.assertEqual(create_record.call_args.kwargs["notify_channel"], "internal")
 
+    @pytest.mark.integration
     def test_generate_transport_text_creates_preview_record(self):
         order = {
             "order_no": "TO-007",

@@ -3,11 +3,14 @@ import types
 import unittest
 from unittest.mock import patch
 
+import pytest
+
 sys.modules.setdefault("pyodbc", types.SimpleNamespace(Connection=object, connect=lambda *args, **kwargs: None))
 
 from backend.services import tool_io_service
 
 
+@pytest.mark.integration
 class ToolIoServiceSubmitTests(unittest.TestCase):
     @patch("backend.services.tool_io_service._emit_internal_notification")
     @patch("backend.services.tool_io_service.submit_tool_io_order")
