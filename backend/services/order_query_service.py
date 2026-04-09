@@ -15,6 +15,7 @@ from database import (
     get_tool_io_orders,
     search_tools,
 )
+from backend.database.schema.column_names import TOOL_MASTER_TABLE
 from backend.services.rbac_data_scope_service import (
     build_order_scope_sql,
     resolve_order_data_scope,
@@ -133,7 +134,7 @@ def batch_query_tools(tool_codes: List[str]) -> Dict:
             quantity as available_quantity,
             status,
             remark
-        FROM 工装主数据
+        FROM {TOOL_MASTER_TABLE}
         WHERE serial_no IN ({placeholders})
           AND status = 'active'
         ORDER BY serial_no
