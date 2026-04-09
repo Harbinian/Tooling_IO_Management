@@ -1,16 +1,20 @@
 import client from './client'
 
+function unwrap(response) {
+  return response.data
+}
+
 export default {
-  getPermissions(params) {
-    return client.get('/admin/permissions', { params })
+  async getPermissions(params) {
+    return unwrap(await client.get('/admin/permissions', { params }))
   },
-  createPermission(payload) {
-    return client.post('/admin/permissions', payload)
+  async createPermission(payload) {
+    return unwrap(await client.post('/admin/permissions', payload))
   },
-  updatePermission(code, payload) {
-    return client.put(`/admin/permissions/${code}`, payload)
+  async updatePermission(code, payload) {
+    return unwrap(await client.put(`/admin/permissions/${code}`, payload))
   },
-  deletePermission(code) {
-    return client.delete(`/admin/permissions/${code}`)
+  async deletePermission(code) {
+    return unwrap(await client.delete(`/admin/permissions/${code}`))
   }
 }

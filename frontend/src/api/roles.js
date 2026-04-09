@@ -1,22 +1,26 @@
 import client from './client'
 
+function unwrap(response) {
+  return response.data
+}
+
 export default {
-  getAdminRoles() {
-    return client.get('/admin/roles')
+  async getAdminRoles() {
+    return unwrap(await client.get('/admin/roles'))
   },
-  createRole(payload) {
-    return client.post('/admin/roles', payload)
+  async createRole(payload) {
+    return unwrap(await client.post('/admin/roles', payload))
   },
-  updateRole(roleId, payload) {
-    return client.put(`/admin/roles/${roleId}`, payload)
+  async updateRole(roleId, payload) {
+    return unwrap(await client.put(`/admin/roles/${roleId}`, payload))
   },
-  deleteRole(roleId) {
-    return client.delete(`/admin/roles/${roleId}`)
+  async deleteRole(roleId) {
+    return unwrap(await client.delete(`/admin/roles/${roleId}`))
   },
-  getRolePermissions(roleId) {
-    return client.get(`/admin/roles/${roleId}/permissions`)
+  async getRolePermissions(roleId) {
+    return unwrap(await client.get(`/admin/roles/${roleId}/permissions`))
   },
-  assignPermissions(roleId, payload) {
-    return client.put(`/admin/roles/${roleId}/permissions`, payload)
+  async assignPermissions(roleId, payload) {
+    return unwrap(await client.put(`/admin/roles/${roleId}/permissions`, payload))
   }
 }
