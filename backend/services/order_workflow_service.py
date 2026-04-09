@@ -38,8 +38,10 @@ from backend.services.notification_service import (
     TRANSPORT_STARTED,
 )
 from backend.services.rbac_data_scope_service import (
+    build_order_scope_sql,
     load_keeper_ids_for_org_ids,
     order_matches_scope,
+    resolve_order_data_scope,
 )
 from backend.services.tool_io_runtime import (
     get_order_logs_runtime,
@@ -49,6 +51,116 @@ from backend.services.tool_io_runtime import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Helper functions extracted from tool_io_service.py
+# (to be made self-contained; original definitions remain in tool_io_service.py for Unit 2)
+
+
+def _build_actor_context(
+    payload: Dict,
+    *,
+    actor_id_key: str = "operator_id",
+    actor_name_key: str = "operator_name",
+    actor_role_key: str = "operator_role",
+) -> Dict:
+    return {
+        "user_id": payload.get(actor_id_key, ""),
+        "user_name": payload.get(actor_name_key, ""),
+        "user_role": payload.get(actor_role_key, ""),
+    }
+
+
+def _resolve_scope_context(current_user: Optional[Dict]) -> Dict:
+    if not current_user:
+        return {
+            "scope_types": ["ALL"],
+            "all_access": True,
+            "org_ids": [],
+            "org_user_ids": [],
+            "self_user_ids": [],
+            "assigned_user_ids": [],
+            "current_user_id": "",
+        }
+    return resolve_order_data_scope(current_user or {})
+
+
+def _order_not_found_response() -> Dict:
+    return {"success": False, "error": "order not found"}
+
+
+def _is_order_accessible(order: Dict, current_user: Optional[Dict]) -> bool:
+    if not current_user:
+        return True
+    scope_context = _resolve_scope_context(current_user)
+    if not order_matches_scope(order, scope_context):
+        return False
+    # Restrict "all-access" users (for example admins) from viewing draft orders.
+    if scope_context.get("all_access"):
+        return (order.get("order_status") or "").strip().lower() != "draft"
+    return True
+
+
+def _evaluate_final_confirm_availability(order: Dict, operator_id: str, operator_role: str) -> Dict:
+    current_status = order.get("order_status") or ""
+    order_type = order.get("order_type") or ""
+    allowed_statuses = {"transport_notified", "transport_completed", "final_confirmation_pending"}
+
+    if current_status == "completed":
+        return {
+            "available": False,
+            "reason": "order is already completed",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": "initiator" if order_type == "outbound" else "keeper",
+        }
+
+    if current_status not in allowed_statuses:
+        return {
+            "available": False,
+            "reason": f"current status does not allow final confirmation: {current_status}",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": "initiator" if order_type == "outbound" else "keeper",
+        }
+
+    expected_role = "initiator" if order_type == "outbound" else "keeper" if order_type == "inbound" else ""
+    if not expected_role:
+        return {
+            "available": False,
+            "reason": f"unsupported order type: {order_type or '-'}",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": "",
+        }
+
+    if operator_role and operator_role != expected_role:
+        return {
+            "available": False,
+            "reason": f"final confirmation requires role {expected_role}",
+            "order_type": order_type,
+            "current_status": current_status,
+            "expected_role": expected_role,
+        }
+
+    if operator_id:
+        owner_key = "initiator_id" if order_type == "outbound" else "keeper_id"
+        owner_value = order.get(owner_key)
+        if owner_value and owner_value != operator_id:
+            return {
+                "available": False,
+                "reason": f"operator does not match the assigned {expected_role}",
+                "order_type": order_type,
+                "current_status": current_status,
+                "expected_role": expected_role,
+            }
+
+    return {
+        "available": True,
+        "reason": "",
+        "order_type": order_type,
+        "current_status": current_status,
+        "expected_role": expected_role,
+    }
 
 
 def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
