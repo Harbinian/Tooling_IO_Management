@@ -126,13 +126,13 @@ const navigateToModule = (module) => {
           模块入口
         </Badge>
         <h1 class="text-3xl font-bold tracking-tight md:text-4xl text-primary-foreground">
-          欢迎回来，<span class="text-emerald-400">{{ session.userName || '用户' }}</span>
+          欢迎回来，<span class="text-accent">{{ session.userName || '用户' }}</span>
         </h1>
         <p class="mt-4 text-lg text-primary-foreground/80">
           选择您需要访问的功能模块，开始工作。
         </p>
       </div>
-      <div class="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl"></div>
+      <div class="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-accent/10 blur-3xl"></div>
     </section>
 
     <!-- Module Cards -->
