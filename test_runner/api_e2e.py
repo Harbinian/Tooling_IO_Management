@@ -528,6 +528,10 @@ def login_user(username: str, password: str) -> tuple:
 def ensure_user_session(username: str) -> tuple:
     """Ensure a test user has a fresh token and cached user_id."""
     user = TEST_USERS[username]
+    # If already logged in with a token, reuse it
+    if user.get("token"):
+        return user["token"], user["user_id"], user
+    # Otherwise, login fresh
     token, user_id, user_data = login_user(username, user["password"])
     if token:
         user["token"] = token
@@ -1530,13 +1534,12 @@ def run_reject_resubmit_workflow_test(report: TestReport):
         return
 
     report.add_step("rej_04", "hutingting", "登录", "PASS", f"user_id={user_id_ht}")
-    # 驳回订单
-    status_code, body = api_post(f"/tool-io-orders/{order_no}/cancel", {
+    # 驳回订单 (使用正确的 /reject 端点)
+    status_code, body = api_post(f"/tool-io-orders/{order_no}/reject", {
         "operator_id": user_id_ht,
         "operator_name": "胡婷婷",
         "operator_role": "keeper",
-        "reason": "测试驳回原因",
-        "cancel_reason": "测试驳回原因：工装数量不足"
+        "reject_reason": "测试驳回原因：工装数量不足"
     }, token=token_ht)
 
     if status_code == 200 and body.get("success"):
@@ -1557,11 +1560,31 @@ def run_reject_resubmit_workflow_test(report: TestReport):
         else:
             report.add_step("rej_06", "hutingting", "验证订单已驳回", "FAIL",
                            details=f"expected=rejected, actual={current_status}")
+            return
 
     # -------------------------------------------------------------------------
-    # 步骤 6-8: 太东旭 - 修改并重新提交
+    # 步骤 6: 太东旭 - 重置订单到草稿状态
     # -------------------------------------------------------------------------
-    print("\n--- Phase 4C: Team Leader Modifies and Resubmits (taidongxu) ---")
+    print("\n--- Phase 4C: Team Leader Resets to Draft (taidongxu) ---")
+
+    # 重置订单到草稿状态（驳回后的订单必须先重置才能修改）
+    status_code, body = api_post(f"/tool-io-orders/{order_no}/reset-to-draft", {
+        "operator_id": user_id_td,
+        "operator_name": "太东旭",
+        "operator_role": "team_leader"
+    }, token=token_td)
+
+    if status_code == 200 and body.get("success"):
+        report.add_step("rej_06b", "taidongxu", "重置订单到草稿", "PASS")
+    else:
+        report.add_step("rej_06b", "taidongxu", "重置订单到草稿", "FAIL",
+                       details=f"status={status_code}, error={body}")
+        return
+
+    # -------------------------------------------------------------------------
+    # 步骤 7-8: 太东旭 - 修改并重新提交
+    # -------------------------------------------------------------------------
+    print("\n--- Phase 4D: Team Leader Modifies and Resubmits (taidongxu) ---")
 
     # 获取订单详情
     detail_status, order_detail = api_get(f"/tool-io-orders/{order_no}", token=token_td)
