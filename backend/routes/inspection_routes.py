@@ -27,7 +27,7 @@ def api_inspection_stats_summary():
         return jsonify(result)
     except Exception as exc:
         logger.error("failed to get inspection stats summary: %s", exc)
-        return jsonify({"success": False, "error": str(exc)}), 500
+        return jsonify({"success": False, "error": "stats summary error: " + str(exc)}), 500
 
 
 @inspection_bp.route("/api/inspection/plans", methods=["GET"])
@@ -153,7 +153,7 @@ def api_inspection_task_list():
 
         result = list_tasks(
             {
-                "task_status": request.args.get("task_status"),
+                "task_status": request.args.get("status") or request.args.get("task_status"),
                 "plan_no": request.args.get("plan_no"),
                 "assigned_to_id": request.args.get("assigned_to_id"),
                 "inspection_result": request.args.get("inspection_result"),
@@ -169,7 +169,7 @@ def api_inspection_task_list():
         return validation_error(str(exc))
     except Exception as exc:
         logger.error("failed to list inspection tasks: %s", exc)
-        return jsonify({"success": False, "error": str(exc)}), 500
+        return jsonify({"success": False, "error": "list_tasks failed: " + str(exc)}), 500
 
 
 @inspection_bp.route("/api/inspection/tasks/<task_no>", methods=["GET"])
