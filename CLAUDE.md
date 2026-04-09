@@ -274,6 +274,14 @@ promptsRec/
 
 详见 `docs/PROMPT_TASK_CONVENTION.md`。
 
+## 单人开发工作流 / Solo Developer Workflow
+
+- **永远在 `main` 分支上工作**，不创建其他分支
+- **不使用 git worktree**，不使用 `isolation: "worktree"` spawn agents
+- Agent 直接在 main 分支运行，完成后 `commit + push`
+- 如需并行任务，用 `Agent` 的 `run_in_background: true` 在主分支并发执行，**禁止**创建新的 git 分支或 worktree
+- 禁止使用 `git branch`、`git checkout -b` 创建新分支
+
 ## 提交风格 / Commit Style
 
 使用简短祈使句: `fix keeper confirmation flow`、`feat: add order submission API`

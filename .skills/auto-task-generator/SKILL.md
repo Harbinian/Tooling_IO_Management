@@ -129,6 +129,7 @@ Generated prompts must follow the exact project specification.
 4. 编号是否来自 `.sequence`
 5. 执行器是否与 `.claude/rules/05_task_convention.md` 一致
 6. 如果是简化任务，是否根本不该生成 prompt
+7. 代码片段引用是否遵循 `05_task_convention.md` 指引（不得内嵌、路径可定位）
 
 **如果校验失败，拒绝生成 prompt 并说明原因。**
 
@@ -194,6 +195,7 @@ Execution: RUNPROMPT
 |------|------|
 | Context / 上下文 | 任务背景和动机 |
 | Required References / 必需参考 | 代码文件、文档、API 契约 |
+| Code Snippet Reference / 代码片段引用 | 目标代码文件路径（不得内嵌，详见 `05_task_convention.md`） |
 | Constraints / 约束条件 | 限制和边界条件 |
 | Completion Criteria / 完成标准 | 可验收的完成标准 |
 
@@ -215,6 +217,9 @@ Execution: RUNPROMPT
 2. 检查相关源代码模块 / Inspect relevant source code modules
 3. 检查真实数据库架构 / Inspect real database schema
 4. 在修改代码前确定根本原因 / Identify the root cause before modifying code
+
+代码片段引用仅限于 Schema 定义和字段常量，
+具体业务逻辑实现代码应让执行者直接读源码理解。
 
 ---
 
