@@ -42,29 +42,15 @@ async function submitLogin() {
   try {
     await session.login(form)
     // Determine redirect target after successful login
-    let redirectTarget
-    if (route.query.denied === '1') {
-      // User was denied access to the originally requested page
-      // Check if they can access dashboard, otherwise use role-specific fallback
-      const permissions = session.permissions || []
-      if (permissions.includes('dashboard:view')) {
-        redirectTarget = route.query.redirect || '/dashboard'
-      } else if (permissions.includes('order:transport_execute')) {
-        // Production prep users - redirect to transport workspace
-        redirectTarget = '/inventory/pre-transport'
-      } else if (permissions.includes('order:keeper_confirm')) {
-        // Keeper users - redirect to keeper workspace
-        redirectTarget = '/inventory/keeper'
-      } else {
-        // Fallback - stay on login page
-        redirectTarget = '/login'
-      }
-      router.replace(redirectTarget)
-    } else {
-      const redirect = route.query.redirect || '/dashboard'
-      router.replace(redirect)
+    let redirectTarget = '/home'
+    if (route.query.denied !== '1' && route.query.redirect) {
+      redirectTarget = String(Array.isArray(route.query.redirect) 
+        ? route.query.redirect[0] || '/home'
+        : route.query.redirect)
     }
-  } catch (error) {
+    router.replace(redirectTarget)
+  } catch (err) {
+    const error = /** @type {any} */ (err)
     errorMessage.value = error.response?.data?.error || '登录失败，请检查用户名或密码'
   } finally {
     submitting.value = false

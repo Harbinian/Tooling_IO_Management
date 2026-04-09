@@ -101,6 +101,7 @@ Execution: RUNPROMPT
 
 Context / 上下文
 Required References / 必需参考
+Code Snippet Reference / 代码片段引用
 Core Task / 核心任务
 Required Work / 必需工作
 Constraints / 约束条件
@@ -148,6 +149,7 @@ Completion Criteria / 完成标准
 4. 编号是否来自 `.sequence`
 5. 执行器是否与 `.claude/rules/05_task_convention.md` 一致
 6. 是否属于不应生成 prompt 的简化任务
+7. 代码片段引用是否遵循 `05_task_convention.md` 指引（不得内嵌、路径可定位）
 
 **如果校验失败，拒绝生成 prompt 并说明原因。**
 
@@ -167,6 +169,9 @@ Completion Criteria / 完成标准
 - 后端 API 结构
 - 工作流状态
 
+提示词中的代码引用仅限于 Schema 定义和字段常量，
+不得包含具体业务逻辑实现代码。
+
 ---
 
 # 功能提示词规则 / Feature Prompt Rules (00001–09999)
@@ -177,6 +182,9 @@ Completion Criteria / 完成标准
 - 提示词必须与现有架构集成
 - 提示词不得重新设计稳定的子系统
 - 提示词必须包含优先级 (P0/P1/P2)
+
+提示词中的代码引用仅限于架构约束和模式骨架，
+不得包含具体业务逻辑实现代码。
 
 ---
 
