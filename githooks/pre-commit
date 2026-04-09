@@ -1,0 +1,128 @@
+#!/bin/sh
+# G1 Pre-commit Hooks - Claude Code Solo Dev
+# Based on 07_ci_gates.md G1 Layer
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "Running G1 pre-commit hooks..."
+
+# ============================================================================
+# G1-1: Branch Check (already existed)
+# ============================================================================
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$current_branch" != "main" ]; then
+    echo "${RED}ERROR: You are on branch '$current_branch', not 'main'.${NC}"
+    echo "Solo dev rule: all work must be done on 'main'."
+    exit 1
+fi
+echo "${GREEN}[G1-BRANCH] OK - on main branch${NC}"
+
+# ============================================================================
+# G1-1: UTF-8 Encoding Check
+# ============================================================================
+echo "Checking UTF-8 encoding..."
+failures=0
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+    # Skip binary files
+    if file "$file" | grep -q "binary"; then
+        continue
+    fi
+    # Check for BOM
+    if [ -f "$file" ]; then
+        # Check UTF-8 BOM (EF BB BF)
+        if head -c 3 "$file" 2>/dev/null | grep -q $'\xef\xbb\xbf'; then
+            echo "${RED}[G1-1] FAIL: $file has UTF-8 BOM${NC}"
+            failures=$((failures + 1))
+        fi
+    fi
+done
+if [ $failures -gt 0 ]; then
+    echo "${RED}[G1-1] UTF-8 BOM check failed${NC}"
+    exit 1
+fi
+echo "${GREEN}[G1-1] UTF-8 encoding OK${NC}"
+
+# ============================================================================
+# G1-2: Chinese Field Name Literal Detection (Python SQL)
+# ============================================================================
+echo "Checking for Chinese SQL literals..."
+failures=0
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py)$'); do
+    if [ -f "$file" ]; then
+        # Check for Chinese characters in SQL keywords (SELECT, INSERT, UPDATE, DELETE, WHERE, FROM)
+        if grep -E '(SELECT|INSERT|UPDATE|DELETE|WHERE|FROM).*[\u4e00-\u9fff]' "$file" 2>/dev/null | grep -v "column_names.py" > /dev/null; then
+            echo "${RED}[G1-2] FAIL: $file contains Chinese field name in SQL${NC}"
+            failures=$((failures + 1))
+        fi
+    fi
+done
+if [ $failures -gt 0 ]; then
+    echo "${RED}[G1-2] Chinese SQL literal check failed - use column_names.py constants${NC}"
+    exit 1
+fi
+echo "${GREEN}[G1-2] No Chinese SQL literals found${NC}"
+
+# ============================================================================
+# G1-3: Placeholder Code Detection
+# ============================================================================
+echo "Checking for placeholder code..."
+failures=0
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|ts|vue)$'); do
+    if [ -f "$file" ]; then
+        # Check for ... pass TODO raise NotImplementedError
+        if grep -E '(^\s*\.\.\.\s*$|^\s*pass\s*#\s*TODO|raise\s+NotImplementedError)' "$file" > /dev/null 2>&1; then
+            # Allow raise NotImplementedError in abstract base classes (must have # abstract comment)
+            if grep -v "# abstract" "$file" | grep -E 'raise\s+NotImplementedError' > /dev/null 2>&1; then
+                echo "${RED}[G1-3] FAIL: $file contains placeholder code${NC}"
+                failures=$((failures + 1))
+            fi
+        fi
+    fi
+done
+if [ $failures -gt 0 ]; then
+    echo "${RED}[G1-3] Placeholder code check failed${NC}"
+    exit 1
+fi
+echo "${GREEN}[G1-3] No placeholder code found${NC}"
+
+# ============================================================================
+# G1-5: Dependency Version Pinning Check (requirements.txt)
+# ============================================================================
+echo "Checking dependency pinning..."
+failures=0
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E 'requirements.*\.txt$'); do
+    if [ -f "$file" ]; then
+        # Check for unpinned dependencies (no == version)
+        while IFS= read -r line; do
+            # Skip comments and empty lines
+            if [ -z "$line" ] || echo "$line" | grep -qE '^\s*#'; then
+                continue
+            fi
+            # Check if line has == version
+            if ! echo "$line" | grep -qE '==[\d]'; then
+                echo "${YELLOW}[G1-5] WARN: $file has unpinned: $line${NC}"
+                failures=$((failures + 1))
+            fi
+        done < "$file"
+    fi
+done
+if [ $failures -gt 0 ]; then
+    echo "${RED}[G1-5] Dependency pinning check failed - use == version${NC}"
+    exit 1
+fi
+echo "${GREEN}[G1-5] Dependency pinning OK${NC}"
+
+# ============================================================================
+# Summary
+# ============================================================================
+echo ""
+echo "${GREEN}======================================${NC}"
+echo "${GREEN}All G1 pre-commit hooks passed!${NC}"
+echo "${GREEN}======================================${NC}"
+exit 0
