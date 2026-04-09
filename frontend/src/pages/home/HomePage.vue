@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Box, Calendar, FileText, Settings as SettingsIcon, ChevronRight } from 'lucide-vue-next'
 import { useSessionStore } from '@/store/session'
+import { DEBUG_IDS } from '@/debug/debugIds'
 
 const router = useRouter()
 const session = useSessionStore()
@@ -108,7 +109,7 @@ const navigateTo = (/** @type {any} */ href) => {
 <template>
   <div class="space-y-8">
     <!-- Portal Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-8 rounded-3xl border border-border shadow-sm">
+    <div v-debug-id="DEBUG_IDS.HOME.TITLE" class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-8 rounded-3xl border border-border shadow-sm">
       <div class="space-y-2">
         <h1 class="text-3xl font-black tracking-tight text-foreground">
           {{ greeting }}，{{ session.userName || session.loginName }}
@@ -122,7 +123,7 @@ const navigateTo = (/** @type {any} */ href) => {
     </div>
 
     <!-- Portal Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div v-debug-id="DEBUG_IDS.HOME.GRID" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       <div
         v-for="card in visibleCards"
         :key="card.key"

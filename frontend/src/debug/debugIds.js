@@ -22,6 +22,13 @@ export const DEBUG_IDS = {
     ERROR_ALERT: 'A-ALERT-001'
   },
 
+  // Home Page (H)
+  HOME: {
+    CARD: 'H-CARD-001',
+    TITLE: 'H-TITLE-001',
+    GRID: 'H-GRID-001'
+  },
+
   // Dashboard (D)
   DASHBOARD: {
     SUMMARY_CARD: 'D-CARD-001',
