@@ -611,7 +611,7 @@ def get_pre_transport_orders(current_user: Optional[Dict] = None) -> Dict:
         role_codes = [r.get("role_code") for r in current_user.get("roles", []) if r.get("role_code")]
     # role_codes comes from RBAC role_code and must be compared case-insensitively.
     if not any(str(role_code).strip().lower() == "production_prep_worker" for role_code in role_codes):
-        return {"success": False, "error": "permission denied", "orders": []}
+        return {"success": False, "error": "missing production_prep_worker role", "orders": []}
 
     # Verify user belongs to Material Support Department (物资保障部)
     current_org = current_user.get("current_org") or {}
@@ -622,7 +622,7 @@ def get_pre_transport_orders(current_user: Optional[Dict] = None) -> Dict:
         or current_user.get("default_org_id", "")
     ).strip()
     if user_org_id != MATERIAL_SUPPORT_ORG_ID:
-        return {"success": False, "error": "permission denied", "orders": []}
+        return {"success": False, "error": "not in material support department", "orders": []}
 
     from backend.database.repositories.order_repository import OrderRepository
 

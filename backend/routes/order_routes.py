@@ -525,6 +525,11 @@ def api_tool_io_orders_pre_transport():
         result = get_pre_transport_orders(current_user=get_authenticated_user())
         if result.get("success"):
             return jsonify(result)
+        error_msg = result.get("error", "")
+        if error_msg == "authentication required":
+            return jsonify(result), 401
+        if error_msg in ("permission denied", "missing production_prep_worker role", "not in material support department"):
+            return jsonify(result), 403
         return jsonify(result), 400
     except Exception as exc:
         logger.error("failed to load pre-transport orders: %s", exc)
