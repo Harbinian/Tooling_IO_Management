@@ -20,26 +20,26 @@ from backend.services.rbac_data_scope_service import (
     build_order_scope_sql,
     resolve_order_data_scope,
 )
-from backend.services.tool_io_service import (
-    _extract_item_values,
-    _extract_order_values,
+from backend.services._shared_utils import (
+    _pick_value,
     _format_order_datetime,
+)
+from backend.services._order_shared import (
     _is_order_accessible,
     _normalize_runtime_order,
-    _pick_value,
     _resolve_scope_context,
+    _extract_order_values,
+    _extract_item_values,
 )
+from backend.services.notification_service import ORDER_CREATED
 
 logger = logging.getLogger(__name__)
 
 
 def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Create a new tool IO order."""
-    from backend.services.tool_io_service import (
-        _build_actor_context,
-        _emit_internal_notification,
-        ORDER_CREATED,
-    )
+    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services._shared_utils import _build_actor_context
 
     actor = _build_actor_context(payload)
     result = create_tool_io_order(payload)

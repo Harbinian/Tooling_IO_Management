@@ -56,6 +56,7 @@ from backend.services._shared_utils import (
     _pick_value,
 )
 from backend.services._order_shared import (
+    _evaluate_final_confirm_availability,
     _is_order_accessible,
     _resolve_scope_context,
 )
@@ -267,8 +268,6 @@ def get_final_confirm_availability(
     current_user: Optional[Dict] = None,
 ) -> Dict:
     """Check if final confirmation is available for an order."""
-    from backend.services._order_shared import _evaluate_final_confirm_availability
-
     order = get_order_detail_runtime(order_no)
     if not order or not _is_order_accessible(order, current_user):
         return {
