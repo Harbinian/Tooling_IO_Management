@@ -119,6 +119,34 @@ fi
 echo "${GREEN}[G1-5] Dependency pinning OK${NC}"
 
 # ============================================================================
+# G1-4: Detect Secrets Check
+# ============================================================================
+echo "Checking for secrets..."
+# Check if baseline exists and is empty of secrets
+if [ -f ".secrets.baseline" ]; then
+    # Simply check if baseline results are empty
+    # False positives have been cleaned from baseline
+    if python -c "
+import json
+with open('.secrets.baseline', 'r', encoding='utf-8') as f:
+    data = json.load(f)
+results = data.get('results', {})
+if results:
+    exit(1)
+else:
+    exit(0)
+" 2>/dev/null; then
+        echo "${GREEN}[G1-4] No secrets in baseline${NC}"
+    else
+        echo "${RED}[G1-4] FAIL: Baseline contains secrets${NC}"
+        echo "Run 'python -m detect_secrets audit .secrets.baseline' to review"
+        exit 1
+    fi
+else
+    echo "${YELLOW}[G1-4] WARN: .secrets.baseline not found, skipping${NC}"
+fi
+
+# ============================================================================
 # Summary
 # ============================================================================
 echo ""
