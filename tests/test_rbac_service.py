@@ -30,13 +30,16 @@ class RBACServiceTests(unittest.TestCase):
         self.assertIn("order:delete", executed_sql)
         self.assertIn("ROLE_SYS_ADMIN", executed_sql)
 
-    def test_incremental_defaults_add_keeper_feishu_permission_for_upgraded_envs(self):
+    def test_incremental_defaults_create_notification_permissions_for_upgraded_envs(self):
         db = Mock()
 
         rbac_service._ensure_incremental_permission_defaults(db)
 
         executed_sql = "\n".join(call.args[0] for call in db.execute_query.call_args_list)
+        self.assertIn("INSERT INTO sys_permission", executed_sql)
         self.assertIn("ROLE_KEEPER", executed_sql)
+        self.assertIn("notification:view", executed_sql)
+        self.assertIn("notification:create", executed_sql)
         self.assertIn("notification:send_feishu", executed_sql)
 
     def test_load_user_roles_returns_normalized_assignments(self):

@@ -173,12 +173,12 @@
           <div v-if="order.items?.length" class="divide-y divide-border">
             <article
               v-for="(item, index) in order.items"
-              :key="item.toolCode || item.toolId || index"
+              :key="item.serialNo || item.toolId || index"
               class="grid gap-4 px-6 py-5 lg:grid-cols-[1.6fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr]"
             >
               <div class="space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-sm font-semibold text-foreground">{{ item.toolCode || item.toolId || '-' }}</p>
+                  <p class="text-sm font-semibold text-foreground">{{ item.serialNo || item.toolId || '-' }}</p>
                   <OrderStatusTag v-if="item.itemStatus" :status="item.itemStatus" item />
                 </div>
                 <p class="text-sm text-muted-foreground">{{ item.toolName || '-' }}</p>
@@ -241,7 +241,16 @@
             empty-text="暂无保管员通知预览"
           />
           <Button
-            v-if="keeperText && canNotifyKeeper"
+            v-if="keeperNotified"
+            size="sm"
+            class="absolute bottom-4 right-4 z-10 shadow-lg border-none bg-emerald-500/20 text-emerald-600 cursor-default"
+            disabled
+          >
+            <CheckCircle class="mr-1 h-3 w-3" />
+            已发送
+          </Button>
+          <Button
+            v-else-if="keeperText && canNotifyKeeper"
             size="sm"
             class="absolute bottom-4 right-4 z-10 shadow-lg border-none"
             :disabled="loading"
@@ -258,7 +267,16 @@
             empty-text="暂无运输通知预览"
           />
           <Button
-            v-if="transportText && canNotifyTransport"
+            v-if="transportNotified"
+            size="sm"
+            class="absolute bottom-4 right-4 z-10 shadow-lg border-none bg-emerald-500/20 text-emerald-600 cursor-default"
+            disabled
+          >
+            <CheckCircle class="mr-1 h-3 w-3" />
+            已发送
+          </Button>
+          <Button
+            v-else-if="transportText && canNotifyTransport"
             size="sm"
             class="absolute bottom-4 right-4 z-10 shadow-lg border-none"
             :disabled="loading"
@@ -393,6 +411,8 @@ import { Send, AlertTriangle, CheckCircle2 as CheckCircle } from 'lucide-vue-nex
 import { formatDateTime } from '@/utils/toolIO'
 import { useSessionStore } from '@/store/session'
 import { DEBUG_IDS } from '@/debug/debugIds'
+import { canNotifyKeeper as canNotifyKeeperForOrder } from './orderDetailPermissions'
+import { getNotificationRecords } from '@/api/orders'
 
 const props = defineProps({
   orderNo: {
@@ -420,6 +440,10 @@ const reportIssueVisible = ref(false)
 const resolveIssueVisible = ref(false)
 const issues = ref([])
 const selectedIssue = ref(null)
+
+// Feishu Notification Anti-Duplicate State
+const keeperNotified = ref(false)
+const transportNotified = ref(false)
 
 const hasOrder = computed(() => Boolean(order.value?.orderNo))
 
@@ -464,10 +488,13 @@ const canDelete = computed(() => {
   return session.isAdmin() || session.hasPermission('order:delete')
 })
 const canNotifyKeeper = computed(() => {
-  return ['submitted', 'keeper_confirmed'].includes(order.value.orderStatus)
+  return !keeperNotified.value && canNotifyKeeperForOrder(
+    order.value.orderStatus,
+    session.hasPermission('notification:send_feishu')
+  )
 })
 const canNotifyTransport = computed(() => {
-  return ['keeper_confirmed', 'partially_confirmed', 'transport_notified', 'transport_in_progress'].includes(order.value.orderStatus)
+  return !transportNotified.value && ['keeper_confirmed', 'partially_confirmed', 'transport_notified', 'transport_in_progress'].includes(order.value.orderStatus)
 })
 
 const canReportIssue = computed(() => {
@@ -505,28 +532,51 @@ async function loadOrder() {
   loading.value = true
   errorMessage.value = ''
 
+  // Reset notification sent states
+  keeperNotified.value = false
+  transportNotified.value = false
+
   try {
-    const [detailResult, logResult, issueResult] = await Promise.all([
-      getOrderDetail(props.orderNo),
-      getOrderLogs(props.orderNo),
-      getTransportIssues(props.orderNo).catch(() => ({ success: false, data: [] }))
-    ])
+    // Step 1: 先查订单详情
+    const detailResult = await getOrderDetail(props.orderNo)
 
-    order.value = detailResult.success
-      ? detailResult.data
-      : {
-          items: []
-        }
-    logs.value = logResult.success ? logResult.data : []
-    issues.value = issueResult.success ? issueResult.data : []
-
+    // 订单不存在则终止，不再发送无意义的请求
     if (!detailResult.success) {
+      order.value = { items: [] }
+      logs.value = []
+      issues.value = []
       errorMessage.value = detailResult.error || '单据详情加载失败。'
       finalConfirmState.value = { available: false, reason: '', expected_role: '' }
       keeperText.value = ''
       transportText.value = ''
       wechatText.value = ''
+      loading.value = false
       return
+    }
+
+    order.value = detailResult.data
+
+    // Step 2: 订单存在，并行查日志、运输异常和通知记录
+    const [logResult, issueResult, notifyResult] = await Promise.all([
+      getOrderLogs(props.orderNo),
+      getTransportIssues(props.orderNo).catch(() => ({ success: false, data: [] })),
+      getNotificationRecords(props.orderNo).catch(() => ({ success: false, data: [] }))
+    ])
+
+    logs.value = logResult.success ? logResult.data : []
+    issues.value = issueResult.success ? issueResult.data : []
+
+    // Step 3: 计算通知发送状态（防重复点击）
+    if (notifyResult.success && notifyResult.data) {
+      const notifications = notifyResult.data
+      // keeper_request 类型通知如果 sendStatus 为 sent，表示已发送
+      keeperNotified.value = notifications.some(
+        n => n.notifyType === 'keeper_request' && n.sendStatus === 'sent'
+      )
+      // transport_notice 类型通知如果 sendStatus 为 sent，表示已发送
+      transportNotified.value = notifications.some(
+        n => n.notifyType === 'transport_notice' && n.sendStatus === 'sent'
+      )
     }
 
     const availability = await getFinalConfirmAvailability(props.orderNo, {
@@ -554,6 +604,7 @@ async function loadOrder() {
   } catch (error) {
     order.value = { items: [] }
     logs.value = []
+    issues.value = []
     finalConfirmState.value = { available: false, reason: '', expected_role: '' }
     keeperText.value = ''
     transportText.value = ''
@@ -641,6 +692,8 @@ async function deleteCurrentOrder() {
 }
 
 async function sendKeeperNotification() {
+  // 立即加锁，防止重复点击
+  keeperNotified.value = true
   loading.value = true
   try {
     const result = await notifyKeeper(props.orderNo, operatorPayload())
@@ -648,9 +701,13 @@ async function sendKeeperNotification() {
       ElMessage.success(result.send_status === 'sent' ? '保管员飞书通知已发送' : `发送失败：${result.send_result}`)
       loadOrder()
     } else {
+      // 发送失败时释放锁
+      keeperNotified.value = false
       ElMessage.error(result.error || '发送通知失败')
     }
   } catch (e) {
+    // 发送失败时释放锁
+    keeperNotified.value = false
     ElMessage.error('发送保管员通知失败')
   } finally {
     loading.value = false
@@ -658,6 +715,8 @@ async function sendKeeperNotification() {
 }
 
 async function sendTransportNotification() {
+  // 立即加锁，防止重复点击
+  transportNotified.value = true
   loading.value = true
   try {
     const result = await notifyTransport(props.orderNo, operatorPayload())
@@ -665,9 +724,13 @@ async function sendTransportNotification() {
       ElMessage.success(result.send_status === 'sent' ? '运输飞书通知已发送' : `发送失败：${result.send_result}`)
       loadOrder()
     } else {
+      // 发送失败时释放锁
+      transportNotified.value = false
       ElMessage.error(result.error || '发送通知失败')
     }
   } catch (e) {
+    // 发送失败时释放锁
+    transportNotified.value = false
     ElMessage.error('发送运输通知失败')
   } finally {
     loading.value = false

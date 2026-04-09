@@ -61,3 +61,14 @@ def api_user_change_password():
     except Exception as exc:
         logger.error("change password failed: %s", exc)
         return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@auth_bp.route("/api/auth/logout", methods=["POST"])
+def api_auth_logout():
+    """Logout endpoint.
+
+    Since the auth system is stateless (token stored client-side),
+    the server cannot invalidate the token. This endpoint exists
+    for semantic completeness. Actual session cleanup is done client-side.
+    """
+    return jsonify({"success": True, "message": "logout success"})

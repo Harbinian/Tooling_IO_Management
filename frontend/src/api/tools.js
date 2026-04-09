@@ -7,7 +7,7 @@ function unwrap(response) {
 
 /**
  * 搜索工装
- * @param {Object} params { keyword, tool_code, tool_name, ... }
+ * @param {Object} params { keyword, serial_no, tool_name, ... }
  */
 export async function searchTools(params) {
   const result = unwrap(await client.get('/tools/search', { params }))
@@ -30,10 +30,10 @@ export async function searchTools(params) {
 
 /**
  * 批量查询工装
- * @param {string[]} toolCodes 
+ * @param {string[]} serialNos
  */
-export async function batchQueryTools(toolCodes) {
-  const result = unwrap(await client.post('/tools/batch-query', { tool_codes: toolCodes }))
+export async function batchQueryTools(serialNos) {
+  const result = unwrap(await client.post('/tools/batch-query', { serial_nos: serialNos }))
   return {
     ...result,
     data: Array.isArray(result.data) ? result.data.map((item) => normalizeItem(item)) : []
@@ -42,7 +42,7 @@ export async function batchQueryTools(toolCodes) {
 
 /**
  * 批量更新工装状态
- * @param {Object} data { tool_codes: string[], new_status: string, remark: string, operator_id, operator_name, operator_role }
+ * @param {Object} data { serial_nos: string[], new_status: string, remark: string, operator_id, operator_name, operator_role }
  */
 export async function batchUpdateToolStatus(data) {
   return await client.patch('/tools/batch-status', data)
@@ -50,9 +50,9 @@ export async function batchUpdateToolStatus(data) {
 
 /**
  * 查询工装状态变更历史
- * @param {string} toolCode 
+ * @param {string} serialNo
  * @param {Object} params { page, page_size }
  */
-export async function getToolStatusHistory(toolCode, params) {
-  return await client.get(`/tools/status-history/${toolCode}`, { params })
+export async function getToolStatusHistory(serialNo, params) {
+  return await client.get(`/tools/status-history/${serialNo}`, { params })
 }

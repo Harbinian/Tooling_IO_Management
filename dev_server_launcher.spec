@@ -3,8 +3,10 @@
 import os
 import sys
 
-# Tcl/Tk library paths from the Python installation
-PYTHON_PREFIX = sys.prefix  # e.g. C:/Program Files/WindowsApps/PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0
+# Tcl/Tk library paths should resolve from the base interpreter, not the venv.
+# When building from a virtual environment, sys.prefix points at ".venv", which
+# does not contain the Tcl/Tk runtime on this workstation.
+PYTHON_PREFIX = getattr(sys, "base_prefix", sys.prefix) or sys.prefix
 TCL_DIR = os.path.join(PYTHON_PREFIX, "tcl")
 TCL8_DIR = os.path.join(TCL_DIR, "tcl8.6")
 TK8_DIR = os.path.join(TCL_DIR, "tk8.6")

@@ -48,10 +48,12 @@ def api_tools_batch_query():
         from backend.services.tool_io_service import batch_query_tools
 
         data = get_json_dict(required=True)
-        tool_codes = data.get("tool_codes")
-        if not isinstance(tool_codes, list):
-            return validation_error("tool_codes must be a JSON array")
-        result = batch_query_tools(tool_codes)
+        serial_nos = data.get("serial_nos")
+        if serial_nos is None:
+            serial_nos = data.get("tool_codes")
+        if not isinstance(serial_nos, list):
+            return validation_error("serial_nos must be a JSON array")
+        result = batch_query_tools(serial_nos)
         return jsonify(result) if result.get("success") else (jsonify(result), 400)
     except ValueError as exc:
         return validation_error(str(exc))
@@ -67,17 +69,19 @@ def api_batch_update_tool_status():
         from backend.services.tool_io_service import batch_update_tool_status
 
         data = get_json_dict(required=True)
-        tool_codes = data.get("tool_codes")
+        serial_nos = data.get("serial_nos")
+        if serial_nos is None:
+            serial_nos = data.get("tool_codes")
         new_status = data.get("new_status")
-        if not isinstance(tool_codes, list):
-            return validation_error("tool_codes must be a JSON array")
+        if not isinstance(serial_nos, list):
+            return validation_error("serial_nos must be a JSON array")
         if not isinstance(new_status, str) or not new_status.strip():
             return validation_error("new_status is required")
 
         user = get_authenticated_user()
         client_ip = (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
         result = batch_update_tool_status(
-            tool_codes=tool_codes,
+            serial_nos=serial_nos,
             new_status=new_status,
             remark=data.get("remark", ""),
             operator={

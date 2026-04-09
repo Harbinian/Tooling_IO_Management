@@ -542,10 +542,12 @@
 
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| tool_codes | array | 是 | 工装序列号列表 |
+| serial_nos | array | 是 | 工装序列号列表 |
 | new_status | string | 是 | 新状态 |
 | remark | string | 否 | 备注 |
 | operator | object | 是 | 操作人信息 {user_id, display_name} |
+
+兼容说明：后端仍兼容旧字段 `tool_codes`，但新实现统一使用 `serial_nos`。
 
 ---
 
@@ -699,7 +701,9 @@
 
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| tool_codes | array | 是 | 工装序列号列表 |
+| serial_nos | array | 是 | 工装序列号列表 |
+
+兼容说明：后端仍兼容旧字段 `tool_codes`，但新实现统一使用 `serial_nos`。
 
 ---
 
@@ -1324,7 +1328,7 @@ When the current feedback status is `pending`, adding a reply auto-updates it to
 
 ```json
 {
-  "tool_codes": ["T001", "T002"],
+  "serial_nos": ["T001", "T002"],
   "new_status": "maintain",
   "remark": "scheduled maintenance"
 }
@@ -1332,7 +1336,7 @@ When the current feedback status is `pending`, adding a reply auto-updates it to
 
 **Validation**
 
-- `tool_codes` must be a non-empty array
+- `serial_nos` must be a non-empty array
 - `new_status` must be one of `in_storage` / `outbounded` / `maintain` / `scrapped`
 
 **Response (`200`)**

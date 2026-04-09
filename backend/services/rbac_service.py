@@ -393,6 +393,19 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
         action_name="status_update",
     )
     for permission_code, permission_name, resource_name, action_name in [
+        ("notification:view", "View Notification", "notification", "view"),
+        ("notification:create", "Create Notification", "notification", "create"),
+        ("notification:send_feishu", "Send Feishu Notification", "notification", "send_feishu"),
+        ("log:view", "View System Log", "log", "view"),
+    ]:
+        _ensure_permission_exists(
+            db,
+            permission_code=permission_code,
+            permission_name=permission_name,
+            resource_name=resource_name,
+            action_name=action_name,
+        )
+    for permission_code, permission_name, resource_name, action_name in [
         ("inspection:create", "Create Inspection Plan", "inspection", "create"),
         ("inspection:list", "List Inspection Data", "inspection", "list"),
         ("inspection:view", "View Inspection Detail", "inspection", "view"),

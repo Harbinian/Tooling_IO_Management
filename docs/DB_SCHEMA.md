@@ -244,6 +244,8 @@
 | 库位 | storage_location | 库位信息 |
 | 出入库状态 | io_status | 出入库状态 |
 
+说明：`Tooling_ID_Main` 的物理列名使用中文字段；其中工装序列号的实际列名是 `序列号`，仓库代码统一通过 `TOOL_MASTER_COLUMNS['tool_code']` 访问，禁止写成 `serial_no`。
+
 ---
 
 ## 3. 状态定义

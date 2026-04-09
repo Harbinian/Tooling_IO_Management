@@ -3,10 +3,10 @@
 # 此文件避免频繁扫描 archive 目录获取编号
 
 # 功能开发 (00001-09999)
-feature_next=00093
+feature_next=00095
 
 # Bug修复 (10101-19999)
-bugfix_next=10199
+bugfix_next=10203
 
 # 重构 (20101-29999)
 refactor_next=20115
@@ -15,4 +15,4 @@ refactor_next=20115
 test_next=30110
 
 # 执行顺序号（归档用）
-exec_next=00230
+exec_next=00237

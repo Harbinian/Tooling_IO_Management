@@ -3,11 +3,11 @@ name: prompt-task-runner
 executor: Claude Code
 auto_invoke: false
 depends_on: []
-triggers: []
+triggers:
+  - /prompt-task-runner
 rules_ref:
   - .claude/rules/01_workflow.md
   - .claude/rules/02_debug.md
-  - .claude/rules/03_hotfix.md
   - .claude/rules/05_task_convention.md
 version: 1.0.0
 ---
@@ -19,8 +19,8 @@ version: 1.0.0
 - Bug修复任务 (10101-19999) → `.claude/rules/02_debug.md` (8D)
 - 重构任务 (20101-29999) → `.claude/rules/01_workflow.md` (ADP)
 - 测试任务 (30101-39999) → `.claude/rules/01_workflow.md` (ADP)
-- 生产环境紧急修复 → `.claude/rules/03_hotfix.md` (HOTFIX)
 - 编号约定 → `.claude/rules/05_task_convention.md`
+- 生产环境紧急修复 → `.claude/rules/03_hotfix.md` (由 `self-healing-dev-loop` 处理)
 
 命令触发: RUNPROMPT / Command Trigger: RUNPROMPT
 
@@ -97,6 +97,33 @@ version: 1.0.0
 ```
 
 如果 .lock 文件已存在，停止执行并选择下一个任务。 / If a .lock file already exists, stop execution and select the next task.
+
+---
+
+### 2.5 锁文件检查（强制前置） / Lock File Check (Mandatory Pre-check)
+
+**此步骤必须在读取提示词文件之前完成，无论任务是如何被选中的（扫描目录或直接传入文件路径）。**
+
+即使技能被直接传入文件路径调用（如 `/prompt-task-runner path/to/xxx.md`），仍必须执行以下检查：
+
+1. **检查锁文件是否存在**: 查找 `promptsRec/active/<任务编号>.lock`
+2. **若锁存在**: 停止执行，输出 `Task is locked by <executor>`，不读取提示词
+3. **若锁不存在**: 创建锁文件（执行 Step 2），然后继续
+
+```
+检查流程：
+  收到任务（扫描发现 或 直接传入路径）
+    ↓
+  检查 <任务编号>.lock 是否存在
+    ↓
+  锁存在 → STOP，不执行任何操作
+  锁不存在 → 创建锁 → 继续 Step 3
+```
+
+**为什么需要这个检查：**
+- 防止同一任务被多个执行者并发处理
+- 防止任务执行中途被再次触发
+- 明确声明任务归属
 
 ---
 

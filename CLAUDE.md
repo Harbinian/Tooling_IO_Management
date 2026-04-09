@@ -60,6 +60,18 @@ utils/feishu_api.py                        → 飞书 Webhook 通知
 
 **路由 → 服务层 → Repository 层 → 数据库**，禁止跨层调用。
 
+### 开发服务器启动器 / Dev Server Launcher
+
+```
+dev_server_launcher.py          → 兼容层，重定向到 backend.launcher.server_launcher
+backend/launcher/
+├── server_launcher.py           → 主入口，启动后端 + 前端 dev 服务器
+├── process_manager.py           → 进程管理（启动/停止/健康检查）
+└── config.py                    → 启动器配置（端口、超时等）
+```
+
+启动器用于开发环境，不用于生产。
+
 ### 后端路由 / Backend Routes
 
 | 文件 | 用途 |
@@ -201,10 +213,48 @@ frontend/src/
 | `04_frontend.md` | 前端开发规范 |
 | `05_task_convention.md` | 提示词任务编号约定 |
 | `06_testing.md` | 测试任务规范 |
+| `07_ci_gates.md` | CI 自动化门禁规范（G1-G6 替代人工评分） |
+| `08_skill_convention.md` | 技能文件约定（结构、体积、触发命令） |
+
+### 开发协议选择决策树
+
+```
+收到任务
+ ├─ 生产环境紧急故障？ → HOTFIX SOP (03_hotfix.md)
+ ├─ 已有功能 Bug/回归？ → 8D 协议 (02_debug.md)
+ ├─ 新功能/重构/UI迁移？ → ADP 四阶段 (01_workflow.md)
+ └─ 纯测试任务？ → 测试规范 (06_testing.md)
+```
+
+### 技能与规则映射
+
+| 规则 | 对应技能 |
+|------|---------|
+| `01_workflow.md` | `prompt-task-runner` |
+| `02_debug.md` / `03_hotfix.md` | `self-healing-dev-loop` |
+| `05_task_convention.md` | `auto-task-generator` |
+| `04_frontend.md` / `06_testing.md` / `07_ci_gates.md` | 手动执行 |
 
 ## 文档真相来源 / Documentation Source of Truth
 
 `docs/PRD.md`、`docs/ARCHITECTURE.md`、`docs/API_SPEC.md`、`docs/DB_SCHEMA.md`、`docs/RBAC_DESIGN.md`、`docs/RBAC_PERMISSION_MATRIX.md` - 代码不得偏离这些文档。
+
+## 技能系统 / Skills System
+
+`.skills/` 目录包含可自动化规则执行的技能文件：
+
+```
+.skills/
+├── meta/                       # 技能元数据（依赖图、审查清单、标准模板）
+├── prompt-task-runner/         # ADP 四阶段流程执行
+├── self-healing-dev-loop/      # 8D / HOTFIX 问题解决
+├── auto-task-generator/        # 提示词任务生成与编号
+├── bug-triage/                  # Bug 分类
+├── prompt-generator/           # 提示词生成器
+└── ...                         # 其他技能
+```
+
+技能文件不得覆盖 `.claude/rules/` 中规则的正文，仅可引用。
 
 ## 提示任务工作流 / Prompt Task Workflow
 

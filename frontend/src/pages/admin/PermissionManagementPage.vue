@@ -68,7 +68,8 @@ function selectPermission(perm) {
 async function loadPermissions() {
   loading.value = true
   try {
-    permissions.value = await permissionsApi.getPermissions()
+    const data = await permissionsApi.getPermissions()
+    permissions.value = data.data || []
     if (selectedCode.value) {
       const refreshed = permissions.value.find((p) => p.permission_code === selectedCode.value)
       if (refreshed) {

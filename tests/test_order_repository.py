@@ -51,7 +51,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS serial_no" in sql_text and "Tooling_ID_Main" in sql_text:
+            if "Tooling_ID_Main" in sql_text and ("AS serial_no" in sql_text or "AS tool_code" in sql_text):
                 return [
                     {
                         "serial_no": "T000001",
@@ -97,7 +97,7 @@ class OrderRepositoryCreateWarningTests(unittest.TestCase):
 
         def execute_query_side_effect(sql, params=None, fetch=True):
             sql_text = str(sql or "")
-            if "AS serial_no" in sql_text and "Tooling_ID_Main" in sql_text:
+            if "Tooling_ID_Main" in sql_text and ("AS serial_no" in sql_text or "AS tool_code" in sql_text):
                 return [
                     {
                         "serial_no": "T000001",
@@ -145,6 +145,22 @@ class OrderRepositoryPendingKeeperTests(unittest.TestCase):
         sql, params = db.execute_query.call_args.args
         self.assertIn("order_status = 'submitted' OR keeper_id = ? OR keeper_id IS NULL", sql)
         self.assertEqual(params, ("U_KEEPER_001",))
+
+    def test_get_order_joins_tool_master_by_physical_sequence_column(self):
+        db = Mock()
+        db.execute_query.side_effect = [
+            [{"order_no": "TO-OUT-20260403-001", "order_status": "submitted"}],
+            [{"serial_no": "T-001", "split_quantity": 2}],
+        ]
+        repo = OrderRepository(db_manager=db)
+
+        result = repo.get_order("TO-OUT-20260403-001")
+
+        self.assertEqual(result["order_no"], "TO-OUT-20260403-001")
+        self.assertEqual(result["items"], [{"serial_no": "T-001", "split_quantity": 2}])
+        items_sql = db.execute_query.call_args_list[1].args[0]
+        self.assertIn("m.[序列号]", items_sql)
+        self.assertNotIn("m.[serial_no]", items_sql)
 
 
 class OrderRepositoryCancellationAndResetTests(unittest.TestCase):

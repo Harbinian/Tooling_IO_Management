@@ -122,6 +122,9 @@ if ($warnText -match "tkinter installation is broken") {
 if ($warnText -match "missing module named tkinter") {
     throw "Build failed quality gate: tkinter missing in PyInstaller warnings."
 }
+if ($warnText -match "missing module named requests") {
+    throw "Build failed quality gate: requests missing in PyInstaller warnings."
+}
 
 Write-Host "[6/6] Smoke test executable..."
 if (-not (Test-Path $exePath)) {
