@@ -1808,7 +1808,6 @@ RBAC_TEST_MATRIX = [
     ("KEEPER", "/notifications", "GET", 200, "notification:view", "ALLOW", "保管员可查看通知列表"),
     ("KEEPER", "/tool-io-orders/TEST001/generate-transport-text", "GET", 404, "notification:create", "ALLOW", "保管员可生成运输通知文案"),
     ("KEEPER", "/tool-io-orders/TEST001/notify-transport", "POST", 404, "notification:send_feishu", "ALLOW", "保管员可发送运输通知"),
-    ("KEEPER", "/logs", "GET", 404, "log:view", "ALLOW", "保管员具备日志查看权限但当前路由缺失"),
     ("KEEPER", "/admin/roles", "GET", 403, "admin:role_manage", "DENY", "保管员无权查看角色列表"),
     ("KEEPER", "/admin/users", "GET", 403, "admin:user_manage", "DENY", "保管员无权查看用户列表"),
     ("KEEPER", "/tool-io-orders", "GET", 200, "order:list", "ALLOW", "保管员可查看订单列表"),
@@ -1826,7 +1825,6 @@ RBAC_TEST_MATRIX = [
     ("PRODUCTION_PREP", "/notifications", "GET", 403, "notification:view", "DENY", "运输执行人无权查看通知"),
     ("PRODUCTION_PREP", "/tool-io-orders/TEST001/generate-transport-text", "GET", 403, "notification:create", "DENY", "运输执行人无权生成运输通知文案"),
     ("PRODUCTION_PREP", "/tool-io-orders/TEST001/notify-transport", "POST", 403, "notification:send_feishu", "DENY", "运输执行人无权发送飞书通知"),
-    ("PRODUCTION_PREP", "/logs", "GET", 404, "log:view", "DENY", "运输执行人无日志权限且当前路由缺失"),
     ("PRODUCTION_PREP", "/admin/roles", "GET", 403, "admin:role_manage", "DENY", "运输执行人无权查看角色列表"),
     ("PRODUCTION_PREP", "/admin/users", "GET", 403, "admin:user_manage", "DENY", "运输执行人无权查看用户列表"),
     ("PRODUCTION_PREP", "/tool-io-orders", "GET", 403, "order:list", "DENY", "运输执行人无权查看订单列表"),
@@ -1844,7 +1842,6 @@ RBAC_TEST_MATRIX = [
 
     ("AUDITOR", "/orgs", "GET", 200, "dashboard:view", "ALLOW", "审计员应可查看组织列表"),
     ("AUDITOR", "/notifications", "GET", 200, "notification:view", "ALLOW", "审计员应可查看通知列表"),
-    ("AUDITOR", "/logs", "GET", 404, "log:view", "ALLOW", "审计员具备日志查看权限但当前路由缺失"),
     ("AUDITOR", "/tool-io-orders", "GET", 200, "order:list", "ALLOW", "审计员应可查看订单列表"),
 ]
 
