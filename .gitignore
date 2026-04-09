@@ -36,5 +36,9 @@ frontend/dist/
 .idea/
 .claude/settings.local.json
 
+# Test
+test_reports/
+promptsRec/.sequence
+
 # Windows special files
 nul
