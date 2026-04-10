@@ -42,10 +42,10 @@ async function submitLogin() {
   try {
     await session.login(form)
     // Determine redirect target after successful login
-    let redirectTarget = '/dashboard'
+    let redirectTarget = '/home'
     if (route.query.denied !== '1' && route.query.redirect) {
       redirectTarget = String(Array.isArray(route.query.redirect)
-        ? route.query.redirect[0] || '/dashboard'
+        ? route.query.redirect[0] || '/home'
         : route.query.redirect)
     }
     router.replace(redirectTarget)
