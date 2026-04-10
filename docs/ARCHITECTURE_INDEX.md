@@ -19,8 +19,6 @@
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
 | docs/ARCHITECTURE.md | 系统总体架构 / System overall architecture |
-| docs/ARCHITECTURE_REVIEW.md | 架构审查记录 / Architecture review records |
-| docs/DB_SCHEMA.md | 数据库 Schema 定义 / Database schema definition |
 | docs/API_SPEC.md | API 规范 / API specification |
 | docs/PRD.md | 产品需求文档 / Product requirements document |
 
@@ -31,10 +29,10 @@
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
 | docs/RBAC_DESIGN.md | RBAC 设计规范 / RBAC design specification |
-| docs/RBAC_DATABASE_SCHEMA.md | RBAC 数据库 Schema / RBAC database schema |
+| docs/RBAC_PERMISSION_MATRIX.md | 权限矩阵 / Permission matrix |
 | docs/RBAC_INIT_DATA.md | RBAC 初始化数据 / RBAC initialization data |
 
-**重要: 任何与 RBAC 相关的更改必须先阅读 RBAC_DESIGN.md**/ **Important: Any RBAC-related changes must read RBAC_DESIGN.md first**
+**重要: 任何与 RBAC 相关的更改必须先阅读 RBAC_DESIGN.md**/ **Important: Any RBAC-related changes must read docs/RBAC_DESIGN.md first**
 
 ---
 
@@ -42,15 +40,11 @@
 
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
-| docs/DB_SCHEMA.md | 主数据库 Schema (历史文档，可能过时) / Main database schema (historical, may be outdated) |
 | docs/SCHEMA_SNAPSHOT_20260325.md | **Schema 英语化后的实际结构快照** / Actual schema snapshot after English migration |
-| docs/RBAC_DATABASE_SCHEMA.md | RBAC 数据库 Schema / RBAC database schema |
+| docs/RBAC_INIT_DATA.md | RBAC 初始化数据 / RBAC initialization data |
 | docs/SQLSERVER_SCHEMA_REVISION.md | SQL Server Schema 修订 / SQL Server schema revision |
-| docs/DATABASE_ALIGNMENT_IMPLEMENTATION.md | 数据库对齐实现 / Database alignment implementation |
-| docs/DATABASE_SETTINGS_COMPATIBILITY_FIX.md | 数据库设置兼容性修复 / Database settings compatibility fix |
-| docs/INHERITED_DB_ACCESS_REVIEW.md | 继承数据库访问审查 / Inherited database access review |
 
-**重要: 任何数据库更改必须先阅读 RBAC_DATABASE_SCHEMA.md**/ **Important: Any database changes must read RBAC_DATABASE_SCHEMA.md first**
+**重要: 任何数据库更改必须先阅读 SCHEMA_SNAPSHOT_20260325.md**/ **Important: Any database changes must read docs/SCHEMA_SNAPSHOT_20260325.md first**
 
 ---
 
@@ -58,11 +52,8 @@
 
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
-| docs/ORDER_SUBMISSION_IMPLEMENTATION.md | 订单提交流程实现 / Order submission workflow implementation |
-| docs/KEEPER_CONFIRMATION_IMPLEMENTATION.md | 保管员确认流程 / Keeper confirmation workflow |
-| docs/FINAL_CONFIRMATION_IMPLEMENTATION.md | 最终确认流程 / Final confirmation workflow |
-| docs/NOTIFICATION_RECORD_USAGE_IMPLEMENTATION.md | 通知记录使用 / Notification record usage |
-| docs/FEISHU_INTEGRATION_IMPLEMENTATION.md | 飞书集成实现 / Feishu integration implementation |
+| docs/ARCHITECTURE.md | 订单工作流和状态机 / Order workflow and state machine |
+| docs/FEISHU_CONFIGURATION.md | 飞书配置与集成 / Feishu configuration and integration |
 
 ---
 
@@ -70,17 +61,17 @@
 
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
-| docs/FRONTEND_DESIGN.md | 前端设计 / Frontend design |
-| docs/FRONTEND_UI_COMPONENT_MAP.md | 前端 UI 组件映射 / Frontend UI component map |
-| docs/FRONTEND_UI_FOUNDATION_IMPLEMENTATION.md | 前端 UI 基础实现 / Frontend UI foundation implementation |
-| docs/FRONTEND_STYLE_MIGRATION_PLAN.md | 前端样式迁移计划 / Frontend style migration plan |
-| docs/ORDER_LIST_UI_MIGRATION.md | 订单列表 UI 迁移 / Order list UI migration |
-| docs/ORDER_DETAIL_UI_MIGRATION.md | 订单详情 UI 迁移 / Order detail UI migration |
-| docs/ORDER_CREATE_UI_MIGRATION.md | 订单创建 UI 迁移 / Order create UI migration |
-| docs/KEEPER_PROCESS_UI_MIGRATION.md | 保管员流程 UI 迁移 / Keeper process UI migration |
-| docs/STRUCTURED_MESSAGE_PREVIEW_UI.md | 结构化消息预览 UI / Structured message preview UI |
-| docs/TOOL_SEARCH_DIALOG_IMPLEMENTATION.md | 工装搜索对话框实现 / Tool search dialog implementation |
-| docs/TOOL_SEARCH_DB_INTEGRATION.md | 工装搜索数据库集成 / Tool search database integration |
+| frontend/src/ | 前端源代码 / Frontend source code |
+| frontend/src/pages/ | 页面组件 / Page components |
+| frontend/src/components/ | 可复用组件 / Reusable components |
+
+---
+
+## 需求文档 / Requirements
+
+| 文档 / Document | 描述 / Description |
+|----------------|-------------------|
+| docs/REQUIREMENTS/ | 需求文档目录 / Requirements documents directory |
 
 ---
 
@@ -88,7 +79,6 @@
 
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
-| docs/for-review/AI_PROMPT_PIPELINE.md | AI 提示词流水线架构 / AI prompt pipeline architecture |
 | .claude/rules/05_task_convention.md | 提示词任务编号约定 / Prompt task numbering convention |
 | .claude/rules/01_workflow.md | ADP 四阶段开发流程 / ADP four-phase workflow |
 | .claude/rules/02_debug.md | 8D 问题解决协议 / 8D problem solving protocol |
@@ -96,81 +86,29 @@
 
 ---
 
-## Bug 处理 / Bug Handling
+## 项目管理与运维 / Project Management & Operations
 
 | 文档 / Document | 描述 / Description |
 |----------------|-------------------|
-| docs/BUG_WORKFLOW_RULES.md | Bug 工作流规则 / Bug workflow rules |
-| docs/INCIDENT_RESPONSE_FLOW.md | 事件响应流程 / Incident response flow |
-| docs/TROUBLESHOOTING_FRONTEND_API_ERRORS.md | 前端 API 错误排查 / Frontend API error troubleshooting |
-| docs/RELEASE_PRECHECK_REPORT.md | 发布预检报告 / Release precheck report |
-
-### Bug 修复记录 / Bug Fix Records
-
-| 文档 / Document | 描述 / Description |
-|----------------|-------------------|
-| docs/BUG_TOOL_SEARCH_REQUEST_ROUTING.md | 工装搜索请求路由 Bug / Tool search request routing bug |
-| docs/BUG_VITE_ENTRY_COMPILE_FAILURE.md | Vite 入口编译失败 Bug / Vite entry compile failure bug |
-| docs/BUG_ORDER_LIST_API_500.md | 订单列表 API 500 错误 Bug / Order list API 500 error bug |
-| docs/BUG_DUPLICATE_SIDEBAR_LAYOUT_CONFLICT.md | 重复侧边栏布局冲突 Bug / Duplicate sidebar layout conflict bug |
+| docs/REPO_CONTEXT_FIREWALL.md | 仓库上下文隔离报告 / Repo context firewall report |
+| docs/SKILLS_CLAUDE_RULES_CONSOLIDATION.md | 技能与规则整合记录 / Skills and rules consolidation record |
+| docs/G1-4_DETECT_SECRETS_SETUP.md | G1-4 secrets 检测配置 / G1-4 detect-secrets setup |
 
 ---
 
-## 项目管理 / Project Management
+## 归档文档 / Archived Documents
 
-| 文档 / Document | 描述 / Description |
-|----------------|-------------------|
-| docs/TASKS.md | 任务列表 / Task list |
-| docs/README_AI_SYSTEM.md | AI 系统自述 / AI system README |
+已完成或过时的文档归档在 `docs/archive/` 目录下。/ Completed or outdated documents are archived in `docs/archive/`.
+
+包括：过往实现记录、Bug 修复报告、测试报告、架构审查记录等。/ Includes: past implementation records, bug fix reports, test reports, architecture review records, etc.
 
 ---
 
 ## 架构使用规则 / Architecture Usage Rules
 
-### RBAC 相关 / RBAC Related
-
-1. 任何与 RBAC 相关的更改必须先阅读 `docs/RBAC_DESIGN.md`。
-   / Any RBAC-related changes must read `docs/RBAC_DESIGN.md` first.
-
-2. 任何权限相关的更改必须先阅读 `docs/RBAC_DATABASE_SCHEMA.md`。
-   / Any permission-related changes must read `docs/RBAC_DATABASE_SCHEMA.md` first.
-
-3. 任何权限初始化必须参考 `docs/RBAC_INIT_DATA.md`。
-   / Any permission initialization must reference `docs/RBAC_INIT_DATA.md`.
-
-4. 禁止在未检查这些文档的情况下重新定义 RBAC 逻辑。
-   / No model should redefine RBAC logic without checking these documents.
-
-### 数据库相关 / Database Related
-
-1. 任何数据库 Schema 更改必须先阅读 `docs/RBAC_DATABASE_SCHEMA.md`。
-   / Any database schema changes must read `docs/RBAC_DATABASE_SCHEMA.md` first.
-
-2. 任何数据库更改必须参考 `docs/DB_SCHEMA.md`。
-   / Any database changes must reference `docs/DB_SCHEMA.md`.
-
-3. SQL Server 特定更改必须参考 `docs/SQLSERVER_SCHEMA_REVISION.md`。
-   / SQL Server-specific changes must reference `docs/SQLSERVER_SCHEMA_REVISION.md`.
-
-### API 相关 / API Related
-
-1. 任何 API 更改必须先阅读 `docs/API_SPEC.md`。
-   / Any API changes must read `docs/API_SPEC.md` first.
-
-2. 任何新端点实现必须与 API 规范对齐。
-   / Any new endpoint implementation must align with the API specification.
-
-### 前端相关 / Frontend Related
-
-1. 任何前端 UI 更改必须参考 `docs/FRONTEND_UI_COMPONENT_MAP.md`。
-   / Any frontend UI changes must reference `docs/FRONTEND_UI_COMPONENT_MAP.md`.
-
-2. 任何样式更改必须参考 `docs/FRONTEND_STYLE_MIGRATION_PLAN.md`。
-## AI 模型工作流 / AI Model Workflow
-
 ### 实现前必须加载的文档 / Documents to Load Before Implementation
 
-在实现任何后端逻辑之前，模型必须首先加载: / Before implementing any backend logic, models must first load:
+在实现任何功能之前，模型必须首先加载: / Before implementing any feature, models must first load:
 
 1. `docs/ARCHITECTURE_INDEX.md` (本文档) / (this document)
 2. 然后根据任务类型加载相关架构文档 / Then load relevant architecture documents based on task type
@@ -180,20 +118,10 @@
 | 任务类型 / Task Type | 必须加载的文档 / Required Documents |
 |---------------------|-----------------------------------|
 | 认证 / Authentication | docs/RBAC_DESIGN.md, docs/API_SPEC.md |
-| 授权 / Authorization | docs/RBAC_DESIGN.md, docs/RBAC_DATABASE_SCHEMA.md |
-| 数据库 Schema / Database Schema | docs/RBAC_DATABASE_SCHEMA.md, docs/DB_SCHEMA.md |
+| 授权 / Authorization | docs/RBAC_DESIGN.md, docs/RBAC_PERMISSION_MATRIX.md |
+| 数据库 Schema / Database Schema | SCHEMA_SNAPSHOT_20260325.md, docs/RBAC_INIT_DATA.md |
 | 状态机 / State Machine | docs/ARCHITECTURE.md, docs/API_SPEC.md |
-| 前端 UI / Frontend UI | docs/FRONTEND_UI_COMPONENT_MAP.md, docs/FRONTEND_DESIGN.md |
-| Bug 修复 / Bug Fix | docs/BUG_WORKFLOW_RULES.md, 相关 Bug 文档 / Related bug document |
-
-### RUNPROMPT 集成 / RUNPROMPT Integration
-
-在执行任何提示词任务之前: / Before executing any prompt task:
-
-1. 加载 `docs/ARCHITECTURE_INDEX.md`
-2. 识别相关架构文档
-3. 加载相关文档
-4. 开始实现
+| Bug 修复 / Bug Fix | .claude/rules/02_debug.md |
 
 ---
 
@@ -201,7 +129,7 @@
 
 | 版本 / Version | 日期 / Date | 描述 / Description |
 |---------------|-------------|-------------------|
-| 1.0 | 2026-03-12 | 初始版本 / Initial version |
+| 2.0 | 2026-04-10 | 清理不存在的文档引用，更新索引结构 / Clean up non-existent document references, update index structure |
 
 ---
 
