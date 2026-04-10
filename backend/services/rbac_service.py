@@ -342,19 +342,32 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
         role_id="ROLE_SYS_ADMIN",
         permission_code="order:delete",
     )
-    db.execute_query(
-        """
-        IF NOT EXISTS (
-            SELECT 1 FROM sys_role_permission_rel
-            WHERE role_id = 'ROLE_TEAM_LEADER' AND permission_code = 'order:view'
+    # Only insert default permissions for TEAM_LEADER if it has ZERO permissions.
+    # Permission_count == 0 means this is a fresh role needing bootstrap defaults.
+    # Permission_count >= 1 means admin has customized the role; do NOT overwrite.
+    _team_leader_count = db.execute_query(
+        "SELECT COUNT(*) as cnt FROM sys_role_permission_rel WHERE role_id = 'ROLE_TEAM_LEADER'"
+    )[0]["cnt"]
+    if _team_leader_count == 0:
+        db.execute_query(
+            """
+            IF NOT EXISTS (
+                SELECT 1 FROM sys_role_permission_rel
+                WHERE role_id = 'ROLE_TEAM_LEADER' AND permission_code = 'order:view'
+            )
+            BEGIN
+                INSERT INTO sys_role_permission_rel (role_id, permission_code)
+                VALUES ('ROLE_TEAM_LEADER', 'order:view')
+            END
+            """,
+            fetch=False,
         )
-        BEGIN
-            INSERT INTO sys_role_permission_rel (role_id, permission_code)
-            VALUES ('ROLE_TEAM_LEADER', 'order:view')
-        END
-        """,
-        fetch=False,
-    )
+        for permission_code in ("inspection:list", "inspection:view", "inspection:accept"):
+            _ensure_role_permission_rel(
+                db,
+                role_id="ROLE_TEAM_LEADER",
+                permission_code=permission_code,
+            )
     db.execute_query(
         """
         IF NOT EXISTS (
@@ -449,12 +462,6 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
             role_id="ROLE_KEEPER",
             permission_code=permission_code,
         )
-    for permission_code in ("inspection:list", "inspection:view", "inspection:accept"):
-        _ensure_role_permission_rel(
-            db,
-            role_id="ROLE_TEAM_LEADER",
-            permission_code=permission_code,
-        )
     for permission_code in ("inspection:list", "inspection:view"):
         _ensure_role_permission_rel(
             db,
@@ -511,19 +518,19 @@ def _ensure_incremental_permission_defaults(db: DatabaseManager):
         role_id="ROLE_KEEPER",
         permission_code="order:cancel",
     )
-    # RBAC_INIT_DATA.md specifies these permissions but they were only in bootstrap,
-    # not in _ensure_incremental_permission_defaults. Adding them here ensures they
-    # are assigned even when RBAC tables were already seeded before this fix.
-    _ensure_role_permission_rel(
-        db,
-        role_id="ROLE_TEAM_LEADER",
-        permission_code="order:create",
-    )
-    _ensure_role_permission_rel(
-        db,
-        role_id="ROLE_TEAM_LEADER",
-        permission_code="order:submit",
-    )
+    # Only insert order:create and order:submit for TEAM_LEADER if it has ZERO permissions.
+    # This backfills old databases; skip if admin has customized.
+    if _team_leader_count == 0:
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_TEAM_LEADER",
+            permission_code="order:create",
+        )
+        _ensure_role_permission_rel(
+            db,
+            role_id="ROLE_TEAM_LEADER",
+            permission_code="order:submit",
+        )
     _ensure_role_permission_rel(
         db,
         role_id="ROLE_KEEPER",

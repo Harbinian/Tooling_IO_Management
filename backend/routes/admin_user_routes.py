@@ -35,6 +35,7 @@ from backend.services.rbac_service import (
     update_permission,
     update_role,
 )
+from backend.database.repositories.rbac_repository import RbacRepository
 
 admin_user_bp = Blueprint("admin_user_routes", __name__)
 logger = logging.getLogger(__name__)
@@ -115,10 +116,15 @@ def api_admin_delete_role(role_id):
 @require_permission("admin:role_manage")
 def api_admin_get_role_permissions(role_id):
     try:
-        if not get_role_detail(role_id):
+        # Use repository directly to avoid ensure_rbac_tables() which re-inserts
+        # incremental defaults and pollutes explicitly assigned permission data.
+        # NOTE: get_role_detail from rbac_service also triggers ensure_rbac_tables()
+        # via _get_rbac_repository(), so we use repo.get_role_by_id() instead.
+        repo = RbacRepository()
+        if not repo.get_role_by_id(role_id):
             return jsonify({"success": False, "error": "role not found"}), 404
-        data = get_role_permissions(role_id)
-        return jsonify({"success": True, "data": data})
+        raw_data = repo.get_role_permissions(role_id)
+        return jsonify({"success": True, "data": raw_data})
     except ValueError as exc:
         return validation_error(str(exc))
     except Exception as exc:
@@ -137,7 +143,11 @@ def api_admin_assign_role_permissions(role_id):
             raise ValueError("permission_codes must be an array")
         actor = get_authenticated_user()
         assign_role_permissions(role_id, permission_codes, actor.get("user_id", ""))
-        return jsonify({"success": True, "data": get_role_permissions(role_id)})
+        # Use repository directly to avoid ensure_rbac_tables() which re-inserts
+        # incremental defaults and resets explicitly assigned permissions.
+        repo = RbacRepository()
+        result_data = repo.get_role_permissions(role_id)
+        return jsonify({"success": True, "data": result_data, "_debug_sent": permission_codes})
     except ValueError as exc:
         return validation_error(str(exc))
     except Exception as exc:
