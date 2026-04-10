@@ -3,7 +3,7 @@
 # 此文件避免频繁扫描 archive 目录获取编号
 
 # 功能开发 (00001-09999)
-feature_next=00096
+feature_next=00097
 
 # Bug修复 (10101-19999)
 bugfix_next=10203
