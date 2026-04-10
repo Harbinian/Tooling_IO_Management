@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 
 def submit_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Submit an order for processing."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     # Check order exists first
     order = get_order_detail_runtime(order_no)
@@ -206,7 +206,7 @@ def keeper_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = 
 
 def final_confirm(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Perform final confirmation on an order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     availability = get_final_confirm_availability(
         order_no,
@@ -287,7 +287,7 @@ def get_final_confirm_availability(
 
 def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Assign transport operator to an order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order:
@@ -342,7 +342,7 @@ def assign_transport(order_no: str, payload: Dict, current_user: Optional[Dict] 
 
 def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Start transport for an order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order:
@@ -394,7 +394,7 @@ def start_transport(order_no: str, payload: Dict, current_user: Optional[Dict] =
 
 def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Complete transport for an order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order:
@@ -451,7 +451,7 @@ def complete_transport(order_no: str, payload: Dict, current_user: Optional[Dict
 
 def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Reject an order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order or not _is_order_accessible(order, current_user):
@@ -482,7 +482,7 @@ def reject_order(order_no: str, payload: Dict, current_user: Optional[Dict] = No
 
 def cancel_order(order_no: str, payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Cancel an order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
 
     order = get_order_detail_runtime(order_no)
     if not order or not _is_order_accessible(order, current_user):

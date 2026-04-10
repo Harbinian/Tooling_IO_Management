@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 def create_order(payload: Dict, current_user: Optional[Dict] = None) -> Dict:
     """Create a new tool IO order."""
-    from backend.services.tool_io_service import _emit_internal_notification
+    from backend.services.notification_service import _emit_internal_notification
     from backend.services._shared_utils import _build_actor_context
 
     actor = _build_actor_context(payload)

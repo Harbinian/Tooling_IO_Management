@@ -95,40 +95,6 @@ ALLOWED_BATCH_TOOL_STATUSES = {"in_storage", "outbounded", "maintain", "scrapped
 MPL_MAX_PHOTO_BYTES = 2 * 1024 * 1024
 
 
-def _emit_internal_notification(
-    notification_type: str,
-    *,
-    order: Dict,
-    actor: Optional[Dict] = None,
-    target_user_id: str = "",
-    target_user_name: str = "",
-    target_role: str = "",
-    metadata: Optional[Dict] = None,
-) -> None:
-    # Internal notifications disabled — normal workflow events are already tracked in operation logs.
-    # Only external notifications (Feishu/WeChat) are recorded.
-    return
-    delivery_result = auto_deliver_notification(
-        {
-            "notification_id": result.get("notification_id", 0),
-            "order_no": order.get("order_no", ""),
-            "order": order,
-            "notification_type": notification_type,
-            "receiver": result.get("receiver", ""),
-            "title": result.get("title", ""),
-            "body": result.get("body", ""),
-            "copy_text": result.get("copy_text", ""),
-        }
-    )
-    if delivery_result.get("send_status") in {"failed", "disabled"}:
-        logger.warning(
-            "Feishu auto delivery did not complete for %s (%s): %s",
-            order.get("order_no", ""),
-            notification_type,
-            delivery_result.get("send_result") or delivery_result.get("response_summary", ""),
-        )
-
-
 def _build_mpl_validation_message(drawing_no: str, revision: str) -> str:
     return f"工装 {drawing_no or '-'} (版次 {revision or '-'}) 缺少可拆卸件清单"
 

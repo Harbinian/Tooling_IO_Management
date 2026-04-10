@@ -371,3 +371,18 @@ def mark_notification_as_read(notification_id: int, current_user: Dict) -> Dict:
     )
     updated_row = {**rows[0], "status": STATUS_READ}
     return {"success": True, "data": _normalize_notification_row(updated_row)}
+
+
+def _emit_internal_notification(
+    notification_type: str,
+    *,
+    order: Dict,
+    actor: Optional[Dict] = None,
+    target_user_id: str = "",
+    target_user_name: str = "",
+    target_role: str = "",
+    metadata: Optional[Dict] = None,
+) -> None:
+    # Internal notifications disabled — normal workflow events are already tracked in operation logs.
+    # Only external notifications (Feishu/WeChat) are recorded.
+    return
