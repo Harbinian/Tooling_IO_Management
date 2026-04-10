@@ -59,6 +59,8 @@
 │                      Service Layer                          │
 │  OrderService  |  ToolService  |  NotificationService      │
 │  TextGeneratorService  |  AuditService                       │
+│  ────────── Internal ──────────                            │
+│  _shared_utils  |  _order_shared                            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -104,6 +106,16 @@
 - 操作日志记录
 - 状态变更追踪
 - 审计查询
+
+#### _shared_utils（通用工具模块）
+
+- 跨 Service 复用的常量、枚举、工具函数
+- 如：订单状态枚举、库位类型、操作类型
+
+#### _order_shared（订单共享模块）
+
+- 订单相关跨层共享逻辑
+- 如：scope 上下文解析、actor 上下文构建、库存检查辅助函数
 
 ---
 
