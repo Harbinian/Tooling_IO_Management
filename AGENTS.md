@@ -6,13 +6,13 @@
 
 The application starts from `web_server.py`, which hosts the Flask app, HTTP APIs, page routes, and health checks. Core SQL Server access, connection pooling, schema bootstrapping, and workflow persistence remain in `database.py`. Shared environment-driven configuration is centralized in `config/settings.py`, and Feishu notification helpers live in `utils/feishu_api.py`.
 
-`backend/` 已启用，包含服务层包装器（如 `backend/services/tool_io_service.py`）以桥接 Flask 路由到数据库和通知流。`frontend/` 已启用，包含 `frontend/src/` 下的 Vite + Vue 3 应用及 `frontend/dist/` 构建输出。`templates/` 下的服务端渲染模板仍是运行时的一部分。
+`backend/` 已启用，包含服务层包装器（如 `backend/services/tool_io_service.py`）以桥接 Flask 路由到数据库和通知流。`frontend/` 已启用，包含 `frontend/src/` 下的 Vite + Vue 3 应用及 `frontend/dist/` 构建输出。页面运行路径当前以 `backend/routes/page_routes.py` 与前端路由为准，仓库当前没有独立的 `templates/` 目录。
 
-`backend/` is active and contains service-layer wrappers (for example `backend/services/tool_io_service.py`) that bridge Flask routes to database and notification flows. `frontend/` is active with a Vite + Vue 3 app in `frontend/src/` and build output in `frontend/dist/`. Server-rendered templates under `templates/` are still part of runtime.
+`backend/` is active and contains service-layer wrappers (for example `backend/services/tool_io_service.py`) that bridge Flask routes to database and notification flows. `frontend/` is active with a Vite + Vue 3 app in `frontend/src/` and build output in `frontend/dist/`. Runtime page entry currently lives in `backend/routes/page_routes.py` plus frontend routing; there is no standalone `templates/` directory in the current workspace.
 
-`docs/`、`.skills/`、`promptsRec/`、`.claude/`、`rules/`、`.trae/` 与 `logs/` 下的文档和流程资产都属于工作仓库的一部分。任务涉及架构、流程、提示词执行、代理分工或上下文治理时，必须同步更新对应文档。
+`docs/`、`promptsRec/`、`.claude/`、`.trae/`、`logs/`、`scripts/` 与 `test_runner/` 下的文档和流程资产都属于工作仓库的一部分。任务涉及架构、流程、提示词执行、代理分工、自动化脚本或上下文治理时，必须同步更新对应文档。
 
-Documentation and workflow assets under `docs/`, `.skills/`, `promptsRec/`, `.claude/`, `rules/`, `.trae/`, and `logs/` are part of the working repository. Update them whenever a task touches architecture, delivery workflow, prompt execution, agent governance, or context-optimization rules.
+Documentation and workflow assets under `docs/`, `promptsRec/`, `.claude/`, `.trae/`, `logs/`, `scripts/`, and `test_runner/` are part of the working repository. Update them whenever a task touches architecture, delivery workflow, prompt execution, agent governance, automation scripts, or context-optimization rules.
 
 ---
 
@@ -26,6 +26,9 @@ Documentation and workflow assets under `docs/`, `.skills/`, `promptsRec/`, `.cl
 - `03_hotfix.md`: 生产热修复 SOP
 - `04_frontend.md`: 前端页面、状态、主题、工作流预览与 RBAC 规则
 - `05_task_convention.md`: 提示词编号、归档命名和执行器分配规则
+- `06_testing.md`: 测试任务和验证分层规则
+- `07_ci_gates.md`: CI 自动化门禁与 G1-G6 评分规则
+- `08_skill_convention.md`: 技能文件的结构、引用方式与瘦身约束
 
 Rules in `.claude/rules/` are the source of truth for agent workflow:
 
@@ -35,14 +38,11 @@ Rules in `.claude/rules/` are the source of truth for agent workflow:
 - `03_hotfix.md`: production hotfix SOP
 - `04_frontend.md`: frontend requirements for pages, states, theming, workflow preview, and RBAC isolation
 - `05_task_convention.md`: prompt numbering, archive naming, and executor assignment
+- `06_testing.md`: testing-task and verification-layer rules
+- `07_ci_gates.md`: CI automation gates and G1-G6 scoring rules
+- `08_skill_convention.md`: skill-file structure, reference style, and slimming constraints
 
-`.skills/` 中与代理执行直接相关的技能包括：
-
-- `prompt-task-runner`: `RUNPROMPT` 执行协议与归档流程
-- `self-healing-dev-loop`: 问题检测、任务生成、执行与管线更新闭环
-- `auto-task-generator`: 标准化提示词生成、优先级与执行器选择
-- `repo-context-firewall`: 仓库上下文热点治理与 `.trae/.ignore` 优化
-- `bug-triage`、`incident-*`、`release-precheck`、`pipeline-dashboard`: 视任务需要配套使用
+历史上 `.skills/` 承载过技能编排层，但当前工作区已不保留该目录。凡遇到旧文档提及 `.skills/`，一律以 `.claude/rules/` 为真源，并以 `docs/SKILLS_CLAUDE_RULES_CONSOLIDATION.md` 作为迁移与冲突整改说明。
 
 ---
 
@@ -61,7 +61,7 @@ When executing tasks from `promptsRec/`, use the repository `RUNPROMPT` workflow
    - Bug 修复 -> `.claude/rules/02_debug.md`
    - 生产热修复 -> `.claude/rules/03_hotfix.md`
 4. 在 `logs/prompt_task_runs/` 下写运行报告
-5. 若有真实修正，在 `logs/codex_rectification/` 下写纠正日志
+5. 若有真实修正，在 `logs/codex_rectification/` 下写纠正日志；目录不存在时先创建
 6. 归档原提示词，禁止删除提示词文件
 7. 成功归档后删除 `.lock`
 
@@ -74,11 +74,11 @@ When executing tasks from `promptsRec/`, use the repository `RUNPROMPT` workflow
 
 工作流依据文档 / Source of truth:
 
-- `docs/PROMPT_TASK_CONVENTION.md`
-- `docs/AI_PIPELINE.md`
-- `docs/README_AI_SYSTEM.md`
 - `.claude/rules/05_task_convention.md`
-- `.skills/prompt-task-runner/skill.md`
+- `docs/SKILLS_CLAUDE_RULES_CONSOLIDATION.md`
+- `docs/archive/PROMPT_TASK_CONVENTION.md`（历史参考）
+- `docs/archive/AI_PIPELINE.md`（历史参考）
+- `docs/archive/README_AI_SYSTEM.md`（历史参考）
 
 ---
 
@@ -338,7 +338,7 @@ UI 一致性 / UI consistency:
 - `docs/PRD.md`
 - `docs/ARCHITECTURE.md`
 - `docs/API_SPEC.md`
-- `docs/DB_SCHEMA.md`
+- `docs/SCHEMA_SNAPSHOT_20260325.md`（当前仓库可见的 schema 快照）
 - `docs/RBAC_PERMISSION_MATRIX.md`
 - `backend/database/schema/column_names.py`
 
@@ -352,7 +352,7 @@ UI 一致性 / UI consistency:
 - 功能变更后 `PRD.md`
 - API 变更后 `API_SPEC.md`
 - 权限变更后 `RBAC_PERMISSION_MATRIX.md`
-- Schema 变更后 `DB_SCHEMA.md` 与 `column_names.py`
+- Schema 变更后至少同步 `docs/SCHEMA_SNAPSHOT_20260325.md`（或补回正式 `DB_SCHEMA.md`）与 `column_names.py`
 
 ---
 
@@ -367,7 +367,7 @@ Use the repo context firewall rules when the repository becomes context-heavy.
 - 大于 200 KB 的文件、超过 500 行的源码、日志、构建产物、归档报告、旧评审文档都属于上下文热点
 - `build/`、`dist/`、日志、生成报告、临时文件通常可忽略或减少频繁加载
 - 大型但仍需保留可见性的源码文件应给出拆分建议，而不是盲目重构
-- 不要忽略 `backend/`、`frontend/src/`、`promptsRec/active/`、`promptsRec/archive/`、`.skills/` 与关键架构文档
+- 不要忽略 `backend/`、`frontend/src/`、`promptsRec/active/`、`promptsRec/archive/`、`.claude/rules/` 与关键架构文档
 - 如进行仓库上下文治理，应同步维护 `docs/REPO_CONTEXT_FIREWALL.md` 和 `.trae/.ignore`
 
 ---
@@ -378,7 +378,7 @@ Use the repo context firewall rules when the repository becomes context-heavy.
 - 重大功能建议对应单独提交
 - PR 需说明行为变更、新增环境变量、schema 假设与验证方式
 - 涉及 UI 变更时附截图
-- 若同时改 Flask 模板和 Vite 页面，需明确权威运行路径
+- 若同时改 Flask 页面路由和 Vite 页面，需明确权威运行路径
 
 ---
 
@@ -395,9 +395,9 @@ Use the repo context firewall rules when the repository becomes context-heavy.
 ## 当前补充约定（2026-03-19）/ Current Addendum (2026-03-19)
 
 - 反馈功能已从浏览器 localStorage 迁移为 SQL Server 持久化
-- 后端反馈接口：`GET /api/feedback`、`POST /api/feedback`、`DELETE /api/feedback/<id>`
+- 后端反馈接口：`GET /api/feedback`、`POST /api/feedback`、`DELETE /api/feedback/<id>`，管理侧还包括 `GET /api/feedback/all`、`PUT /api/feedback/<id>/status`、`POST /api/feedback/<id>/reply`、`GET /api/feedback/<id>/replies`
 - 数据表：`tool_io_feedback`（由 schema 引导函数自动创建/对齐）
-- 相关规范见：`docs/API_SPEC.md` 与 `docs/DB_SCHEMA.md`
+- 相关规范见：`docs/API_SPEC.md`、`backend/database/schema/`，以及当前可见的 schema 快照 `docs/SCHEMA_SNAPSHOT_20260325.md`
 
 ---
 

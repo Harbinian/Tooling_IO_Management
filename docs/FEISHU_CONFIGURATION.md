@@ -232,6 +232,14 @@ FEISHU_NOTIFICATION_TIMEOUT_SECONDS=10
 
 ## 第五步：验证配置
 
+### 5.0 开发环境监听服务（可选）
+
+`Bug Sniff` 飞书指令监听服务不再集成到 GUI 启动器中。如需使用，请在项目根目录直接执行：
+
+```bash
+python scripts/bug_sniff/cli.py --repo-path . --feishu-listen --feishu-port 8152
+```
+
 ### 5.1 确认后端运行中
 
 ```bash

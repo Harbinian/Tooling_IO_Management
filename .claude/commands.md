@@ -42,8 +42,7 @@ Type `/` followed by the command name to invoke the corresponding skill.
 
 所有技能位于: / All skills are located at:
 
-- `.skills/` (符号链接 → `C:\Users\charl\.claude\skills\`)
-- `.skills/start-dev/` (已删除)
+- `C:\Users\charl\.claude\skills\` (集中维护)
 
 ---
 

@@ -62,13 +62,21 @@ utils/feishu_api.py                        → 飞书 Webhook 通知
 
 ### 开发服务器启动器 / Dev Server Launcher
 
+开发环境可使用启动器同时启动后端和前端：
+
+```powershell
+# 方式1: 使用 launcher（推荐）
+python -m backend.launcher.server_launcher
+
+# 方式2: 使用兼容层（已废弃）
+python dev_server_launcher.py
 ```
-dev_server_launcher.py          → 兼容层，重定向到 backend.launcher.server_launcher
-backend/launcher/
-├── server_launcher.py           → 主入口，启动后端 + 前端 dev 服务器
-├── process_manager.py           → 进程管理（启动/停止/健康检查）
-└── config.py                    → 启动器配置（端口、超时等）
-```
+
+| 文件 | 用途 |
+|------|------|
+| `backend/launcher/server_launcher.py` | 主入口，启动后端 + 前端 dev 服务器 |
+| `backend/launcher/process_manager.py` | 进程管理（启动/停止/健康检查） |
+| `backend/launcher/config.py` | 启动器配置（端口、超时等） |
 
 启动器用于开发环境，不用于生产。
 
@@ -83,7 +91,9 @@ backend/launcher/
 | `system_config_routes.py` | 系统配置 API |
 | `admin_user_routes.py` | 管理员用户 API |
 | `dashboard_routes.py` | 仪表盘 API |
+| `inspection_routes.py` | 点检/检验计划、任务与统计 API |
 | `org_routes.py` | 组织架构 API |
+| `user_routes.py` | 当前用户与账户侧 API |
 | `feedback_routes.py` | 反馈 API |
 | `page_routes.py` | 页面渲染 |
 | `system_routes.py` | 系统 API |
@@ -94,12 +104,16 @@ backend/launcher/
 |------|------|
 | `tool_io_service.py` | 工装出入库核心业务逻辑 |
 | `order_workflow_service.py` | 订单状态机和工作流 |
-| `mpl_service.py` | MPL (可拆卸件清单) 管理 |
-| `rbac_service.py` | 角色权限控制 |
+| `order_query_service.py` | 订单列表/详情查询聚合 |
 | `notification_service.py` | 通知服务 |
 | `feishu_notification_adapter.py` | 飞书通知适配器 |
-| `transport_issue_service.py` | 运输异常处理（支持 Base64 图片） |
-| `feature_flag_service.py` | 功能开关管理 |
+| `feedback_service.py` | 反馈提交、回复与状态流转 |
+| `rbac_service.py` / `rbac_data_scope_service.py` | 角色权限与数据域控制 |
+| `auth_service.py` / `admin_user_service.py` / `org_service.py` | 认证、用户、角色、组织管理 |
+| `inspection_plan_service.py` / `inspection_task_service.py` / `inspection_stats_service.py` | 点检计划、任务与统计 |
+| `inspection_notification_service.py` | 点检通知 |
+| `transport_issue_service.py` | 运输异常处理 |
+| `tool_location_service.py` / `feature_flag_service.py` | 库位与功能开关管理 |
 
 ### 数据访问层 / Repository Layer
 
@@ -110,6 +124,18 @@ backend/launcher/
 | `mpl_repository.py` | MPL 数据访问 |
 | `system_config_repository.py` | 系统配置数据访问 |
 | `transport_issue_repository.py` | 运输异常数据访问 |
+| `rbac_repository.py` | 用户、角色、权限与组织访问 |
+| `inspection_*_repository.py` | 点检计划、任务、报告与状态访问 |
+| `acceptance_repository.py` / `dispatch_repository.py` / `tpitr_repository.py` | 入库验收、发运与台账类访问 |
+
+## 脚本工具 / Scripts
+
+| 路径 | 用途 |
+|------|------|
+| `scripts/bug_sniff/` | Bug 嗅探工具 |
+| `scripts/feishu_bridge/` | 飞书指令桥接服务（端口 8152） |
+| `test_runner/api_e2e.py` | API E2E 测试 |
+| `test_runner/playwright_e2e.py` | Playwright E2E 测试 |
 
 ## 数据库 / Database
 
@@ -122,10 +148,25 @@ backend/launcher/
 - `tool_io_location` - 工装位置信息
 - `tool_io_transport_issue` - 运输异常记录
 - `tool_io_mpl` - 工装可拆卸件清单
+- `tool_io_feedback` - 反馈与回复
+
+当前仓库还包含 inspection 相关 repository/service 模块；相关表结构以代码中的 schema 引导逻辑和仓库文档为准。
 
 RBAC 表: `sys_org`, `sys_user`, `sys_role`, `sys_permission`, `tool_io_order_no_sequence`
 
-> **注意**: `Tooling_ID_Main` 是外部系统表，禁止修改其 Schema，必须通过 `column_names.py` 中的常量访问。
+> **注意**: `Tooling_ID_Main` 是外部系统表，**禁止 DDL 操作**（CREATE/ALTER/DROP/TRUNCATE），必须通过 `column_names.py` 中的常量访问。
+
+### DEBUG_ID 系统
+
+前端组件需要添加 `v-debug-id` 属性用于自动化测试标识：
+
+| 文件 | 用途 |
+|------|------|
+| `frontend/src/debug/debugIds.js` | DEBUG_ID 常量定义 |
+
+当前仓库未提供独立的 `scripts/check-debug-ids.js` 校验脚本，相关约束以页面实现和测试覆盖为准。
+
+命名规范: `{PAGE}-{TYPE}-{NUMBER}` 格式（如 `OD-PANEL-005`）
 
 ## 前端结构 / Frontend Structure
 
@@ -136,6 +177,8 @@ frontend/src/
 │   ├── admin/      # 管理页面 (UserAdmin, FeedbackAdmin)
 │   ├── dashboard/  # 仪表盘
 │   ├── auth/       # 登录
+│   ├── home/       # 首页/门户
+│   ├── inspection/ # 点检计划、任务、统计、日历
 │   └── settings/   # 设置
 ├── components/    # 可复用 UI 组件
 ├── api/            # API 包装器 (统一封装所有 /api/* 调用)
@@ -158,6 +201,10 @@ frontend/src/
 | `orgs.js` | 组织架构 API |
 | `adminUsers.js` | 用户管理 API |
 | `feedback.js` | 反馈 API |
+| `inspection.js` | 点检/检验 API |
+| `permissions.js` | 权限管理 API |
+| `roles.js` | 角色管理 API |
+| `users.js` | 用户相关 API |
 | `client.js` | 通用客户端封装 |
 
 ## 关键 API 路由 / Key API Routes
@@ -174,6 +221,12 @@ frontend/src/
 | `GET /api/tools/search` | 工装搜索 |
 | `GET /api/mpl/<tool_code>` | 获取 MPL 清单 |
 | `POST /api/admin/system-config/*` | 系统配置管理 |
+| `GET /api/feedback/all` | 管理侧反馈列表 |
+| `PUT /api/feedback/{id}/status` | 更新反馈状态 |
+| `POST /api/feedback/{id}/reply` | 回复反馈 |
+| `GET /api/inspection/*` | 点检计划、任务、统计与日历 |
+| `GET/POST /api/admin/roles` | 角色管理 |
+| `GET/POST /api/admin/permissions` | 权限管理 |
 | `POST /api/tool-io-orders/<order_no>/notify-transport` | 运输通知 |
 | `GET /api/health` | 健康检查 |
 
@@ -226,35 +279,24 @@ frontend/src/
  └─ 纯测试任务？ → 测试规范 (06_testing.md)
 ```
 
-### 技能与规则映射
+### 历史技能名称映射
 
-| 规则 | 对应技能 |
-|------|---------|
+下列名称仅用于理解旧文档和归档记录中的提法；当前工作区不再保留 `.skills/` 目录：
+
+| 规则 | 历史技能名 / 说明 |
+|------|------------------|
 | `01_workflow.md` | `prompt-task-runner` |
 | `02_debug.md` / `03_hotfix.md` | `self-healing-dev-loop` |
 | `05_task_convention.md` | `auto-task-generator` |
-| `04_frontend.md` / `06_testing.md` / `07_ci_gates.md` | 手动执行 |
+| `04_frontend.md` / `06_testing.md` / `07_ci_gates.md` | 直接按规则执行 |
 
 ## 文档真相来源 / Documentation Source of Truth
 
-`docs/PRD.md`、`docs/ARCHITECTURE.md`、`docs/API_SPEC.md`、`docs/DB_SCHEMA.md`、`docs/RBAC_DESIGN.md`、`docs/RBAC_PERMISSION_MATRIX.md` - 代码不得偏离这些文档。
+`docs/PRD.md`、`docs/ARCHITECTURE.md`、`docs/API_SPEC.md`、`docs/RBAC_DESIGN.md`、`docs/RBAC_PERMISSION_MATRIX.md`、`docs/SCHEMA_SNAPSHOT_20260325.md`、`backend/database/schema/column_names.py` - 代码不得偏离这些文档与 schema 常量定义。若后续补回正式 `docs/DB_SCHEMA.md`，以正式文档为准。
 
 ## 技能系统 / Skills System
 
-`.skills/` 目录包含可自动化规则执行的技能文件：
-
-```
-.skills/
-├── meta/                       # 技能元数据（依赖图、审查清单、标准模板）
-├── prompt-task-runner/         # ADP 四阶段流程执行
-├── self-healing-dev-loop/      # 8D / HOTFIX 问题解决
-├── auto-task-generator/        # 提示词任务生成与编号
-├── bug-triage/                  # Bug 分类
-├── prompt-generator/           # 提示词生成器
-└── ...                         # 其他技能
-```
-
-技能文件不得覆盖 `.claude/rules/` 中规则的正文，仅可引用。
+历史上 `.skills/` 目录承载过技能编排层，但当前工作区已不保留该目录。遇到旧文档提及 `.skills/` 时，以 `.claude/rules/` 为唯一规则真源，并参考 `docs/SKILLS_CLAUDE_RULES_CONSOLIDATION.md` 了解迁移背景。
 
 ## 提示任务工作流 / Prompt Task Workflow
 
@@ -272,7 +314,9 @@ promptsRec/
 | `20101-29999` | 重构 |
 | `30101-39999` | 测试 |
 
-详见 `docs/PROMPT_TASK_CONVENTION.md`。
+编号计数器: `promptsRec/.sequence`（由提示词流程原子递增，禁止手动编辑）
+
+详见 `.claude/rules/05_task_convention.md`；旧版说明位于 `docs/archive/PROMPT_TASK_CONVENTION.md`。
 
 ## 单人开发工作流 / Solo Developer Workflow
 
@@ -288,24 +332,31 @@ promptsRec/
 
 ## 安全 / Security
 
-- 永不提交凭据，使用 `.env` (不提交) 以 `.env.example` 为模板
-- 外保持 `FLASK_DEBUG=False`
+- 永不提交凭据；本地敏感配置通过未提交的环境变量或本地覆盖方式管理
+- 非本地调试保持 `FLASK_DEBUG=False`
 - 测试前验证数据库连接
 
 ## 照片存储 / Photo Storage
 
-运输异常报告支持图片附件，采用 Base64 内嵌存储：
-- 前端: `ReportTransportIssueDialog.vue` 中 el-upload 设置 `:auto-upload="false"`
+运输异常与点检附件能力都涉及图片/附件载荷：
 - 后端: `transport_issue_service.py` 接收 `image_urls` 参数
-- 限制: 单张图片 Base64 不超过 2MB
+- 前端上传入口可能随页面演进而变化，修改前先检查当前 `frontend/src/pages/tool-io/` 与 `frontend/src/pages/inspection/` 实现
+- 附件传输与大小限制必须与当前后端校验保持一致
 
 ## 日志目录 / Logs
 
 ```
 logs/
-├── codex_rectification/     # Codex 纠正日志 (Bug 修复后记录)
+├── codex_rectification/     # Codex 纠正日志 (Bug 修复后按需创建)
 └── prompt_task_runs/        # 提示词任务执行报告
 ```
+
+## 配置 / Configuration
+
+| 文件 | 用途 |
+|------|------|
+| `config/settings.py` | 后端配置（数据库连接、飞书 Webhook 等） |
+| 进程环境变量 | 运行时覆盖配置来源 |
 
 ## 调试和问题解决 / Debugging & Problem Solving
 

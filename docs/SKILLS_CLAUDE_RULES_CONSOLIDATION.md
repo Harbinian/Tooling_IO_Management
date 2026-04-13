@@ -30,6 +30,7 @@
 | 6 | ADP/8D/HOTFIX 协议在技能层二次复写 | P1 | prompt-task-runner, prompt-generator, self-healing-dev-loop | 删除正文，改为引用真源文件 |
 | 7 | Prompt 生成缺少存在性校验 | P1 | auto-task-generator, prompt-generator | 增加生成前硬校验 |
 | 8 | 技能文档承担"主规则定义"职责 | P1 | 全部技能文件 | 降为流程适配层 |
+| 9 | requirement-harvest 维护了弱化版 prompt 协议并错误吸收简化任务 | P1 | requirement-harvest | 收缩为需求收集与分流层，后续 prompt 一律委托真源生成器 |
 
 ---
 
@@ -70,6 +71,8 @@
 8. 任何技能文件不得出现"若 prompt 中另有规定则以 prompt 为准"
 9. 归档判断只按 `.claude` 归档前置条件执行
 10. 如 `.claude/rules` 更新，`.skills` 只能检查引用路径是否仍有效
+11. `requirement-harvest` 只负责需求澄清与结构化输入，不维护独立 prompt 章节模板
+12. 测试任务提示词在技能层同样不得偏离 `.claude/rules/01_workflow.md` 的 ADP 真源
 
 ---
 
@@ -82,6 +85,8 @@
 - [x] 生成新 prompt 前会拒绝失效文档引用
 - [x] 简化任务不会再错误生成正式 prompt
 - [x] 任意技能文档都不能覆盖 `.claude` 规则
+- [x] requirement-harvest 不再把简化任务错误升级为正式 prompt
+- [x] requirement-harvest 不再维护独立测试任务章节模板
 
 ---
 
@@ -95,3 +100,4 @@
 | `.skills/prompt-generator/SKILL.md` | 删除协议正文、删除执行器规则表、增加生成前存在性校验 |
 | `.skills/bug-triage/SKILL.md` | 删除 `*_bug_*.md` 文件名匹配，改为按编号区间 |
 | `.skills/pipeline-dashboard/SKILL.md` | 删除文件名片段匹配，改为按编号区间 |
+| `.skills/requirement-harvest/SKILL.md` | 删除弱化版 prompt 模板定义、改为委托 auto-task-generator、修正简化任务与测试任务分流 |

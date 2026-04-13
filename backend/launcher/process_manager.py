@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import ctypes
+import csv
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import re
@@ -194,6 +196,273 @@ def resolve_python() -> str:
     return ""
 
 
+def resolve_node() -> str:
+    """Find a usable Node.js executable for the frontend dev server."""
+    return shutil.which("node.exe") or shutil.which("node") or ""
+
+
+def build_backend_launch_env(port: int) -> dict[str, str]:
+    """Build a launcher-safe backend environment.
+
+    The GUI launcher should hold the real Flask server process instead of a
+    Werkzeug reloader parent/child pair, otherwise stopping the tracked process
+    can still leave the child listener alive on the port.
+    """
+    return {
+        "FLASK_HOST": "0.0.0.0",
+        "FLASK_PORT": str(port),
+        "FLASK_DEBUG": "false",
+        "FLASK_USE_RELOADER": "false",
+    }
+
+
+def is_local_port_accepting_connections(port: int, host: str = "127.0.0.1", timeout: float = 0.5) -> bool:
+    """Return whether a local TCP port is already accepting connections."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def _extract_port_from_endpoint(endpoint: str) -> str | None:
+    """Extract the trailing TCP port from a netstat/lsof endpoint token."""
+    token = endpoint.strip()
+    if not token:
+        return None
+    if token.startswith("[") and "]:" in token:
+        return token.rsplit("]:", 1)[-1]
+    if ":" not in token:
+        return None
+    return token.rsplit(":", 1)[-1]
+
+
+def parse_windows_listening_pid(netstat_output: str, port: int) -> int | None:
+    """Parse `netstat -ano -p tcp` output and return the listening PID for a port."""
+    port_text = str(port)
+    for raw_line in netstat_output.splitlines():
+        parts = raw_line.split()
+        if len(parts) < 5:
+            continue
+        protocol, local_address, _, state, pid = parts[:5]
+        if protocol.upper() != "TCP" or state.upper() != "LISTENING":
+            continue
+        if _extract_port_from_endpoint(local_address) != port_text:
+            continue
+        if pid.isdigit():
+            return int(pid)
+    return None
+
+
+def parse_windows_process_name(tasklist_output: str, pid: int) -> str | None:
+    """Parse `tasklist /FO CSV /NH` output and return the process name for a PID."""
+    for row in csv.reader(tasklist_output.splitlines()):
+        if len(row) < 2:
+            continue
+        image_name, row_pid = row[0].strip(), row[1].strip()
+        if row_pid.isdigit() and int(row_pid) == pid:
+            return image_name or None
+    return None
+
+
+def parse_process_executable_output(command_output: str) -> str | None:
+    """Return the first non-empty executable path line from command output."""
+    for line in command_output.splitlines():
+        value = line.strip()
+        if value:
+            return value
+    return None
+
+
+def find_listening_pid_for_port(port: int) -> int | None:
+    """Return the PID currently listening on the given TCP port, if detectable."""
+    if port <= 0:
+        return None
+    try:
+        if os.name == "nt":
+            result = subprocess.run(
+                ["netstat", "-ano", "-p", "tcp"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                timeout=3,
+                **windows_hidden_process_kwargs(),
+            )
+            return parse_windows_listening_pid(result.stdout, port)
+
+        result = subprocess.run(
+            ["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=3,
+        )
+        for line in result.stdout.splitlines():
+            token = line.strip()
+            if token.isdigit():
+                return int(token)
+    except Exception:
+        return None
+    return None
+
+
+def find_process_name_by_pid(pid: int) -> str | None:
+    """Return the process name for a PID, if detectable."""
+    if pid <= 0:
+        return None
+    try:
+        if os.name == "nt":
+            result = subprocess.run(
+                ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                timeout=3,
+                **windows_hidden_process_kwargs(),
+            )
+            return parse_windows_process_name(result.stdout, pid)
+
+        result = subprocess.run(
+            ["ps", "-p", str(pid), "-o", "comm="],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=3,
+        )
+        name = result.stdout.strip()
+        return name or None
+    except Exception:
+        return None
+
+
+def find_process_executable_by_pid(pid: int) -> str | None:
+    """Return the executable path for a PID, if detectable."""
+    if pid <= 0:
+        return None
+    try:
+        if os.name == "nt":
+            powershell = shutil.which("powershell.exe") or "powershell.exe"
+            result = subprocess.run(
+                [
+                    powershell,
+                    "-NoProfile",
+                    "-Command",
+                    f"(Get-CimInstance Win32_Process -Filter \"ProcessId = {pid}\").ExecutablePath",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                timeout=4,
+                **windows_hidden_process_kwargs(),
+            )
+            return parse_process_executable_output(result.stdout)
+
+        result = subprocess.run(
+            ["ps", "-p", str(pid), "-o", "command="],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=4,
+        )
+        return parse_process_executable_output(result.stdout)
+    except Exception:
+        return None
+
+
+def find_process_command_line_by_pid(pid: int) -> str | None:
+    """Return the full command line for a PID, if detectable."""
+    if pid <= 0:
+        return None
+    try:
+        if os.name == "nt":
+            powershell = shutil.which("powershell.exe") or "powershell.exe"
+            result = subprocess.run(
+                [
+                    powershell,
+                    "-NoProfile",
+                    "-Command",
+                    f"(Get-CimInstance Win32_Process -Filter \"ProcessId = {pid}\").CommandLine",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                timeout=4,
+                **windows_hidden_process_kwargs(),
+            )
+            return parse_process_executable_output(result.stdout)
+
+        result = subprocess.run(
+            ["ps", "-p", str(pid), "-o", "command="],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=4,
+        )
+        return parse_process_executable_output(result.stdout)
+    except Exception:
+        return None
+
+
+def terminate_pid_tree(pid: int, *, grace_seconds: float = 1.5) -> bool:
+    """Terminate a process tree by PID."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        try:
+            result = subprocess.run(
+                ["taskkill", "/PID", str(pid), "/T", "/F"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                timeout=max(3, int(grace_seconds) + 2),
+                **windows_hidden_process_kwargs(),
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
+    try:
+        os.kill(pid, 15)
+        return True
+    except Exception:
+        return False
+
+
+def build_frontend_dev_command(node_cmd: str | None = None, port: int | None = None) -> list[str]:
+    """Build the frontend dev-server command without the npm wrapper process."""
+    from backend.launcher.config import FRONTEND_PORT
+
+    resolved_node = node_cmd or NODE_CMD
+    vite_bin = FRONTEND_DIR / "node_modules" / "vite" / "bin" / "vite.js"
+    resolved_port = port or FRONTEND_PORT
+    if not resolved_node or not vite_bin.exists():
+        return []
+    return [
+        resolved_node,
+        str(vite_bin),
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(resolved_port),
+        "--strictPort",
+    ]
+
+
 def is_http_200_line(line: str) -> bool:
     """Check if a log line is a benign HTTP 200 log line."""
     return bool(HTTP_200_LINE_PATTERN.search(line))
@@ -201,6 +470,53 @@ def is_http_200_line(line: str) -> bool:
 
 # Module-level resolved Python command
 PYTHON_CMD = resolve_python()
+NODE_CMD = resolve_node()
 
 # GUI event directory for incident monitoring
 GUI_EVENT_DIR = BASE_DIR / "incidents" / "gui_events"
+
+
+def terminate_process_tree(process: subprocess.Popen | None, *, grace_seconds: float = 1.5) -> bool:
+    """Terminate a process and its child processes."""
+    if process is None:
+        return True
+    if process.poll() is not None:
+        return True
+    force_kill_succeeded = False
+
+    try:
+        process.terminate()
+    except Exception:
+        pass
+
+    try:
+        process.wait(timeout=grace_seconds)
+        return True
+    except Exception:
+        pass
+
+    if os.name == "nt":
+        try:
+            result = subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                timeout=max(3, int(grace_seconds) + 2),
+                **windows_hidden_process_kwargs(),
+            )
+            force_kill_succeeded = result.returncode == 0
+        except Exception:
+            pass
+    else:
+        try:
+            process.kill()
+            force_kill_succeeded = True
+        except Exception:
+            pass
+
+    try:
+        process.wait(timeout=2)
+    except Exception:
+        pass
+    return process.poll() is not None or force_kill_succeeded

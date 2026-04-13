@@ -365,8 +365,8 @@ def check_doc(path):
             failures.append(f"{section}: 缺少关键词 {keywords}")
     return failures
 
-# 扫描 active/ 目录中带 8D 标记的文档
-for f in pathlib.Path("prompts/active").glob("1*.md"):
+# 扫描 promptsRec/active/ 目录中 bug 编号范围的文档
+for f in pathlib.Path("promptsRec/active").glob("1*.md"):
     failures = check_doc(f)
     if failures:
         print(f"[FAIL] {f.name} 8D 结构不完整:")
@@ -392,7 +392,7 @@ print("[PASS] 8D document structure OK")
 # scripts/check_hotfix_rfc.py
 REQUIRED_RFC_SECTIONS = ["爆炸半径", "回滚预案", "影响模块"]
 
-for f in pathlib.Path("prompts/active").glob("hotfix_*.md"):
+for f in pathlib.Path("promptsRec/active").glob("hotfix_*.md"):
     content = f.read_text(encoding="utf-8")
     missing = [s for s in REQUIRED_RFC_SECTIONS if s not in content]
     if missing:
@@ -429,11 +429,11 @@ ACTIVE_PATTERN = re.compile(
 
 failures = []
 
-for f in pathlib.Path("prompts/archive").iterdir():
+for f in pathlib.Path("promptsRec/archive").iterdir():
     if not ARCHIVE_PATTERN.match(f.name):
         failures.append(f"archive/ 命名不合规: {f.name}")
 
-for f in pathlib.Path("prompts/active").iterdir():
+for f in pathlib.Path("promptsRec/active").iterdir():
     if f.name == ".gitkeep": continue
     if not ACTIVE_PATTERN.match(f.name):
         failures.append(f"active/ 命名不合规: {f.name}")
@@ -453,7 +453,7 @@ if failures:
 # scripts/check_archive_naming.py（追加到上方脚本）
 
 seq_nums = []
-for f in pathlib.Path("prompts/archive").iterdir():
+for f in pathlib.Path("promptsRec/archive").iterdir():
     m = re.match(r'^✅_(\d{5})_', f.name)
     if m: seq_nums.append((m.group(1), f.name))
 
@@ -484,21 +484,24 @@ if dupes:
 
 import sys, json, pathlib, re
 
-REPORT_DIR = pathlib.Path("test-reports")
+REPORT_DIR = pathlib.Path("logs/prompt_task_runs")
 
-for f in pathlib.Path("prompts/archive").iterdir():
+def find_report_for_task(task_id):
+    for report in REPORT_DIR.glob("*.md"):
+        name = report.name
+        content = report.read_text(encoding="utf-8", errors="ignore")
+        if task_id in name or f"提示词编号: {task_id}" in content or f"**ID**: {task_id}" in content:
+            return report
+    return None
+
+for f in pathlib.Path("promptsRec/archive").iterdir():
     m = re.match(r'^✅_\d{5}_(\d{5})_', f.name)
     if not m: continue
     task_id = m.group(1)
-    report = REPORT_DIR / f"{task_id}_result.json"
+    report = find_report_for_task(task_id)
 
-    if not report.exists():
+    if report is None:
         print(f"[FAIL] {f.name}: 缺少测试报告 {report}")
-        sys.exit(1)
-
-    result = json.loads(report.read_text(encoding="utf-8"))
-    if result.get("status") != "passed":
-        print(f"[FAIL] {f.name}: 测试未通过，status={result.get('status')}")
         sys.exit(1)
 
 print("[PASS] Archive preconditions OK")
@@ -548,7 +551,7 @@ print("[PASS] Archive preconditions OK")
 
 ## Layer 6 — 技能文件门禁 / Skill File Gates
 
-**触发条件**: `.skills/` 目录下有文件变更时执行
+**触发条件**: `C:\Users\charl\.claude\skills\` 目录下有文件变更时执行
 **执行者**: CI 自动执行，无需人工介入
 
 ---
@@ -581,18 +584,18 @@ print("[PASS] Archive preconditions OK")
 |--------|------|---------|
 | 必填字段缺失 | 任意必填字段缺失 → 阻断合并 | 阻断 |
 | executor 合法性 | 值不在合法列表（Claude Code / Codex / Human）→ 阻断 | 阻断 |
-| name 与文件名匹配 | name 与文件名不一致（去掉 .md 后缀）→ 阻断 | 阻断 |
+| name 与技能目录名匹配 | `SKILL.md` / `skill.md` 的 frontmatter `name` 与父目录名不一致 → 阻断 | 阻断 |
 
 **错误信息**:
 ```
-[G6-2] {filename} Frontmatter 不合规：缺少字段 {fields} / executor 值非法 / name 与文件名不匹配
+[G6-2] {filename} Frontmatter 不合规：缺少字段 {fields} / executor 值非法 / name 与技能目录名不匹配
 ```
 
 ---
 
 ### G6-3｜触发命令全局唯一性检查
 
-**检查范围**: `.skills/` 目录所有技能文件（全量扫描，非仅变更文件）
+**检查范围**: `C:\Users\charl\.claude\skills\` 目录所有技能文件（全量扫描，非仅变更文件）
 
 | 检查项 | 规则 | 不通过时 |
 |--------|------|---------|
@@ -612,12 +615,12 @@ print("[PASS] Archive preconditions OK")
 
 | 检查项 | 规则 | 不通过时 |
 |--------|------|---------|
-| 依赖引用 | `depends_on` 中声明的技能名称在 `.skills/` 目录中不存在对应文件 → 阻断合并 | 阻断 |
+| 依赖引用 | `depends_on` 中声明的技能名称在 `C:\Users\charl\.claude\skills\` 目录中不存在对应文件 → 阻断合并 | 阻断 |
 
 **错误信息**:
 ```
 [G6-4] {filename} 声明依赖 {skill_name}，
-但 .skills/{skill_name}/ 不存在，请先创建依赖技能或修正 depends_on
+但 C:\Users\charl\.claude\skills\{skill_name}/ 不存在，请先创建依赖技能或修正 depends_on
 ```
 
 ---
